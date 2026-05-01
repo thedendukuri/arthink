@@ -1,0 +1,13 @@
+# Dependencies — never commit these, npm install recreates them
+node_modules/
+
+# Environment secrets — never commit your keys
+.env
+schwab_tokens.json
+
+# macOS clutter
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
