@@ -47,11 +47,11 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 .logo-name{font-family:var(--serif);font-size:19px;font-weight:700;letter-spacing:-.2px;color:#3d1a00;white-space:nowrap;font-style:italic}
 .logo-name em{color:#138808;font-style:italic}.logo-dot{color:#138808}
 .nav{display:flex;flex:1;padding-left:10px;overflow:hidden}
-.nav a{color:rgba(0,0,0,.55);font-size:11px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;padding:0 14px;height:52px;display:flex;align-items:center;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s;cursor:pointer}
-.nav a:hover{color:#000}.nav a.on{color:#000;border-bottom-color:#138808}
-#nav-alpha{color:#138808!important;font-weight:700}
-#nav-alpha:hover{color:#0a5c0e!important}
-#nav-alpha.on{color:#000!important}
+.nav a{color:rgba(255,255,255,.75);font-size:11px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;padding:0 14px;height:52px;display:flex;align-items:center;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s;cursor:pointer}
+.nav a:hover{color:#fff}.nav a.on{color:#fff;border-bottom-color:#138808}
+#nav-alpha{color:#fff!important;font-weight:700;text-shadow:0 0 8px rgba(255,255,255,.5)}
+#nav-alpha:hover{color:#fff!important}
+#nav-alpha.on{color:#fff!important}
 .hdr-right{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0}
 .searchbox{display:flex;align-items:center;background:rgba(0,0,0,.12);border:1px solid rgba(0,0,0,.2);height:30px;padding:0 10px;gap:8px;width:200px}
 .searchbox input{background:none;border:none;outline:none;color:#1a0a00;font-size:12px;font-family:var(--sans);width:100%}
@@ -83,25 +83,25 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 .nm-share{margin-left:auto;font-size:12px;color:var(--muted)}
 
 /* ── TICKER ── */
-.tbar{background:#000;border-bottom:1px solid #111;height:32px;overflow:hidden;position:relative}
+.tbar{background:#fff;border-bottom:1px solid #e0e0e0;height:32px;overflow:hidden;position:relative}
 .tbar::before,.tbar::after{content:'';position:absolute;top:0;bottom:0;width:60px;z-index:2;pointer-events:none}
-.tbar::before{left:0;background:linear-gradient(to right,#000 40%,transparent)}
-.tbar::after{right:0;background:linear-gradient(to left,#000 40%,transparent)}
+.tbar::before{left:0;background:linear-gradient(to right,#fff 40%,transparent)}
+.tbar::after{right:0;background:linear-gradient(to left,#fff 40%,transparent)}
 .tbar-track{display:flex;align-items:center;height:100%;animation:tsroll 90s linear infinite;width:max-content;will-change:transform}
 .tbar-track:hover{animation-play-state:paused}
 @keyframes tsroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-.tick{display:flex;align-items:center;gap:8px;padding:0 16px;border-right:1px solid #111;height:100%;cursor:pointer;flex-shrink:0}
-.tick:hover{background:rgba(255,255,255,.04)}
+.tick{display:flex;align-items:center;gap:8px;padding:0 16px;border-right:1px solid #e8e8e8;height:100%;cursor:pointer;flex-shrink:0}
+.tick:hover{background:rgba(0,0,0,.04)}
 .tick-left{min-width:0}
-.t-sym{font-family:var(--mono);font-size:10px;font-weight:700;color:#ccc;display:block;white-space:nowrap;letter-spacing:.3px}
+.t-sym{font-family:var(--mono);font-size:10px;font-weight:700;color:#111;display:block;white-space:nowrap;letter-spacing:.3px}
 .t-row{display:flex;align-items:center;gap:4px}
-.t-price{font-family:var(--mono);font-size:10px;color:#555;white-space:nowrap}
+.t-price{font-family:var(--mono);font-size:10px;color:#444;white-space:nowrap}
 .t-pct{font-family:var(--mono);font-size:10px;font-weight:600;white-space:nowrap}
 .pos{color:var(--pos)}.neg{color:var(--neg)}
 .tick-spark{flex-shrink:0;line-height:0}
 
 /* ── STATUS ── */
-.statusbar{background:var(--hdr);border-bottom:1px solid var(--border);padding:3px 24px;display:flex;align-items:center;gap:12px;font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.3px}
+.statusbar{background:var(--hdr);border-bottom:1px solid rgba(0,0,0,.15);padding:3px 24px;display:flex;align-items:center;gap:12px;font-family:var(--mono);font-size:9px;color:#000;letter-spacing:.3px;font-weight:600}
 .mkt-open{color:var(--pos);font-weight:600}.mkt-closed{color:var(--neg);font-weight:600}
 
 /* ── SECTIONS ── */
@@ -547,8 +547,8 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
     <div class="search-wrap">
       <div class="searchbox">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input type="text" placeholder="Search stocks, indices, MFs…" id="searchInput" autocomplete="off"
-          oninput="runSearch(this.value)" onfocus="runSearch(this.value)" onblur="setTimeout(()=>closeSearch(),180)"/>
+        <input type="text" placeholder="Search stocks, indices, MFs…" id="searchInput" autocomplete="new-password" name="arthink-search"
+          oninput="runSearch(this.value)" onfocus="this.value='';runSearch('')" onblur="setTimeout(()=>closeSearch(),180)"/>
       </div>
       <div class="search-drop" id="searchDrop"></div>
     </div>
@@ -3911,6 +3911,10 @@ function updateDetailLive(){
 // INIT
 // ══════════════════════════════════════════════
 (async function init(){
+  // Kill browser autofill on search input — Chrome ignores autocomplete="off"
+  const _si=document.getElementById('searchInput');
+  if(_si){_si.value='';setTimeout(()=>{_si.value='';},50);}
+
   // Set correct theme button icon on load
   updateThemeBtn(document.documentElement.getAttribute('data-theme')||'light');
 
