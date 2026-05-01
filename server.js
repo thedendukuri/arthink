@@ -191,6 +191,36 @@ async function yahooChart(sym, period, interval, from, to, isCustom) {
     }));
 }
 
+// ── GET /api/sparks?syms=^NSEI,^NSEBANK,TCS.NS  ──────────────────────────────
+// Returns last 20 daily closes per symbol for sparkline rendering.
+// Cached 10 minutes — accurate enough for decorative mini-charts.
+app.get('/api/sparks', async (req, res) => {
+  const syms = (req.query.syms || '').split(',').map(s => s.trim()).filter(Boolean);
+  if (!syms.length) return res.status(400).json({ error: 'syms required' });
+
+  const cacheKey = 'sparks:' + syms.join(',');
+  const cached = getCache(cacheKey, 10 * 60_000);
+  if (cached) return res.json(cached);
+
+  const period1 = new Date(Date.now() - 30 * 86400_000);
+  const period2 = new Date();
+
+  const results = {};
+  await Promise.allSettled(syms.map(async sym => {
+    try {
+      const chart = await yahooFinance.chart(sym, { period1, period2, interval: '1d' });
+      const closes = (chart?.quotes ?? [])
+        .filter(b => b.close != null)
+        .map(b => b.close)
+        .slice(-20);
+      if (closes.length >= 2) results[sym] = closes;
+    } catch {}
+  }));
+
+  setCache(cacheKey, results);
+  res.json(results);
+});
+
 // ── GET /api/news?sym=RELIANCE.NS  (optional sym for ticker news) ────────────
 // General: merges ET, Moneycontrol, Business Standard, Mint RSS feeds.
 // Ticker:  uses yahoo-finance2 search for stock/index-specific headlines.

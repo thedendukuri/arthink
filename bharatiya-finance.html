@@ -3942,6 +3942,26 @@ function updateDetailLive(){
     if(lbl){lbl.textContent='Live data';lbl.style.color='var(--pos)';}
   }
 
+  // Fetch real sparkline data (last 20 daily closes) — replaces random genHist shapes
+  if(IS_SERVED){
+    try{
+      const sparkSyms=[
+        ...REGIONS_DEF[0].indices.map(i=>i.sym),
+        ...STOCKS.slice(0,9).map(s=>s.sym),
+      ].join(',');
+      const sparkData=await fetch(`/api/sparks?syms=${encodeURIComponent(sparkSyms)}`,
+        {signal:AbortSignal.timeout(8000)}).then(r=>r.json());
+      let updated=false;
+      REGIONS_DEF[0].indices.forEach(i=>{
+        if(sparkData[i.sym]?.length>=2){histI[i.sym]=sparkData[i.sym];updated=true;}
+      });
+      STOCKS.slice(0,9).forEach(s=>{
+        if(sparkData[s.sym]?.length>=2){histS[s.sym]=sparkData[s.sym];updated=true;}
+      });
+      if(updated) buildTicker(); // rebuild with real shapes
+    }catch(e){}
+  }
+
   // Restore page position from URL hash (e.g. after reload)
   restoreFromHash();
 
