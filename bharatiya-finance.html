@@ -3026,11 +3026,11 @@ const IST = {
 
       if (data.loading) {
         tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted);font-family:var(--mono);font-size:12px">
-          <div style="margin-bottom:10px">⏳ Building stock list from Yahoo Finance…</div>
-          <div style="font-size:11px">This takes ~30 seconds on first load. Page will refresh automatically.</div>
+          <div style="margin-bottom:10px">⏳ Server is starting up, fetching stock list…</div>
+          <div style="font-size:11px">This only happens once. Page will refresh automatically.</div>
         </td></tr>`;
         countEl.textContent = 'Loading…';
-        setTimeout(() => this.load(), 8000); // retry in 8s
+        setTimeout(() => this.load(), 4000); // retry in 4s
         return;
       }
       if (!data.stocks?.length) {

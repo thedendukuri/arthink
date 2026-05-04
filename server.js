@@ -802,7 +802,7 @@ const NSE_SEED = [
   // ── Auto & Auto Ancillaries ───────────────────────────────
   'TVSMOTOR','ASHOKLEY','MOTHERSON','BOSCHLTD','BHARATFORG','MRF',
   'APOLLOTYRE','CEATLTD','BALKRISIND','EXIDEIND','AMARARAJA',
-  'TIINDIA','SUPRAJIT','ENDURANCE','WABCOINDIA','Gabriel',
+  'TIINDIA','SUPRAJIT','ENDURANCE','WABCOINDIA','GABRIEL',
   'LUMAXIND','SBCL','CRAFTSMAN',
   // ── Pharma & Healthcare ───────────────────────────────────
   'BIOCON','FORTIS','AUROPHARMA','LUPIN','ALKEM','GLENMARK',
@@ -828,8 +828,8 @@ const NSE_SEED = [
   'INOXGREEN','ORIENTGREEN','GREENPANEL',
   // ── Real Estate & Infrastructure ──────────────────────────
   'MAHLIFE','BRIGADE','KOLTEPATIL','SOBHA','LODHA','IRCON','NBCC',
-  'RITES','NCC','KNR','AHLUCONT','CAPACITE','PSP','HG INFRA',
-  'PNC INFRATECH','GALAND','WELCORP',
+  'RITES','NCC','KNR','AHLUCONT','CAPACITE','PSP','HGINFRA',
+  'PNCINFRA','WELCORP',
   // ── Capital Goods & Engineering ───────────────────────────
   'HAL','BEL','COCHINSHIP','GRINDWELL','CUMMINS','APAR','KEI',
   'POLYCAB','CROMPTON','VOLTAS','BLUESTAR','BHEL','GARDENREACH',
@@ -870,13 +870,29 @@ const NSE_SEED = [
   'MAHINDCIE','BAJAJHLDNG','TATAELXSI',
 ];
 
-async function loadIndiaStocks() {
-  const syms = NSE_SEED.map(s => s + '.NS');
-  console.log(`[india-stocks] Loading ${syms.length} NSE symbols via batch quote()…`);
+// Phase 1 — instant: seed the list from NSE_SEED so the table is
+// always available (zero loading spinner). Symbols with spaces or
+// invalid chars are filtered out here.
+function seedIndiaStocks() {
+  const valid = NSE_SEED.filter(s => s && !/\s/.test(s));
+  INDIA_STOCKS = valid.map(s => ({
+    sym     : s + '.NS',
+    shortSym: s,
+    name    : s,       // overwritten by enrichment
+    isin    : '',
+    exchange: 'NSE',
+    sector  : '',      // overwritten by enrichment
+  }));
+  INDIA_STOCKS.sort((a, b) => a.shortSym.localeCompare(b.shortSym));
+  console.log(`[india-stocks] Seeded ${INDIA_STOCKS.length} symbols instantly`);
+}
 
+// Phase 2 — background: enrich with real names & sectors from Yahoo.
+// Removes symbols that return no price (delisted / invalid).
+async function enrichIndiaStocks() {
+  const syms      = INDIA_STOCKS.map(s => s.sym);
   const batchSize = 50;
-  const allStocks = [];
-  const seen      = new Set();
+  console.log(`[india-stocks] Enriching ${syms.length} symbols…`);
 
   for (let i = 0; i < syms.length; i += batchSize) {
     const batch = syms.slice(i, i + batchSize);
@@ -888,26 +904,30 @@ async function loadIndiaStocks() {
       );
       const quotes = Array.isArray(raw) ? raw : [raw];
       for (const q of quotes) {
-        if (!q?.symbol || seen.has(q.symbol)) continue;
-        seen.add(q.symbol);
-        const shortSym = q.symbol.replace(/\.NS$/, '');
-        allStocks.push({
-          sym     : q.symbol,
-          shortSym,
-          name    : (q.longname || q.shortname || shortSym).trim(),
-          isin    : '',
-          exchange: 'NSE',
-          sector  : (q.sector || '').trim(),
-        });
+        if (!q?.symbol) continue;
+        const idx = INDIA_STOCKS.findIndex(s => s.sym === q.symbol);
+        if (idx === -1) continue;
+        if (q.regularMarketPrice == null) {
+          // Delisted or invalid — remove
+          INDIA_STOCKS.splice(idx, 1);
+          continue;
+        }
+        INDIA_STOCKS[idx].name   = (q.longname || q.shortname || INDIA_STOCKS[idx].shortSym).trim();
+        INDIA_STOCKS[idx].sector = (q.sector || '').trim();
       }
     } catch (e) {
-      console.warn(`[india-stocks] batch ${i}–${i + batchSize} failed:`, e.message);
+      console.warn(`[india-stocks] enrich batch ${i}–${i + batchSize}:`, e.message);
     }
-    if (i + batchSize < syms.length) await delay(150);
+    if (i + batchSize < syms.length) await delay(200);
   }
 
-  INDIA_STOCKS = allStocks.sort((a, b) => a.name.localeCompare(b.name));
-  console.log(`[india-stocks] Ready — ${INDIA_STOCKS.length} stocks loaded`);
+  INDIA_STOCKS.sort((a, b) => a.name.localeCompare(b.name));
+  console.log(`[india-stocks] Enriched — ${INDIA_STOCKS.length} valid stocks`);
+}
+
+async function loadIndiaStocks() {
+  seedIndiaStocks();          // synchronous — stocks available immediately
+  await enrichIndiaStocks();  // async background — fills names & sectors
 }
 
 // ── GET /api/markets/india/stocks ────────────────────────────
