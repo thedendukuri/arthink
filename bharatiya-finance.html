@@ -1253,20 +1253,20 @@ function genIntraday(base,pts=75){ // 75 bars × 5 min = 375 min = 9:15–3:30 I
 }
 
 function initData(){
+  // Use base prices as stable placeholders — no Math.random() here.
+  // Live API data replaces these as soon as it loads.
+  // This prevents numbers from changing on every page reload.
   ALL_INDICES.forEach(i=>{
-    const pct=(Math.random()-.45)*.025;const p=i.base*(1+pct);
-    ID_DATA[i.sym]={price:p,chg:p-i.base,pct:pct*100};
-    histI[i.sym]=genHist(i.base,pct>=0);
+    ID_DATA[i.sym]={price:i.base,chg:0,pct:0};
+    histI[i.sym]=genHist(i.base,true);
     ohlcCache[i.sym]={};
   });
   STOCKS.forEach(s=>{
-    const pct=(Math.random()-.45)*.03;const p=s.base*(1+pct);
-    SD[s.sym]={price:p,chg:p-s.base,pct:pct*100,vol:Math.floor(rnd(5e5,18e6))};
-    histS[s.sym]=genHist(s.base,pct>=0);
+    SD[s.sym]={price:s.base,chg:0,pct:0,vol:5000000};
+    histS[s.sym]=genHist(s.base,true);
   });
   COMMS.forEach(c=>{
-    const pct=(Math.random()-.48)*.012;
-    CD[c.n]={price:c.base*(1+pct),chg:c.base*pct,pct:pct*100};
+    CD[c.n]={price:c.base,chg:0,pct:0};
   });
 }
 

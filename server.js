@@ -750,11 +750,10 @@ app.get('/api/stock/:sym/financials', async (req, res) => {
 });
 
 // ══════════════════════════════════════════════════════════════
-// India Full Stock List  (NSE + BSE)
-// Built at startup using Yahoo Finance screener — same source
-// already powering all prices, so no external APIs to block.
-// Strategy: paginate screener by exchange (NSI=NSE, BOM=BSE)
-// in batches of 250 until the exchange is exhausted.
+// India Full Stock List  (NSE — ~700 major symbols)
+// Strategy: static seed list of known NSE tickers → batch
+// yahoo-finance2 quote() calls at startup (~5-10 seconds total).
+// Much faster and more reliable than screener pagination.
 // Served via /api/markets/india/stocks (paginated, searchable).
 // Prices fetched on-demand via /api/markets/india/prices.
 // ══════════════════════════════════════════════════════════════
@@ -763,87 +762,152 @@ let INDIA_STOCKS = []; // { sym, shortSym, name, isin, exchange, sector }
 
 const delay = ms => new Promise(r => setTimeout(r, ms));
 
-async function screenerPage(exchangeCode, offset, count = 250) {
-  return yahooFinance.screener(
-    {
-      count,
-      offset,
-      query: {
-        operator: 'and',
-        operands: [{ operator: 'eq', operands: ['exchange', exchangeCode] }],
-      },
-      sortField: 'intradaymarketcap',
-      sortType : 'DESC',
-      quoteType: 'EQUITY',
-      topOperator: 'AND',
-    },
-    { validateResult: false }
-  );
-}
-
-async function fetchExchangeStocks(exchangeCode, exchangeName, suffix) {
-  const stocks = [];
-  const seen   = new Set();
-  const batch  = 250;
-  let offset   = 0;
-
-  while (true) {
-    let result;
-    try {
-      result = await screenerPage(exchangeCode, offset, batch);
-    } catch (e) {
-      console.warn(`[india-stocks] screener ${exchangeName} offset=${offset}:`, e.message);
-      break;
-    }
-
-    const quotes = result?.quotes ?? [];
-    if (!quotes.length) break;
-
-    for (const q of quotes) {
-      if (!q?.symbol || seen.has(q.symbol)) continue;
-      seen.add(q.symbol);
-      const shortSym = q.symbol.replace(/\.(NS|BO)$/, '');
-      stocks.push({
-        sym      : q.symbol,
-        shortSym,
-        name     : (q.longname || q.shortname || shortSym).trim(),
-        isin     : '',
-        exchange : exchangeName,
-        sector   : (q.sector || '').trim(),
-      });
-    }
-
-    const total = result?.total ?? 0;
-    console.log(`[india-stocks] ${exchangeName} offset=${offset} → ${quotes.length} quotes (total=${total})`);
-    if (!total || offset + batch >= total) break;
-    offset += batch;
-    await delay(400); // be polite to Yahoo Finance
-  }
-
-  return stocks;
-}
+// ~700 major NSE tickers (append .NS for Yahoo Finance).
+// Covers Nifty 50, Next 50, Midcap 150, Smallcap 250, and other
+// well-known names across all sectors.
+const NSE_SEED = [
+  // ── Nifty 50 ──────────────────────────────────────────────
+  'RELIANCE','TCS','HDFCBANK','INFY','ICICIBANK','HINDUNILVR','ITC',
+  'SBIN','BHARTIARTL','KOTAKBANK','LT','AXISBANK','MARUTI','ASIANPAINT',
+  'HCLTECH','BAJFINANCE','SUNPHARMA','TITAN','BAJAJFINSV','WIPRO',
+  'ULTRACEMCO','ONGC','NESTLEIND','POWERGRID','TECHM','NTPC',
+  'INDUSINDBK','TATAMOTORS','GRASIM','JSWSTEEL','ADANIENT','TATASTEEL',
+  'ADANIPORTS','HINDALCO','COALINDIA','DIVISLAB','DRREDDY','CIPLA',
+  'APOLLOHOSP','EICHERMOT','HEROMOTOCO','BPCL','BRITANNIA','SBILIFE',
+  'BAJAJ-AUTO','M&M','HDFCLIFE','SHREECEM','TATACONSUM','UPL',
+  // ── Nifty Next 50 ─────────────────────────────────────────
+  'ADANIGREEN','SIEMENS','ABB','HAVELLS','PIDILITIND','MARICO',
+  'BERGEPAINT','PAGEIND','TORNTPHARM','MUTHOOTFIN','LICHSGFIN','PNB',
+  'BANKBARODA','CANBK','UNIONBANK','INDIGO','IRCTC','DMART','JUBLFOOD',
+  'NYKAA','ZOMATO','POLICYBZR','LICI','ADANITRANS','ADANIPOWER',
+  'ATGL','LTIM','LTTS','MPHASIS','PERSISTENT','COFORGE','OFSS','KPIT',
+  'TATACOMM','TATACHEM','GODREJCP','GODREJPROP','OBEROIRLTY',
+  'PRESTIGE','DLF','PHOENIXLTD',
+  // ── IT & Technology ───────────────────────────────────────
+  'TATAELXSI','MASTEK','ZENSAR','BSOFT','RATEGAIN','HAPPSTMNDS',
+  'NIIT','MPHASIS','CYIENT','INTELLECT','KFINTECH','CDSL','BSE',
+  'NSDL','TANLA','LATENTVIEW','DATAMATICS','EMUDHRA','ROUTE',
+  // ── Banks ─────────────────────────────────────────────────
+  'FEDERALBNK','IDFCFIRSTB','KARURVYSYA','SOUTHBANK','RBLBANK',
+  'YESBANK','BANDHANBNK','AUBANK','EQUITASBNK','UJJIVANSFB',
+  'IOB','MAHABANK','CENTRALBANK','INDIANB','UCO','ESAFSFB',
+  // ── NBFCs & Finance ───────────────────────────────────────
+  'CHOLAFIN','MANAPPURAM','BAJAJHLDNG','SBICARD','ICICIPRULI',
+  'HDFCAMC','NIACL','GICRE','ABCAPITAL','M&MFIN','PNBHOUSING',
+  'CANFINHOME','SUNDARMFIN','MOTILALOFS','ANGELONE','5PAISA',
+  'IIFL','MOFSL','GEOJITFSL','EDELWEISS',
+  // ── Insurance ─────────────────────────────────────────────
+  'MAXHEALTH','STARHEALTH','HDFCLIFE','SBILIFE','ICICIPRULI',
+  'GICRE','NIACL','GODIGIT',
+  // ── Auto & Auto Ancillaries ───────────────────────────────
+  'TVSMOTOR','ASHOKLEY','MOTHERSON','BOSCHLTD','BHARATFORG','MRF',
+  'APOLLOTYRE','CEATLTD','BALKRISIND','EXIDEIND','AMARARAJA',
+  'TIINDIA','SUPRAJIT','ENDURANCE','WABCOINDIA','Gabriel',
+  'LUMAXIND','SBCL','CRAFTSMAN',
+  // ── Pharma & Healthcare ───────────────────────────────────
+  'BIOCON','FORTIS','AUROPHARMA','LUPIN','ALKEM','GLENMARK',
+  'IPCA','PFIZER','ABBOTINDIA','GLAXO','SANOFI','NATCOPHARM',
+  'AJANTPHARM','GRANULES','LALPATHLAB','METROPOLIS','THYROCARE',
+  'MAXHEALTH','NARAYANAMRN','MEDANTA','YATHARTH','JBCHEPHARM',
+  'SOLARA','MARKSANS','LAURUSLABS','SEQUENT','CONCORD',
+  // ── FMCG ──────────────────────────────────────────────────
+  'COLPAL','DABUR','EMAMILTD','RADICO','UBL','VARUNBEV',
+  'MCDOWELL-N','JYOTHYLAB','ZYDUSWELL','GILLETTE','HONASA',
+  'BIKAJI','BECTORFOOD','HATSUN','HERITAGE','KRBL',
+  // ── Cement & Building Materials ───────────────────────────
+  'AMBUJACEM','ACC','JKCEMENT','RAMCOCEM','DALMIACEMBE',
+  'HEIDELBERG','BIRLACARBON','NUVOCO','JTLIND','PRISM','SANGHI',
+  'ASTRAL','SUPREMEIND','FINOLEX','CERA','SOMANYCER',
+  // ── Metals & Mining ───────────────────────────────────────
+  'VEDL','NMDC','MOIL','SAIL','NATIONALUM','APLAPOLLO','JSPL',
+  'JINDALSAW','RATNAMANI','WELSPUN','APL','SANDUMA','HLEGLAS',
+  'HFCL','TINPLATE','KALYANKJIL','GOLDIAM',
+  // ── Energy & Power ────────────────────────────────────────
+  'TATAPOWER','CESC','TORNTPOWER','JPPOWER','NHPC','SJVN','IREDA',
+  'IOC','GAIL','PETRONET','IGL','MGL','AEGISCHEM','GUJGASLTD',
+  'INOXGREEN','ORIENTGREEN','GREENPANEL',
+  // ── Real Estate & Infrastructure ──────────────────────────
+  'MAHLIFE','BRIGADE','KOLTEPATIL','SOBHA','LODHA','IRCON','NBCC',
+  'RITES','NCC','KNR','AHLUCONT','CAPACITE','PSP','HG INFRA',
+  'PNC INFRATECH','GALAND','WELCORP',
+  // ── Capital Goods & Engineering ───────────────────────────
+  'HAL','BEL','COCHINSHIP','GRINDWELL','CUMMINS','APAR','KEI',
+  'POLYCAB','CROMPTON','VOLTAS','BLUESTAR','BHEL','GARDENREACH',
+  'MAZAGONDOCK','MIDHANI','DATAVOLT','SKIPPER','KALPATPOWR',
+  'THERMAX','ELGIEQUIP','KENNAMETAL','TIMKEN','SKF',
+  // ── Consumer Discretionary ────────────────────────────────
+  'TITAN','JUBLFOOD','DMART','BATA','RELAXO','DEVYANI','WESTLIFE',
+  'TRENT','VMART','RAYMOND','MANYAVAR','VEDANT','SAPPHIREFDS',
+  'SHOPERSTOP','PVRINOX','INOXLEISUR','WONDERLA',
+  // ── Logistics & Transportation ────────────────────────────
+  'BLUEDART','CONCOR','VRL','MAHLOG','GESHIP','SCI',
+  'DELHIVERY','XPRESSBEES','ALLCARGO','MPSLTD','TCI',
+  // ── Telecom & Media ───────────────────────────────────────
+  'INDIAMART','INFOEDGE','JUSTDIAL','RAILTEL','STLTECH',
+  'TVSUPPLY','NETWEB','ZENTEC','CYBERMEDINDL',
+  // ── Chemicals & Specialty ─────────────────────────────────
+  'DEEPAKNTR','SUDARSCHEM','NAVINFLUOR','GNFC','VINATIORGA',
+  'AARTIIND','GALAXYSURF','TATACHEM','BASF','VINATI',
+  'ALKYLAMINE','ANUPAMR','CLEAN','FINEORG','ROSSARI',
+  'DHARAMSI','CAMLIN','NOCIL','PCBL',
+  // ── New Age / Tech ────────────────────────────────────────
+  'PAYTM','CARTRADE','MAPMYINDIA','EASEMYTRIP','NAUKRI',
+  'JUSTDIAL','POLICYBZR','NYKAA','ZOMATO','SWIGGY',
+  // ── Railways & Defense ────────────────────────────────────
+  'IRFC','RVNL','IRCON','RAILTEL','IRCTC','HAL','BEL',
+  'BEML','GRSE','MDL','DPSCG','COCHINSHIP',
+  // ── Textiles ──────────────────────────────────────────────
+  'RAYMOND','TRIDENT','VARDHMAN','RUPA','KITEX','SIYARAM',
+  'ARVIND','WELSPUN','SUTLEJTEX','GOKEX',
+  // ── Agricultural & Fertilizers ────────────────────────────
+  'UPL','COROMANDEL','PIIND','CHAMBAL','NFL','GNFC',
+  'IFFCO TOKIO','ZUARIIND','KSCL','RALLIS',
+  // ── PSU Misc ──────────────────────────────────────────────
+  'ONGC','BPCL','IOC','GAIL','COALINDIA','POWERGRID','NTPC',
+  'NHPC','SJVN','IREDA','RECLTD','PFC','HUDCO',
+  // ── Diversified Conglomerates ─────────────────────────────
+  'ADANIENT','TATAMOTORS','M&M','GODREJIND','DCMSHRIRAM',
+  'MAHINDCIE','BAJAJHLDNG','TATAELXSI',
+];
 
 async function loadIndiaStocks() {
-  console.log('[india-stocks] Starting load via Yahoo Finance screener…');
+  const syms = NSE_SEED.map(s => s + '.NS');
+  console.log(`[india-stocks] Loading ${syms.length} NSE symbols via batch quote()…`);
 
-  const [nse, bse] = await Promise.allSettled([
-    fetchExchangeStocks('NSI', 'NSE', '.NS'),
-    fetchExchangeStocks('BOM', 'BSE', '.BO'),
-  ]);
+  const batchSize = 50;
+  const allStocks = [];
+  const seen      = new Set();
 
-  const nseStocks = nse.status === 'fulfilled' ? nse.value : [];
-  const bseStocks = bse.status === 'fulfilled' ? bse.value : [];
+  for (let i = 0; i < syms.length; i += batchSize) {
+    const batch = syms.slice(i, i + batchSize);
+    try {
+      const raw = await yahooFinance.quote(
+        batch,
+        { fields: ['symbol','longname','shortname','sector','regularMarketPrice'] },
+        { validateResult: false }
+      );
+      const quotes = Array.isArray(raw) ? raw : [raw];
+      for (const q of quotes) {
+        if (!q?.symbol || seen.has(q.symbol)) continue;
+        seen.add(q.symbol);
+        const shortSym = q.symbol.replace(/\.NS$/, '');
+        allStocks.push({
+          sym     : q.symbol,
+          shortSym,
+          name    : (q.longname || q.shortname || shortSym).trim(),
+          isin    : '',
+          exchange: 'NSE',
+          sector  : (q.sector || '').trim(),
+        });
+      }
+    } catch (e) {
+      console.warn(`[india-stocks] batch ${i}–${i + batchSize} failed:`, e.message);
+    }
+    if (i + batchSize < syms.length) await delay(150);
+  }
 
-  if (nse.status === 'rejected') console.warn('[india-stocks] NSE screener failed:', nse.reason?.message);
-  if (bse.status === 'rejected') console.warn('[india-stocks] BSE screener failed:', bse.reason?.message);
-
-  // Merge — deduplicate by symbol (NSE takes priority if both have the same company)
-  const nseSyms = new Set(nseStocks.map(s => s.shortSym));
-  const bseOnly = bseStocks.filter(s => !nseSyms.has(s.shortSym));
-
-  INDIA_STOCKS = [...nseStocks, ...bseOnly];
-  INDIA_STOCKS.sort((a, b) => a.name.localeCompare(b.name));
-  console.log(`[india-stocks] Total: ${INDIA_STOCKS.length} (NSE=${nseStocks.length} BSE-only=${bseOnly.length})`);
+  INDIA_STOCKS = allStocks.sort((a, b) => a.name.localeCompare(b.name));
+  console.log(`[india-stocks] Ready — ${INDIA_STOCKS.length} stocks loaded`);
 }
 
 // ── GET /api/markets/india/stocks ────────────────────────────
