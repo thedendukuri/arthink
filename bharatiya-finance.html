@@ -3004,10 +3004,17 @@ const IST = {
       const res  = await fetch(`/api/markets/india/stocks?${params}`, { signal: AbortSignal.timeout(10_000) });
       const data = await res.json();
 
-      if (!data.loaded || !data.stocks?.length) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--muted)">
-          ${!data.loaded ? 'Stock list is loading — please wait a moment and try again.' : 'No companies match your filters.'}
+      if (data.loading) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted);font-family:var(--mono);font-size:12px">
+          <div style="margin-bottom:10px">⏳ Building stock list from Yahoo Finance…</div>
+          <div style="font-size:11px">This takes ~30 seconds on first load. Page will refresh automatically.</div>
         </td></tr>`;
+        countEl.textContent = 'Loading…';
+        setTimeout(() => this.load(), 8000); // retry in 8s
+        return;
+      }
+      if (!data.stocks?.length) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--muted)">No companies match your filters.</td></tr>`;
         countEl.textContent = '';
         return;
       }

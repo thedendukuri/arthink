@@ -749,103 +749,106 @@ app.get('/api/stock/:sym/financials', async (req, res) => {
 
 // ══════════════════════════════════════════════════════════════
 // India Full Stock List  (NSE + BSE)
-// Loaded at startup by fetchNSEList() + fetchBSEList().
-// Served via /api/markets/india/stocks (paginated).
+// Built at startup using Yahoo Finance screener — same source
+// already powering all prices, so no external APIs to block.
+// Strategy: paginate screener by exchange (NSI=NSE, BOM=BSE)
+// in batches of 250 until the exchange is exhausted.
+// Served via /api/markets/india/stocks (paginated, searchable).
 // Prices fetched on-demand via /api/markets/india/prices.
 // ══════════════════════════════════════════════════════════════
 
 let INDIA_STOCKS = []; // { sym, shortSym, name, isin, exchange, sector }
 
-function extractCookies(response) {
-  try {
-    const arr = response.headers.getSetCookie?.() || [];
-    if (arr.length) return arr.map(c => c.split(';')[0]).join('; ');
-  } catch {}
-  return (response.headers.get('set-cookie') || '').split(',').map(c => c.split(';')[0]).join('; ');
+const delay = ms => new Promise(r => setTimeout(r, ms));
+
+async function screenerPage(exchangeCode, offset, count = 250) {
+  return yahooFinance.screener(
+    {
+      count,
+      offset,
+      query: {
+        operator: 'and',
+        operands: [{ operator: 'eq', operands: ['exchange', exchangeCode] }],
+      },
+      sortField: 'intradaymarketcap',
+      sortType : 'DESC',
+      quoteType: 'EQUITY',
+      topOperator: 'AND',
+    },
+    { validateResult: false }
+  );
 }
 
-async function fetchNSEList() {
-  const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36';
-  // Establish NSE session (get cookies)
-  const homeRes = await fetch('https://www.nseindia.com', {
-    headers: { 'User-Agent': UA, 'Accept': 'text/html' },
-    signal: AbortSignal.timeout(12_000),
-    redirect: 'follow',
-  });
-  const cookies = extractCookies(homeRes);
-  await new Promise(r => setTimeout(r, 1200)); // brief pause — NSE rate-limits
-
-  const csvRes = await fetch('https://nsearchives.nseindia.com/content/equities/EQUITY_L.csv', {
-    headers: {
-      'User-Agent': UA,
-      'Referer': 'https://www.nseindia.com/',
-      'Accept': 'text/csv,text/plain,*/*',
-      'Cookie': cookies,
-    },
-    signal: AbortSignal.timeout(20_000),
-  });
-  if (!csvRes.ok) throw new Error(`NSE CSV HTTP ${csvRes.status}`);
-  const text = await csvRes.text();
-
-  // CSV columns: SYMBOL, NAME OF COMPANY, SERIES, DATE OF LISTING, PAID UP VALUE, MARKET LOT, ISIN NUMBER, FACE VALUE
+async function fetchExchangeStocks(exchangeCode, exchangeName, suffix) {
   const stocks = [];
-  for (const line of text.split('\n').slice(1)) {
-    const p = line.split(',');
-    if (p.length < 7) continue;
-    const sym = p[0].trim();
-    const name = p[1].trim().replace(/^"|"$/g, '');
-    const isin = p[6].trim();
-    if (!sym || !name || sym === 'SYMBOL') continue;
-    stocks.push({ sym: sym + '.NS', shortSym: sym, name, isin, exchange: 'NSE', sector: '' });
+  const seen   = new Set();
+  const batch  = 250;
+  let offset   = 0;
+
+  while (true) {
+    let result;
+    try {
+      result = await screenerPage(exchangeCode, offset, batch);
+    } catch (e) {
+      console.warn(`[india-stocks] screener ${exchangeName} offset=${offset}:`, e.message);
+      break;
+    }
+
+    const quotes = result?.quotes ?? [];
+    if (!quotes.length) break;
+
+    for (const q of quotes) {
+      if (!q?.symbol || seen.has(q.symbol)) continue;
+      seen.add(q.symbol);
+      const shortSym = q.symbol.replace(/\.(NS|BO)$/, '');
+      stocks.push({
+        sym      : q.symbol,
+        shortSym,
+        name     : (q.longname || q.shortname || shortSym).trim(),
+        isin     : '',
+        exchange : exchangeName,
+        sector   : (q.sector || '').trim(),
+      });
+    }
+
+    const total = result?.total ?? 0;
+    console.log(`[india-stocks] ${exchangeName} offset=${offset} → ${quotes.length} quotes (total=${total})`);
+    if (!total || offset + batch >= total) break;
+    offset += batch;
+    await delay(400); // be polite to Yahoo Finance
   }
+
   return stocks;
 }
 
-async function fetchBSEList() {
-  const res = await fetch(
-    'https://api.bseindia.com/BseIndiaAPI/api/ListofScripData/w?Type=0&Scode=',
-    {
-      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
-      signal: AbortSignal.timeout(20_000),
-    }
-  );
-  if (!res.ok) throw new Error(`BSE API HTTP ${res.status}`);
-  const data = await res.json();
-  return (data.Table || [])
-    .map(s => ({
-      sym      : String(s.SCRIP_CD).trim() + '.BO',
-      shortSym : String(s.SCRIP_CD).trim(),
-      name     : (s.LONG_NAME || s.SHORT_NAME || '').trim(),
-      isin     : (s.ISIN_NO || '').trim(),
-      exchange : 'BSE',
-      sector   : (s.INDUSTRY || '').trim(),
-    }))
-    .filter(s => s.name && s.shortSym);
-}
-
 async function loadIndiaStocks() {
-  console.log('[india-stocks] Starting load…');
-  let nse = [], bse = [];
+  console.log('[india-stocks] Starting load via Yahoo Finance screener…');
 
-  try { nse = await fetchNSEList(); console.log(`[india-stocks] NSE: ${nse.length} stocks`); }
-  catch (e) { console.warn('[india-stocks] NSE fetch failed:', e.message); }
+  const [nse, bse] = await Promise.allSettled([
+    fetchExchangeStocks('NSI', 'NSE', '.NS'),
+    fetchExchangeStocks('BOM', 'BSE', '.BO'),
+  ]);
 
-  try { bse = await fetchBSEList(); console.log(`[india-stocks] BSE: ${bse.length} stocks`); }
-  catch (e) { console.warn('[india-stocks] BSE fetch failed:', e.message); }
+  const nseStocks = nse.status === 'fulfilled' ? nse.value : [];
+  const bseStocks = bse.status === 'fulfilled' ? bse.value : [];
 
-  // Merge: add BSE stocks not already present on NSE (dedup by ISIN)
-  const nseIsins = new Set(nse.map(s => s.isin).filter(Boolean));
-  const bseOnly  = bse.filter(s => !s.isin || !nseIsins.has(s.isin));
+  if (nse.status === 'rejected') console.warn('[india-stocks] NSE screener failed:', nse.reason?.message);
+  if (bse.status === 'rejected') console.warn('[india-stocks] BSE screener failed:', bse.reason?.message);
 
-  INDIA_STOCKS = [...nse, ...bseOnly];
+  // Merge — deduplicate by symbol (NSE takes priority if both have the same company)
+  const nseSyms = new Set(nseStocks.map(s => s.shortSym));
+  const bseOnly = bseStocks.filter(s => !nseSyms.has(s.shortSym));
+
+  INDIA_STOCKS = [...nseStocks, ...bseOnly];
   INDIA_STOCKS.sort((a, b) => a.name.localeCompare(b.name));
-  console.log(`[india-stocks] Total loaded: ${INDIA_STOCKS.length}`);
+  console.log(`[india-stocks] Total: ${INDIA_STOCKS.length} (NSE=${nseStocks.length} BSE-only=${bseOnly.length})`);
 }
 
 // ── GET /api/markets/india/stocks ────────────────────────────
 // Paginated, filterable list of all NSE+BSE stocks.
 // Query params: page (default 1), limit (default 50, max 100),
 //               search, exchange (NSE|BSE), sector
+// `loading: true` means the screener is still running in the bg.
 app.get('/api/markets/india/stocks', (req, res) => {
   const { page = '1', limit = '50', search = '', exchange = '', sector = '' } = req.query;
 
@@ -869,12 +872,14 @@ app.get('/api/markets/india/stocks', (req, res) => {
   // Collect unique sectors for filter dropdown
   const sectors = [...new Set(INDIA_STOCKS.map(s => s.sector).filter(Boolean))].sort();
 
+  const isLoading = INDIA_STOCKS.length === 0;
   res.json({
-    stocks : list.slice(offset, offset + pgSize),
+    stocks  : list.slice(offset, offset + pgSize),
     total,
-    page   : pageNum,
-    pages  : Math.ceil(total / pgSize) || 1,
-    loaded : INDIA_STOCKS.length > 0,
+    page    : pageNum,
+    pages   : Math.ceil(total / pgSize) || 1,
+    loaded  : !isLoading,
+    loading : isLoading,
     sectors,
   });
 });
