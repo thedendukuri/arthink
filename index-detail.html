@@ -10,6 +10,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,800;1,400;1,700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 <style>
+/* Kill TradingView attribution logo — belt + suspenders */
+.tv-lightweight-charts a[href*="tradingview"]{display:none!important}
+.tv-lightweight-charts table tr:last-child td:last-child a{display:none!important}
 :root{
   --bg:#000000;--surface:#0a0a0a;--surface2:#111111;--surface3:#181818;
   --border:#1c1c1c;--border2:#2a2a2a;
