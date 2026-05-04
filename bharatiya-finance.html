@@ -1452,7 +1452,7 @@ const MKT={
     const stocks=STOCKS.filter(s=>s.region===r.id);
     document.getElementById('regionStockBody').innerHTML=stocks.length?stocks.map(s=>{
       const d=SD[s.sym]||{price:s.base,pct:0,vol:0};
-      return`<tr style="cursor:pointer" onclick="MKT.goStock('${s.sym}','region')">
+      return`<tr style="cursor:pointer" onclick="goToStock('${s.sym}','region')">
         <td><b>${s.n}</b><br><span style="color:var(--muted);font-size:11px">${s.s}</span></td>
         <td style="color:var(--muted)">${s.sect}</td>
         <td class="tr"><b>₹${fmt(d.price)}</b></td>
@@ -1521,7 +1521,7 @@ const MKT={
     const consts=STOCKS.slice(0,8).map(s=>({...s,weight:(Math.random()*12+1).toFixed(2)}));
     document.getElementById('idxConstBody').innerHTML=consts.map(s=>{
       const d2=SD[s.sym]||{price:s.base,pct:0};
-      return`<tr style="cursor:pointer" onclick="MKT.goStock('${s.sym}','region')">
+      return`<tr style="cursor:pointer" onclick="goToStock('${s.sym}','region')">
         <td><b>${s.s}</b></td>
         <td>${s.n}</td>
         <td style="color:var(--muted)">${s.sect}</td>
@@ -3670,9 +3670,10 @@ function handleAlphaCardClick(ticker){
   // Match by short symbol (s field) or full sym
   const stock=STOCKS.find(s=>s.s===ticker||s.sym===ticker||s.sym.startsWith(ticker));
   if(stock){
-    const navEl=document.querySelector('.nav a:nth-child(2)');
-    MKT.currentRegion=stock.region||'india';
-    showSection('markets',navEl,()=>MKT.goStock(stock.sym,'alpha'));
+    goToStock(stock.sym,'alpha');
+  } else {
+    // Fallback: try ticker+.NS
+    goToStock(ticker+'.NS','alpha');
   }
 }
 
