@@ -56,6 +56,7 @@ app.use((req, res, next) => {
 
 // ── Serve front-end ─────────────────────────────────────────
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'bharatiya-finance.html')));
+app.get('/reset-password', (req, res) => res.sendFile(path.join(__dirname, 'reset-password.html')));
 
 // ── GET /api/quote?syms=^NSEI,TCS.NS,AAPL,^GSPC ─────────────
 // Splits by data source, fetches in parallel, merges results.
