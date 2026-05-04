@@ -281,6 +281,7 @@ const WORLD_RSS_FEEDS = [
   { url: 'https://www.cnbc.com/id/10001147/device/rss/rss.html',               src: 'CNBC'              },
   { url: 'https://feeds.reuters.com/reuters/businessNews',                      src: 'Reuters'           },
   { url: 'https://feeds.reuters.com/reuters/INbusinessNews',                    src: 'Reuters'           },
+  { url: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml',          src: 'NYT'               },
   { url: 'https://rss.nytimes.com/services/xml/rss/nyt/Business.xml',          src: 'NYT'               },
   { url: 'https://feeds.bbci.co.uk/news/business/rss.xml',                     src: 'BBC'               },
   { url: 'https://www.ft.com/?format=rss',                                     src: 'FT'                },
@@ -377,6 +378,7 @@ async function fetchGeneralNews() {
       WORLD_RSS_FEEDS.map(f => parseRSS(f.url, f.src).then(items => items.map(a => tagRegion(a, 'world'))))
     ).catch(() => []),
   ]);
+
 
   const seen     = new Set();
   const articles = [];

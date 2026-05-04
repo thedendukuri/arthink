@@ -2466,9 +2466,29 @@ async function fetchHomeNews(){
     _newsArticles=data.articles||[];
     _newsArchives=data.archives||[];
     _newsLastFetch=Date.now();
-    return _newsArticles;
-  }catch(e){ return []; }
+  }catch(e){ _newsArticles=[]; }
+  // Prepend any manually added articles (deduplicated by id)
+  const existingIds=new Set(_newsArticles.map(a=>a.id));
+  const manual=MANUAL_NEWS.filter(a=>!existingIds.has(a.id));
+  _newsArticles=[...manual,..._newsArticles];
+  return _newsArticles;
 }
+
+// ── Manually added news items (prepended to live feed) ───────
+// Add articles here to have them appear at the top of the feed.
+const MANUAL_NEWS = [
+  {
+    id       : 'bbc-ce8pdvp5x5ro',
+    title    : "Modi's BJP conquers Bengal, one of India's toughest political frontiers",
+    link     : 'https://www.bbc.com/news/articles/ce8pdvp5x5ro',
+    source   : 'BBC',
+    category : 'ELECTION',
+    region   : 'india',
+    pubDate  : new Date('2026-05-04T06:00:00Z').toISOString(),
+    excerpt  : "The BJP's stunning victory in West Bengal marks the end of Mamata Banerjee's 14-year grip on power and a landmark moment for Modi's party ahead of the 2029 general elections.",
+    thumbnail: 'https://ichef.bbci.co.uk/news/1024/branded_news/assets/images/2024/07/02/image-placeholder.png',
+  },
+];
 
 async function renderHero(){
   const heroEl=document.getElementById('heroEl');
