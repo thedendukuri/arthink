@@ -2450,44 +2450,120 @@ async function drawOverviewCharts(){
 // ══════════════════════════════════════════════
 // MARKETS TABLE
 // ══════════════════════════════════════════════
-function renderMktTable(){
-  const type=document.getElementById('f-type')?.value||'all';
-  const region=document.getElementById('f-region')?.value||'all';
-  const sect=document.getElementById('f-sect2')?.value||'';
-  const sort=document.getElementById('f-sort2')?.value||'mcap';
-  const dir=document.getElementById('f-dir2')?.value||'desc';
+async function renderMktTable(){
+  const type   = document.getElementById('f-type')?.value   || 'all';
+  const region = document.getElementById('f-region')?.value || 'all';
+  const sect   = document.getElementById('f-sect2')?.value  || '';
+  const sort   = document.getElementById('f-sort2')?.value  || 'mcap';
+  const dir    = document.getElementById('f-dir2')?.value   || 'desc';
+  const tbody  = document.getElementById('mktTableBody');
 
-  let rows=[];
-  if(type!=='shares') ALL_INDICES.forEach(i=>{
-    if(region!=='all'&&i.region!==region) return;
-    const d=ID_DATA[i.sym]||{price:i.base,pct:0};
-    rows.push({name:i.n,sym:i.s,type:'Index',region:i.regionEmoji+' '+i.regionName,exch:i.exch,price:d.price,pct:d.pct,mcap:0,vol:rnd(5e6,25e6),_isIdx:true,_sym:i.sym,_region:i.region});
-  });
-  if(type!=='indices') STOCKS.forEach(s=>{
-    if(region!=='all'&&s.region!==region) return;
-    if(sect&&s.sect!==sect) return;
-    const d=SD[s.sym]||{price:s.base,pct:0,vol:0};
-    rows.push({name:s.n,sym:s.s,type:'Share',region:'🇮🇳 Bhaarat',exch:'NSE',price:d.price,pct:d.pct,mcap:s.mcap,vol:d.vol,sect:s.sect,_isIdx:false,_fullSym:s.sym});
+  // ── Index rows (always synchronous from in-memory data) ──────
+  let rows = [];
+  if(type !== 'shares') ALL_INDICES.forEach(i => {
+    if(region !== 'all' && i.region !== region) return;
+    const d = ID_DATA[i.sym] || {price:i.base, pct:0};
+    rows.push({
+      name:i.n, sym:i.s, type:'Index', regionLabel:i.regionName,
+      exch:i.exch, price:d.price, pct:d.pct, mcap:0, vol:0,
+      _isIdx:true, _sym:i.sym, _region:i.region,
+    });
   });
 
+  // ── Share rows ───────────────────────────────────────────────
+  // For Bhaarat (or "all") use the full API-driven list.
+  // For other regions fall back to the curated STOCKS array.
+  const needIndia = type !== 'indices' && (region === 'all' || region === 'india');
+  const needOther = type !== 'indices' && region !== 'india';
+
+  if(needOther) STOCKS.forEach(s => {
+    if(region !== 'all' && s.region !== region) return;
+    if(sect && s.sect !== sect) return;
+    const d = SD[s.sym] || {price:s.base, pct:0, vol:0};
+    rows.push({
+      name:s.n, sym:s.s, type:'Share', regionLabel:'Bhaarat',
+      exch:'NSE', price:d.price, pct:d.pct, mcap:s.mcap*1e5, vol:d.vol,
+      sect:s.sect, _isIdx:false, _fullSym:s.sym,
+    });
+  });
+
+  if(needIndia){
+    // Show a loading skeleton while we fetch
+    const skeletonRows = rows.slice(0, 5); // indices already in rows
+    tbody.innerHTML = [
+      ...skeletonRows.map(r => mktTableRow(r)),
+      `<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--muted);font-family:var(--mono);font-size:11px">
+        ⏳ Loading Bhaarat stocks…</td></tr>`,
+    ].join('');
+
+    try{
+      // Build query params
+      const params = new URLSearchParams({
+        page:1, limit:50,
+        sector:sect,
+        // sort handled client-side after price fetch
+      });
+      const res  = await fetch(`/api/markets/india/stocks?${params}`, {signal:AbortSignal.timeout(10_000)});
+      const data = await res.json();
+
+      if(!data.loading && data.stocks?.length){
+        // Fetch prices for this page
+        const syms  = data.stocks.map(s => s.sym);
+        let prices  = {};
+        try{
+          const pr = await fetch(`/api/markets/india/prices?syms=${encodeURIComponent(syms.join(','))}`,
+            {signal:AbortSignal.timeout(12_000)});
+          if(pr.ok) prices = await pr.json();
+        }catch{}
+
+        data.stocks.forEach(s => {
+          const p = prices[s.sym] || {};
+          rows.push({
+            name:s.name, sym:s.shortSym, type:'Share', regionLabel:'Bhaarat',
+            exch:s.exchange, price:p.price||0, pct:p.pct||0,
+            mcap:p.mktCap||0, vol:p.vol||0, sect:s.sector,
+            _isIdx:false, _fullSym:s.sym,
+          });
+        });
+      }
+    }catch(e){
+      console.warn('[mktTable] india fetch failed:', e.message);
+      // Fall back to STOCKS curated list
+      STOCKS.forEach(s=>{
+        if(sect&&s.sect!==sect) return;
+        const d=SD[s.sym]||{price:s.base,pct:0,vol:0};
+        rows.push({name:s.n,sym:s.s,type:'Share',regionLabel:'Bhaarat',
+          exch:'NSE',price:d.price,pct:d.pct,mcap:s.mcap*1e5,vol:d.vol,
+          sect:s.sect,_isIdx:false,_fullSym:s.sym});
+      });
+    }
+  }
+
+  // ── Sort & render ─────────────────────────────────────────────
   rows.sort((a,b)=>{
-    const va=sort==='pct'?a.pct:sort==='price'?a.price:sort==='vol'?a.vol:a.mcap;
-    const vb=sort==='pct'?b.pct:sort==='price'?b.price:sort==='vol'?b.vol:b.mcap;
-    return dir==='asc'?va-vb:vb-va;
+    const va = sort==='pct'?a.pct : sort==='price'?a.price : sort==='vol'?a.vol : a.mcap;
+    const vb = sort==='pct'?b.pct : sort==='price'?b.price : sort==='vol'?b.vol : b.mcap;
+    return dir==='asc' ? va-vb : vb-va;
   });
 
-  document.getElementById('mktTableBody').innerHTML=rows.slice(0,40).map(r=>{
-    const nav=r._isIdx?`goToIndex('${r._sym}','${r._region}')`:`goToStock('${r._fullSym}','overview')`;
-    return`<tr style="cursor:pointer" onclick="${nav}">
-    <td><b>${r.name}</b><br><span style="color:var(--muted);font-size:11px">${r.sym}</span></td>
-    <td><span style="font-size:10px;background:${r._isIdx?'rgba(167,139,250,.12)':'rgba(255,153,51,.12)'};color:${r._isIdx?'var(--link)':'var(--accent)'};padding:2px 7px;border-radius:3px;font-weight:700">${r.type}</span></td>
-    <td style="color:var(--muted)">${r.region}</td>
-    <td style="color:var(--muted)">${r.exch}</td>
-    <td class="tr" style="font-weight:700">${fmt(r.price,r._isIdx?0:2)}</td>
-    <td class="tr" style="color:${clr(r.pct)};font-weight:700">${sgn(r.pct)}${fmt(r.pct)}%</td>
-    <td class="tr" style="color:var(--muted)">${r.mcap?'₹'+r.mcap+'L Cr':'–'}</td>
-    <td class="tr" style="color:var(--muted)">${fmtVol(r.vol)}</td>
-  </tr>`;}).join('');
+  tbody.innerHTML = rows.slice(0,60).map(r=>mktTableRow(r)).join('');
+}
+
+function mktTableRow(r){
+  const nav = r._isIdx
+    ? `location.href='/index/${encodeURIComponent(r._sym)}'`
+    : `goToStock('${r._fullSym}','overview')`;
+  const fmtCap = v => !v?'–':v>=1e12?'₹'+(v/1e12).toFixed(1)+'L Cr':v>=1e9?'₹'+(v/1e9).toFixed(0)+'B':v>=1e5?'₹'+(v/1e5).toFixed(0)+'L':'₹'+v;
+  return`<tr style="cursor:pointer" onclick="${nav}">
+    <td><b>${escH(r.name)}</b><br><span style="color:var(--muted);font-size:11px;font-family:var(--mono)">${escH(r.sym)}</span></td>
+    <td><span style="font-size:10px;background:${r._isIdx?'rgba(167,139,250,.12)':'rgba(255,153,51,.12)'};color:${r._isIdx?'var(--link)':'var(--accent)'};padding:2px 7px;font-weight:700">${r.type}</span></td>
+    <td style="color:var(--muted)">${escH(r.regionLabel)}</td>
+    <td style="color:var(--muted)">${escH(r.exch)}</td>
+    <td class="tr" style="font-weight:700;font-family:var(--mono)">${r.price?fmt(r.price,r._isIdx?0:2):'—'}</td>
+    <td class="tr" style="color:${clr(r.pct)};font-weight:700;font-family:var(--mono)">${r.pct!=null?sgn(r.pct)+fmt(r.pct)+'%':'—'}</td>
+    <td class="tr" style="color:var(--muted);font-family:var(--mono)">${fmtCap(r.mcap)}</td>
+    <td class="tr" style="color:var(--muted);font-family:var(--mono)">${r.vol?fmtVol(r.vol):'—'}</td>
+  </tr>`;
 }
 
 // Region cards
