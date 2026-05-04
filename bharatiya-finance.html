@@ -535,15 +535,15 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
     <span class="logo-name"><em>p</em>rvaaha<span class="logo-dot">.</span></span>
   </div>
   <nav class="nav">
-    <a class="on" onclick="showSection('home',this)">Home</a>
-    <a onclick="showSection('markets',this)">Markets</a>
-    <a onclick="showSection('news',this)">News</a>
-    <a onclick="showSection('ipo',this)">IPO</a>
-    <a onclick="showSection('screener',this)">Screener</a>
-    <a onclick="showSection('alpha',this)" id="nav-alpha">Alpha ✦</a>
-    <a onclick="showSection('mf',this)">Mutual Funds</a>
-    <a onclick="showSection('crypto',this)">Crypto</a>
-    <a onclick="showSection('watchlist',this)" id="nav-watchlist">Watchlist</a>
+    <a class="on" href="/" onclick="showSection('home',this);return false;">Home</a>
+    <a href="/#markets" onclick="showSection('markets',this);return false;">Markets</a>
+    <a href="/#news" onclick="showSection('news',this);return false;">News</a>
+    <a href="/#ipo" onclick="showSection('ipo',this);return false;">IPO</a>
+    <a href="/#screener" onclick="showSection('screener',this);return false;">Screener</a>
+    <a href="/#alpha" onclick="showSection('alpha',this);return false;" id="nav-alpha">Alpha ✦</a>
+    <a href="/#mf" onclick="showSection('mf',this);return false;">Mutual Funds</a>
+    <a href="/#crypto" onclick="showSection('crypto',this);return false;">Crypto</a>
+    <a href="/#watchlist" onclick="showSection('watchlist',this);return false;" id="nav-watchlist">Watchlist</a>
   </nav>
   <div class="hdr-right">
     <div class="search-wrap">
@@ -2910,10 +2910,9 @@ function restoreFromHash(){
   } else if(h.startsWith('region:')){
     const [,regionId]=h.split(':');
     showSection('markets',navEl,()=>MKT.goRegion(regionId));
-  } else if(h==='markets'){
-    showSection('markets',navEl);
   } else {
-    const navMap={news:3,ipo:4,screener:5,mf:6,crypto:7};
+    // Direct section hashes — e.g. /#markets, /#news, /#alpha, /#watchlist
+    const navMap={home:1,markets:2,news:3,ipo:4,screener:5,alpha:6,mf:7,crypto:8,watchlist:9};
     const navIdx=navMap[h];
     if(navIdx) showSection(h,document.querySelector(`.nav a:nth-child(${navIdx})`));
   }
