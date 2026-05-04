@@ -43,6 +43,17 @@ const _schwabStatus = schwabStatus();
 console.log(`[schwab] ${_schwabStatus.ready ? '✓ ready' : '✗ unavailable'} — ${_schwabStatus.reason}`);
 let schwabAvailable = _schwabStatus.ready;
 
+// ── HTTPS redirect (production only) ────────────────────────
+app.use((req, res, next) => {
+  const host = req.headers.host || '';
+  const isLocal = host.includes('localhost') || host.includes('127.0.0.1') || host.includes('railway.internal');
+  const proto = req.headers['x-forwarded-proto'];
+  if (!isLocal && proto && proto !== 'https') {
+    return res.redirect(301, `https://${host}${req.originalUrl}`);
+  }
+  next();
+});
+
 // ── Serve front-end ─────────────────────────────────────────
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'bharatiya-finance.html')));
 

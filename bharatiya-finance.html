@@ -930,10 +930,33 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
           onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
           onkeydown="if(event.key==='Enter')AUTH.doSignIn()"/>
       </div>
+      <div style="margin-bottom:16px;text-align:right">
+        <span onclick="authSwitchTab('reset')" style="font-size:11px;color:var(--accent);cursor:pointer;font-weight:600;letter-spacing:.2px">Forgot password?</span>
+      </div>
       <div id="si-err" style="color:var(--neg);font-size:12px;margin-bottom:12px;display:none"></div>
       <button onclick="AUTH.doSignIn()" class="signin" style="width:100%;padding:11px;font-size:12px;letter-spacing:.8px">Sign In →</button>
       <div style="margin-top:14px;text-align:center;font-size:11px;color:var(--muted)">
         Don't have an account? <span onclick="authSwitchTab('up')" style="color:var(--accent);cursor:pointer;font-weight:600">Create one free</span>
+      </div>
+    </div>
+    <!-- Forgot Password form -->
+    <div id="auth-form-reset" style="padding:20px 28px 28px;display:none">
+      <div style="margin-bottom:18px">
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">Reset your password</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.5">Enter the email linked to your account and we'll send you a reset link.</div>
+      </div>
+      <div style="margin-bottom:20px">
+        <label style="display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:6px">Email</label>
+        <input id="reset-email" type="email" placeholder="you@example.com" autocomplete="email"
+          style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 12px;font-size:13px;font-family:var(--sans);outline:none"
+          onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
+          onkeydown="if(event.key==='Enter')AUTH.doResetPassword()"/>
+      </div>
+      <div id="reset-err" style="color:var(--neg);font-size:12px;margin-bottom:12px;display:none"></div>
+      <div id="reset-ok" style="color:#138808;font-size:12px;margin-bottom:12px;display:none;font-weight:600">✓ Reset link sent — check your inbox!</div>
+      <button id="reset-btn" onclick="AUTH.doResetPassword()" class="signin" style="width:100%;padding:11px;font-size:12px;letter-spacing:.8px">Send Reset Link →</button>
+      <div style="margin-top:14px;text-align:center;font-size:11px;color:var(--muted)">
+        <span onclick="authSwitchTab('in')" style="color:var(--accent);cursor:pointer;font-weight:600">← Back to Sign In</span>
       </div>
     </div>
     <!-- Sign Up form -->
@@ -3196,6 +3219,23 @@ const AUTH={
     }
   },
 
+  async doResetPassword(){
+    const email=document.getElementById('reset-email')?.value.trim();
+    if(!email){this._showErr('reset-err','Please enter your email address.');return;}
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){this._showErr('reset-err','Enter a valid email address.');return;}
+    const btn=document.getElementById('reset-btn');
+    if(btn){btn.textContent='Sending…';btn.disabled=true;}
+    const{error}=await _sb.auth.resetPasswordForEmail(email,{
+      redirectTo:'https://prvaaha.com/reset-password',
+    });
+    if(btn){btn.textContent='Send Reset Link →';btn.disabled=false;}
+    if(error){this._showErr('reset-err',error.message);return;}
+    // Show success state
+    const ok=document.getElementById('reset-ok');
+    if(ok){ok.style.display='block';}
+    if(btn){btn.style.display='none';}
+  },
+
   async signOut(){
     document.getElementById('user-dropdown')?.remove();
     await _sb.auth.signOut();
@@ -3273,16 +3313,27 @@ function openAuthModal(tab='in'){
 function closeAuthModal(){
   document.getElementById('auth-modal').style.display='none';
   // Clear form fields
-  ['si-email','si-pass','su-name','su-email','su-pass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['si-email','si-pass','su-name','su-email','su-pass','reset-email'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const ok=document.getElementById('reset-ok');if(ok)ok.style.display='none';
 }
 function authSwitchTab(tab){
   const isIn=tab==='in';
+  const isUp=tab==='up';
+  const isReset=tab==='reset';
   document.getElementById('auth-form-in').style.display=isIn?'block':'none';
-  document.getElementById('auth-form-up').style.display=isIn?'none':'block';
+  document.getElementById('auth-form-up').style.display=isUp?'block':'none';
+  document.getElementById('auth-form-reset').style.display=isReset?'block':'none';
   const tIn=document.getElementById('auth-tab-in');
   const tUp=document.getElementById('auth-tab-up');
+  // Tabs only light up for in/up; reset hides behind the form
   if(tIn){tIn.style.borderBottomColor=isIn?'var(--accent)':'transparent';tIn.style.color=isIn?'var(--text)':'var(--muted)';}
-  if(tUp){tUp.style.borderBottomColor=isIn?'transparent':'var(--accent)';tUp.style.color=isIn?'var(--muted)':'var(--text)';}
+  if(tUp){tUp.style.borderBottomColor=isUp?'var(--accent)':'transparent';tUp.style.color=isUp?'var(--text)':'var(--muted)';}
+  // Update subtitle text
+  const sub=document.getElementById('auth-subtitle');
+  if(sub){
+    if(isReset) sub.textContent='We\'ll email you a secure link to reset your password.';
+    else sub.textContent='Sign in to unlock full Alpha Engine & premium insights';
+  }
 }
 
 // ══════════════════════════════════════════════
