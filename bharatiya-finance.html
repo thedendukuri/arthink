@@ -1959,9 +1959,40 @@ const MKT={
     const proj=d3.geoNaturalEarth1().scale(baseScale).translate([W/2,H/2]);
     const path=d3.geoPath().projection(proj);
 
-    // Zoom/pan — all map content lives in a <g> that gets the transform
+    // ── SVG Filters & Gradients — must come before any painted elements ──
+    const defs=svg.append('defs');
+
+    // City-lights grain filter
+    const gf=defs.append('filter').attr('id','cityGrain')
+      .attr('x','0%').attr('y','0%').attr('width','100%').attr('height','100%')
+      .attr('color-interpolation-filters','sRGB');
+    gf.append('feTurbulence').attr('type','fractalNoise')
+      .attr('baseFrequency','0.78').attr('numOctaves','4')
+      .attr('seed','17').attr('result','noise');
+    gf.append('feColorMatrix').attr('type','matrix')
+      .attr('values','0 0 0 0 1.0  0 0 0 0 0.60  0 0 0 0 0.02  0 0 0 0.62 0')
+      .attr('in','noise').attr('result','goldNoise');
+    gf.append('feComposite').attr('in','goldNoise').attr('in2','SourceGraphic')
+      .attr('operator','in').attr('result','masked');
+    const gfm=gf.append('feMerge');
+    gfm.append('feMergeNode').attr('in','SourceGraphic');
+    gfm.append('feMergeNode').attr('in','masked');
+
+    // Vignette radial gradient
+    const vig=defs.append('radialGradient').attr('id','vigGrad')
+      .attr('cx','50%').attr('cy','50%').attr('r','70%');
+    vig.append('stop').attr('offset','0%').attr('stop-color','rgba(0,0,0,0)');
+    vig.append('stop').attr('offset','100%').attr('stop-color','rgba(0,0,0,0.5)');
+
+    // ── Ocean background — appended before mapG so it sits underneath ──
+    svg.append('rect').attr('width',W).attr('height',H).attr('fill','#030c18');
+    svg.append('rect').attr('width',W).attr('height',H)
+      .attr('fill','url(#vigGrad)').style('pointer-events','none');
+
+    // ── mapG — created AFTER ocean rects so it renders on top ────────
     const mapG=svg.append('g').attr('class','map-root');
 
+    // ── Zoom/pan ──────────────────────────────────────────────────────
     const zoom=d3.zoom()
       .scaleExtent([1,12])
       .translateExtent([[0,0],[W,H]])
@@ -1969,10 +2000,8 @@ const MKT={
         mapG.attr('transform',event.transform);
         svg.style('cursor',event.transform.k>1?'grabbing':'grab');
       });
-    svg.call(zoom)
-      .on('dblclick.zoom',null); // disable dblclick zoom (we handle it manually)
+    svg.call(zoom).on('dblclick.zoom',null);
 
-    // Double-click to zoom in, shift+dblclick to zoom out
     svg.on('dblclick',(event)=>{
       event.preventDefault();
       const t=d3.zoomTransform(svg.node());
@@ -1984,40 +2013,7 @@ const MKT={
       );
     });
 
-    // ── SVG Filters & Gradients ───────────────────────────────────────
-    const defs=svg.append('defs');
-
-    // City-lights grain filter — fractal noise clipped to landmass shape
-    // produces the NASA night-lights speckled-gold look
-    const gf=defs.append('filter').attr('id','cityGrain')
-      .attr('x','0%').attr('y','0%').attr('width','100%').attr('height','100%')
-      .attr('color-interpolation-filters','sRGB');
-    gf.append('feTurbulence').attr('type','fractalNoise')
-      .attr('baseFrequency','0.78').attr('numOctaves','4')
-      .attr('seed','17').attr('result','noise');
-    gf.append('feColorMatrix').attr('type','matrix')
-      // boost R+G channels for warm gold, zero blue, moderate alpha
-      .attr('values','0 0 0 0 1.0  0 0 0 0 0.60  0 0 0 0 0.02  0 0 0 0.62 0')
-      .attr('in','noise').attr('result','goldNoise');
-    gf.append('feComposite').attr('in','goldNoise').attr('in2','SourceGraphic')
-      .attr('operator','in').attr('result','masked');
-    const gfm=gf.append('feMerge');
-    gfm.append('feMergeNode').attr('in','SourceGraphic');
-    gfm.append('feMergeNode').attr('in','masked');
-
-    // Vignette radial gradient (darken edges)
-    const vig=defs.append('radialGradient').attr('id','vigGrad')
-      .attr('cx','50%').attr('cy','50%').attr('r','70%');
-    vig.append('stop').attr('offset','0%').attr('stop-color','rgba(0,0,0,0)');
-    vig.append('stop').attr('offset','100%').attr('stop-color','rgba(0,0,0,0.5)');
-
-    // ── Ocean ─────────────────────────────────────────────────────────
-    // Deep space-black with faint blue tint (like looking down from orbit)
-    svg.append('rect').attr('width',W).attr('height',H).attr('fill','#030c18');
-    svg.append('rect').attr('width',W).attr('height',H)
-      .attr('fill','url(#vigGrad)').style('pointer-events','none');
-
-    // ── Lat/lon grid — very faint blue lines (inside mapG so they zoom) ─
+    // ── Lat/lon grid (inside mapG so it zooms) ───────────────────────
     mapG.append('path').datum(d3.geoGraticule().step([20,20])()).attr('d',path)
       .attr('stroke','#0b2a40').attr('fill','none').attr('stroke-width',.3).attr('opacity',.9);
     mapG.append('path').datum({type:'Sphere'}).attr('d',path)
