@@ -784,7 +784,7 @@ function renderOverviewChart(){
     timeScale:{borderColor:isDark?'#1c1c1c':'#e8e8e8',timeVisible:true,secondsVisible:false},
     handleScroll:{mouseWheel:true,pressedMouseMove:true},
     handleScale:{axisPressedMouseMove:true,mouseWheel:true,pinch:true},
-    disableAttributionLogo: true,
+    attributionLogo: false,
   });
 
   const toTime=d=>isIntraday?Math.floor(new Date(d.date).getTime()/1000):d.date.split('T')[0];
@@ -1115,7 +1115,7 @@ function renderTechChart(){
     layout:{background:{color:'transparent'},textColor:isDark?'#5a5650':'#78746c',fontSize:11},
     grid:{vertLines:{color:isDark?'#1c1c1c':'#f0f0f0'},horzLines:{color:isDark?'#1c1c1c':'#f0f0f0'}},
     crosshair:{mode:LightweightCharts.CrosshairMode.Normal},
-    disableAttributionLogo:true,
+    attributionLogo:false,
     rightPriceScale:{borderColor:isDark?'#1c1c1c':'#e8e8e8'},
     timeScale:{borderColor:isDark?'#1c1c1c':'#e8e8e8',timeVisible:true,secondsVisible:false},
     handleScroll:{mouseWheel:true,pressedMouseMove:true},
