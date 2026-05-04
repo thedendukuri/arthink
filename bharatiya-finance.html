@@ -2182,19 +2182,23 @@ const MKT={
           .attr('fill',c.color).style('pointer-events','none')
           .style('filter',`drop-shadow(0 0 ${c.r+3}px ${c.color}) drop-shadow(0 0 ${c.r+6}px ${c.color}66)`);
 
-        // City label
+        // City label — dark stroke halo for contrast on any background
         const tx=c.anchor==='end'?cx-c.r-5:cx+c.r+5;
         svg.append('text').attr('x',tx).attr('y',cy-c.r-2)
           .attr('text-anchor',c.anchor).attr('fill',c.color)
+          .attr('stroke','#000').attr('stroke-width',2.8)
+          .attr('paint-order','stroke fill')
           .attr('font-size',8).attr('font-weight','700')
           .attr('font-family','JetBrains Mono,monospace')
           .attr('letter-spacing','.6')
           .style('pointer-events','none').text(c.label);
 
-        // Performance readout
+        // Performance readout — same halo treatment
         if(pctStr){
           svg.append('text').attr('x',tx).attr('y',cy+c.r+9)
             .attr('text-anchor',c.anchor).attr('fill',pctColor)
+            .attr('stroke','#000').attr('stroke-width',2.4)
+            .attr('paint-order','stroke fill')
             .attr('font-size',7).attr('font-weight','700')
             .attr('font-family','JetBrains Mono,monospace')
             .style('pointer-events','none').text(pctStr);
