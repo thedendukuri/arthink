@@ -661,6 +661,76 @@ app.get('/api/charttest', async (req, res) => {
   }
 });
 
+// ── Serve stock detail page ──────────────────────────────────
+app.get('/stock/:sym', (req, res) =>
+  res.sendFile(path.join(__dirname, 'stock.html'))
+);
+
+// ── GET /api/stock/:sym/summary ──────────────────────────────
+// Price + company profile + key stats. 5-minute cache.
+app.get('/api/stock/:sym/summary', async (req, res) => {
+  const sym = decodeURIComponent(req.params.sym);
+  const key = `stock-summary:${sym}`;
+  const cached = getCache(key, 5 * 60_000);
+  if (cached) return res.json(cached);
+  try {
+    const [quote, summary] = await Promise.all([
+      yahooFinance.quote(sym, {
+        fields: [
+          'regularMarketPrice','regularMarketChange','regularMarketChangePercent',
+          'regularMarketVolume','regularMarketOpen','regularMarketDayHigh',
+          'regularMarketDayLow','regularMarketPreviousClose',
+          'fiftyTwoWeekHigh','fiftyTwoWeekLow','marketCap','symbol',
+          'shortName','longName','exchange','currency',
+          'regularMarketTime','averageDailyVolume3Month',
+        ],
+      }),
+      yahooFinance.quoteSummary(sym, {
+        modules: ['assetProfile','summaryDetail','defaultKeyStatistics','financialData'],
+      }).catch(() => ({})),
+    ]);
+    const data = {
+      quote,
+      profile     : summary.assetProfile          || null,
+      summaryDetail: summary.summaryDetail         || null,
+      stats       : summary.defaultKeyStatistics   || null,
+      financial   : summary.financialData          || null,
+    };
+    setCache(key, data);
+    res.json(data);
+  } catch (err) {
+    console.error('[stock-summary]', err.message);
+    res.status(502).json({ error: err.message });
+  }
+});
+
+// ── GET /api/stock/:sym/financials ───────────────────────────
+// Income / Balance / Cash-Flow statements + earnings. 30-minute cache.
+app.get('/api/stock/:sym/financials', async (req, res) => {
+  const sym = decodeURIComponent(req.params.sym);
+  const key = `stock-fin:${sym}`;
+  const cached = getCache(key, 30 * 60_000);
+  if (cached) return res.json(cached);
+  try {
+    const data = await yahooFinance.quoteSummary(sym, {
+      modules: [
+        'incomeStatementHistory',
+        'incomeStatementHistoryQuarterly',
+        'balanceSheetHistory',
+        'balanceSheetHistoryQuarterly',
+        'cashflowStatementHistory',
+        'cashflowStatementHistoryQuarterly',
+        'earningsHistory',
+      ],
+    }).catch(() => ({}));
+    setCache(key, data);
+    res.json(data);
+  } catch (err) {
+    console.error('[stock-financials]', err.message);
+    res.status(502).json({ error: err.message });
+  }
+});
+
 // ── Start ────────────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`
