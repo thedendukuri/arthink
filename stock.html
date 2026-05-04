@@ -103,6 +103,8 @@ button{cursor:pointer;font-family:inherit}
 @media(max-width:960px){.overview-layout{grid-template-columns:1fr}}
 
 /* ══ Chart ══ */
+/* Hide TradingView attribution logo on all lightweight-charts instances */
+.tv-lightweight-charts a[href*="tradingview"]{display:none!important}
 .chart-section{background:var(--surface);border:1px solid var(--border)}
 .chart-controls{display:flex;align-items:center;padding:12px 16px;gap:8px;border-bottom:1px solid var(--border);flex-wrap:wrap}
 .tf-btns{display:flex;gap:2px}
@@ -628,6 +630,20 @@ async function loadSummary(){
   }
 }
 
+// Helper: get a value from quote first, then from optional supplemental objects
+// yahoo-finance2 full quote already includes trailingPE, epsTrailingTwelveMonths,
+// dividendYield, beta, forwardPE, bookValue, averageDailyVolume3Month, etc.
+function qv(q, ...keys){ for(const k of keys){ const v=q[k]; if(v!=null&&v!==''&&!isNaN(Number(v))) return Number(v); } return null; }
+
+function mktTime(raw){
+  // yahoo-finance2 may return Date object or Unix seconds integer
+  if(!raw) return null;
+  if(raw instanceof Date) return raw;
+  if(typeof raw==='number') return new Date(raw*1000);
+  if(typeof raw==='string') return new Date(raw);
+  return null;
+}
+
 function renderSymBar(){
   if(!SUMMARY) return;
   const q=SUMMARY.quote||{};
@@ -637,15 +653,18 @@ function renderSymBar(){
   document.getElementById('bc-sym').className='';
   document.getElementById('sym-ticker').textContent=SYM.replace('.NS','').replace('.BO','');
   document.getElementById('sym-company').textContent=q.longName||q.shortName||SYM;
-  document.getElementById('sym-exchange').textContent=q.exchange||'';
+  document.getElementById('sym-exchange').textContent=q.fullExchangeName||q.exchange||'';
   const price=q.regularMarketPrice,chg=q.regularMarketChange,pct=q.regularMarketChangePercent;
-  document.getElementById('sym-price').textContent=`${cur}${fmtP(price)}`;
-  const sign=chg>=0?'+':'',cls=chg>=0?'pos':'neg';
-  document.getElementById('sym-change').className=`sym-change ${cls}`;
-  document.getElementById('sym-change').textContent=`${sign}${cur}${fmtP(Math.abs(chg))} (${sign}${pct?.toFixed(2)}%)`;
-  const mt=q.regularMarketTime?new Date(q.regularMarketTime*1000):null;
-  document.getElementById('sym-time').textContent=mt?`${mt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})} IST · Delayed`:'Delayed';
-  // Watchlist state
+  document.getElementById('sym-price').textContent=price?`${cur}${fmtP(price)}`:'—';
+  if(chg!=null){
+    const sign=chg>=0?'+':'',cls=chg>=0?'pos':'neg';
+    document.getElementById('sym-change').className=`sym-change ${cls}`;
+    document.getElementById('sym-change').textContent=`${sign}${cur}${fmtP(Math.abs(chg))} (${sign}${(pct||0).toFixed(2)}%)`;
+  }
+  const mt=mktTime(q.regularMarketTime);
+  document.getElementById('sym-time').textContent=mt
+    ?`${mt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})} IST · Delayed`
+    :'Delayed';
   const wl=JSON.parse(localStorage.getItem('prvaaha-wl')||'[]');
   const btn=document.getElementById('wl-btn');
   if(wl.includes(SYM)){btn.textContent='★ In Watchlist';btn.classList.add('active');}
@@ -653,16 +672,22 @@ function renderSymBar(){
 
 function renderKPI(){
   if(!SUMMARY) return;
-  const q=SUMMARY.quote||{},sd=SUMMARY.summaryDetail||{},st=SUMMARY.stats||{},fi=SUMMARY.financial||{};
+  const q=SUMMARY.quote||{},sd=SUMMARY.summaryDetail||{},st=SUMMARY.stats||{};
   const cur=q.currency==='INR'?'₹':'$';
-  set('k-mcap', fmtBig(q.marketCap,cur));
-  set('k-pe',   sd.trailingPE?sd.trailingPE.toFixed(2):'—');
-  set('k-eps',  st.trailingEps?`${cur}${fmtP(st.trailingEps)}`:'—');
-  set('k-52w',  q.fiftyTwoWeekLow?`${cur}${fmtP(q.fiftyTwoWeekLow)} – ${cur}${fmtP(q.fiftyTwoWeekHigh)}`:'—');
-  set('k-vol',  fmtVol(q.regularMarketVolume));
-  set('k-avgvol',fmtVol(q.averageDailyVolume3Month||sd.averageVolume));
-  set('k-yield',sd.dividendYield?(sd.dividendYield*100).toFixed(2)+'%':'—');
-  set('k-beta', sd.beta?sd.beta.toFixed(2):'—');
+  // Use quote fields first — they're always present. Fall back to quoteSummary modules.
+  const pe   = qv(q,'trailingPE')             ?? qv(sd,'trailingPE');
+  const eps  = qv(q,'epsTrailingTwelveMonths') ?? qv(st,'trailingEps');
+  const yield_= qv(q,'dividendYield')          ?? qv(sd,'dividendYield');
+  const beta = qv(q,'beta')                    ?? qv(sd,'beta');
+  const avgvol= qv(q,'averageDailyVolume3Month','averageDailyVolume10Day') ?? qv(sd,'averageVolume');
+  set('k-mcap',   fmtBig(q.marketCap,cur));
+  set('k-pe',     pe!=null?pe.toFixed(2):'—');
+  set('k-eps',    eps!=null?`${cur}${fmtP(eps)}`:'—');
+  set('k-52w',    q.fiftyTwoWeekLow?`${cur}${fmtP(q.fiftyTwoWeekLow)} – ${cur}${fmtP(q.fiftyTwoWeekHigh)}`:'—');
+  set('k-vol',    fmtVol(q.regularMarketVolume));
+  set('k-avgvol', fmtVol(avgvol));
+  set('k-yield',  yield_!=null?(yield_*100).toFixed(2)+'%':'—');
+  set('k-beta',   beta!=null?beta.toFixed(2):'—');
   set('k-dayrange',q.regularMarketDayLow?`${cur}${fmtP(q.regularMarketDayLow)} – ${cur}${fmtP(q.regularMarketDayHigh)}`:'—');
 }
 
@@ -670,21 +695,26 @@ function renderQSPanel(){
   if(!SUMMARY) return;
   const q=SUMMARY.quote||{},sd=SUMMARY.summaryDetail||{},st=SUMMARY.stats||{};
   const cur=q.currency==='INR'?'₹':'$';
-  set('qs-open',`${cur}${fmtP(q.regularMarketOpen)}`);
-  set('qs-high',`${cur}${fmtP(q.regularMarketDayHigh)}`);
-  set('qs-low', `${cur}${fmtP(q.regularMarketDayLow)}`);
-  set('qs-prev',`${cur}${fmtP(q.regularMarketPreviousClose)}`);
-  set('qs-vol', fmtVol(q.regularMarketVolume));
-  set('qs-52hi',`${cur}${fmtP(q.fiftyTwoWeekHigh)}`);
-  set('qs-52lo',`${cur}${fmtP(q.fiftyTwoWeekLow)}`);
-  set('r52-lo', `${cur}${fmtP(q.fiftyTwoWeekLow)}`);
-  set('r52-hi', `${cur}${fmtP(q.fiftyTwoWeekHigh)}`);
-  set('qs-mcap',fmtBig(q.marketCap,cur));
-  set('qs-pe',  sd.trailingPE?sd.trailingPE.toFixed(2):'—');
-  set('qs-fpe', sd.forwardPE?sd.forwardPE.toFixed(2):'—');
-  set('qs-eps', st.trailingEps?`${cur}${fmtP(st.trailingEps)}`:'—');
-  set('qs-yield',sd.dividendYield?(sd.dividendYield*100).toFixed(2)+'%':'—');
-  set('qs-beta',sd.beta?sd.beta.toFixed(2):'—');
+  const pe   = qv(q,'trailingPE')             ?? qv(sd,'trailingPE');
+  const fpe  = qv(q,'forwardPE')              ?? qv(sd,'forwardPE');
+  const eps  = qv(q,'epsTrailingTwelveMonths') ?? qv(st,'trailingEps');
+  const yield_= qv(q,'dividendYield')          ?? qv(sd,'dividendYield');
+  const beta = qv(q,'beta')                    ?? qv(sd,'beta');
+  set('qs-open',  `${cur}${fmtP(q.regularMarketOpen)}`);
+  set('qs-high',  `${cur}${fmtP(q.regularMarketDayHigh)}`);
+  set('qs-low',   `${cur}${fmtP(q.regularMarketDayLow)}`);
+  set('qs-prev',  `${cur}${fmtP(q.regularMarketPreviousClose)}`);
+  set('qs-vol',   fmtVol(q.regularMarketVolume));
+  set('qs-52hi',  `${cur}${fmtP(q.fiftyTwoWeekHigh)}`);
+  set('qs-52lo',  `${cur}${fmtP(q.fiftyTwoWeekLow)}`);
+  set('r52-lo',   `${cur}${fmtP(q.fiftyTwoWeekLow)}`);
+  set('r52-hi',   `${cur}${fmtP(q.fiftyTwoWeekHigh)}`);
+  set('qs-mcap',  fmtBig(q.marketCap,cur));
+  set('qs-pe',    pe!=null?pe.toFixed(2):'—');
+  set('qs-fpe',   fpe!=null?fpe.toFixed(2):'—');
+  set('qs-eps',   eps!=null?`${cur}${fmtP(eps)}`:'—');
+  set('qs-yield', yield_!=null?(yield_*100).toFixed(2)+'%':'—');
+  set('qs-beta',  beta!=null?beta.toFixed(2):'—');
   // 52W range bar
   if(q.fiftyTwoWeekLow&&q.fiftyTwoWeekHigh&&q.regularMarketPrice){
     const lo=q.fiftyTwoWeekLow,hi=q.fiftyTwoWeekHigh,p=q.regularMarketPrice;
@@ -754,6 +784,7 @@ function renderOverviewChart(){
     timeScale:{borderColor:isDark?'#1c1c1c':'#e8e8e8',timeVisible:true,secondsVisible:false},
     handleScroll:{mouseWheel:true,pressedMouseMove:true},
     handleScale:{axisPressedMouseMove:true,mouseWheel:true,pinch:true},
+    disableAttributionLogo: true,
   });
 
   const toTime=d=>isIntraday?Math.floor(new Date(d.date).getTime()/1000):d.date.split('T')[0];
@@ -1084,6 +1115,7 @@ function renderTechChart(){
     layout:{background:{color:'transparent'},textColor:isDark?'#5a5650':'#78746c',fontSize:11},
     grid:{vertLines:{color:isDark?'#1c1c1c':'#f0f0f0'},horzLines:{color:isDark?'#1c1c1c':'#f0f0f0'}},
     crosshair:{mode:LightweightCharts.CrosshairMode.Normal},
+    disableAttributionLogo:true,
     rightPriceScale:{borderColor:isDark?'#1c1c1c':'#e8e8e8'},
     timeScale:{borderColor:isDark?'#1c1c1c':'#e8e8e8',timeVisible:true,secondsVisible:false},
     handleScroll:{mouseWheel:true,pressedMouseMove:true},
