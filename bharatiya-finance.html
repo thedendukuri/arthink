@@ -248,10 +248,10 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 .map-tt-region{font-family:var(--serif);font-size:13px;font-weight:700;margin-bottom:6px}
 .map-tt-row{display:flex;justify-content:space-between;gap:16px;font-size:11px;color:var(--muted);margin-top:2px}
 .map-tt-val{font-family:var(--mono);color:var(--text);font-weight:600}
-.map-legend{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 16px;border-top:1px solid rgba(30,58,95,.8);background:rgba(4,8,20,.6);backdrop-filter:blur(4px)}
-.map-leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);cursor:pointer;transition:color .15s}
-.map-leg-item:hover{color:var(--text)}
-.map-leg-dot{width:8px;height:8px;border-radius:50%;box-shadow:0 0 6px currentColor}
+.map-legend{position:absolute;bottom:10px;left:12px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:0;background:none;border:none;pointer-events:none;z-index:10}
+.map-leg-item{display:flex;align-items:center;gap:5px;font-size:10px;font-family:var(--mono);font-weight:700;letter-spacing:.4px;color:#e8e4da;cursor:pointer;pointer-events:all;transition:opacity .15s;text-shadow:0 0 8px rgba(0,0,0,1),0 1px 3px rgba(0,0,0,1)}
+.map-leg-item:hover{opacity:.75}
+.map-leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 @keyframes mapPulse{0%{r:5;opacity:.9}70%{r:14;opacity:0}100%{r:14;opacity:0}}
 @keyframes mapPulse2{0%{r:3;opacity:.6}70%{r:10;opacity:0}100%{r:10;opacity:0}}
 
@@ -1939,23 +1939,50 @@ const MKT={
     const wrap=document.getElementById('mapWrap');
     const W=wrap.clientWidth||960,H=Math.round(W*.44);
 
-    // Legend
+    const svg=d3.select(wrap).append('svg')
+      .attr('viewBox',`0 0 ${W} ${H}`)
+      .attr('width','100%').style('display','block')
+      .style('cursor','grab');
+
+    // Legend — appended after SVG so it floats on top
     const legend=document.createElement('div');
     legend.className='map-legend';
     legend.innerHTML=REGIONS_DEF.map(r=>`
       <div class="map-leg-item" onclick="MKT.goRegion('${r.id}')">
-        <div class="map-leg-dot" style="background:${r.color}"></div>
-        <img src="${r.flag}" width="16" height="12" style="border-radius:2px;object-fit:cover;vertical-align:middle" onerror="this.style.display='none'"/>
+        <div class="map-leg-dot" style="background:${r.color};box-shadow:0 0 5px ${r.color}"></div>
+        <img src="${r.flag}" width="15" height="11" style="border-radius:1px;object-fit:cover;vertical-align:middle;opacity:.85" onerror="this.style.display='none'"/>
         <span>${r.name}</span>
       </div>`).join('');
     wrap.appendChild(legend);
 
-    const svg=d3.select(wrap).insert('svg','div')
-      .attr('viewBox',`0 0 ${W} ${H}`)
-      .attr('width','100%').style('display','block');
-
-    const proj=d3.geoNaturalEarth1().scale(W/6.1).translate([W/2,H/2]);
+    const baseScale=W/6.1;
+    const proj=d3.geoNaturalEarth1().scale(baseScale).translate([W/2,H/2]);
     const path=d3.geoPath().projection(proj);
+
+    // Zoom/pan — all map content lives in a <g> that gets the transform
+    const mapG=svg.append('g').attr('class','map-root');
+
+    const zoom=d3.zoom()
+      .scaleExtent([1,12])
+      .translateExtent([[0,0],[W,H]])
+      .on('zoom',(event)=>{
+        mapG.attr('transform',event.transform);
+        svg.style('cursor',event.transform.k>1?'grabbing':'grab');
+      });
+    svg.call(zoom)
+      .on('dblclick.zoom',null); // disable dblclick zoom (we handle it manually)
+
+    // Double-click to zoom in, shift+dblclick to zoom out
+    svg.on('dblclick',(event)=>{
+      event.preventDefault();
+      const t=d3.zoomTransform(svg.node());
+      const newK=event.shiftKey?Math.max(1,t.k/2):Math.min(12,t.k*2);
+      const [mx,my]=d3.pointer(event,svg.node());
+      svg.transition().duration(400).call(
+        zoom.transform,
+        d3.zoomIdentity.translate(mx,my).scale(newK).translate(-mx,-my)
+      );
+    });
 
     // ── SVG Filters & Gradients ───────────────────────────────────────
     const defs=svg.append('defs');
@@ -1990,10 +2017,10 @@ const MKT={
     svg.append('rect').attr('width',W).attr('height',H)
       .attr('fill','url(#vigGrad)').style('pointer-events','none');
 
-    // ── Lat/lon grid — very faint blue lines ──────────────────────────
-    svg.append('path').datum(d3.geoGraticule().step([20,20])()).attr('d',path)
+    // ── Lat/lon grid — very faint blue lines (inside mapG so they zoom) ─
+    mapG.append('path').datum(d3.geoGraticule().step([20,20])()).attr('d',path)
       .attr('stroke','#0b2a40').attr('fill','none').attr('stroke-width',.3).attr('opacity',.9);
-    svg.append('path').datum({type:'Sphere'}).attr('d',path)
+    mapG.append('path').datum({type:'Sphere'}).attr('d',path)
       .attr('fill','none').attr('stroke','#0d3050').attr('stroke-width',.7);
 
     const tt=document.getElementById('mapTT');
@@ -2008,17 +2035,16 @@ const MKT={
       const borders=topojson.mesh(world,world.objects.countries,(a,b)=>a!==b);
 
       // ── Layer 1: dark land base (like unlit terrain) ──────────────
-      svg.selectAll('.cb').data(countries.features).join('path')
+      mapG.selectAll('.cb').data(countries.features).join('path')
         .attr('class','cb').attr('d',path)
         .attr('fill','#0e0800').attr('stroke','none');
 
       // ── Layer 2: city-lights grain overlay ───────────────────────
-      // Region countries glow gold; non-region land is very dim
-      svg.selectAll('.cl').data(countries.features).join('path')
+      mapG.selectAll('.cl').data(countries.features).join('path')
         .attr('class','cl').attr('d',path)
         .attr('fill',d=>{
-          if(+d.id===356) return '#FF9933';         // Bhaarat — saffron
-          return countryToRegion(d.id)?'#c87018':'#6b3d10'; // gold / dim
+          if(+d.id===356) return '#FF9933';
+          return countryToRegion(d.id)?'#c87018':'#6b3d10';
         })
         .attr('opacity',d=>{
           if(+d.id===356) return .92;
@@ -2027,15 +2053,15 @@ const MKT={
         .attr('stroke','none')
         .style('filter','url(#cityGrain)');
 
-      // ── Country borders — barely visible seams ────────────────────
-      svg.append('path').datum(borders)
+      // ── Country borders ───────────────────────────────────────────
+      mapG.append('path').datum(borders)
         .attr('fill','none').attr('stroke','#1a0d00')
         .attr('stroke-width',.3).attr('d',path);
 
       // ── Bhaarat extra glow halo ───────────────────────────────────
       const indFeat=countries.features.find(d=>+d.id===356);
       if(indFeat){
-        svg.append('path').datum(indFeat).attr('d',path)
+        mapG.append('path').datum(indFeat).attr('d',path)
           .attr('fill','#FF9933').attr('opacity',.15)
           .attr('stroke','#FF9933').attr('stroke-width',1)
           .style('filter','drop-shadow(0 0 16px #FF993399) drop-shadow(0 0 7px #FF993355)')
@@ -2043,7 +2069,6 @@ const MKT={
       }
 
       // ── Financial hub connection arcs ─────────────────────────────
-      // Quadratic bezier arcs between major exchange cities
       const HUB={
         mumbai:  [72.83,18.96], newYork: [-74.0,40.71],
         london:  [-0.12,51.51], tokyo:   [139.69,35.69],
@@ -2059,7 +2084,7 @@ const MKT={
         const pa=proj(HUB[a]),pb=proj(HUB[b]);
         if(!pa||!pb||!isFinite(pa[0])||!isFinite(pb[0])) return;
         const mx=(pa[0]+pb[0])/2, my=(pa[1]+pb[1])/2 - W*0.055;
-        svg.append('path')
+        mapG.append('path')
           .attr('d',`M${pa[0].toFixed(1)},${pa[1].toFixed(1)} Q${mx.toFixed(1)},${my.toFixed(1)} ${pb[0].toFixed(1)},${pb[1].toFixed(1)}`)
           .attr('fill','none')
           .attr('stroke','rgba(80,190,255,0.16)')
@@ -2068,8 +2093,8 @@ const MKT={
           .style('pointer-events','none');
       });
 
-      // ── Interactive hit layer (transparent — for hover/click) ─────
-      svg.selectAll('.ch').data(countries.features).join('path')
+      // ── Interactive hit layer ─────────────────────────────────────
+      mapG.selectAll('.ch').data(countries.features).join('path')
         .attr('class','ch').attr('d',path)
         .attr('fill','transparent').attr('stroke','none')
         .on('mouseover',(e,d)=>{
@@ -2099,7 +2124,7 @@ const MKT={
             const ring=rings[0];if(!ring)return;
             const pts=ring.map(([lo,la])=>proj([lo,la])).filter(p=>p&&isFinite(p[0])&&isFinite(p[1]));
             if(pts.length<3)return;
-            svg.append('polygon')
+            mapG.append('polygon')
               .attr('points',pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' '))
               .attr('fill',fill).attr('stroke',stroke||fill)
               .attr('stroke-width',.6).attr('stroke-linejoin','round')
@@ -2122,24 +2147,23 @@ const MKT={
       }
 
       function _drawClaimedFallback(){
-        const d2=svg.select('defs').empty()?svg.append('defs'):svg.select('defs');
         const pokPts=[[70.5,37.8],[78.5,37.8],[78.5,33.0],[70.5,33.0]]
           .map(([lo,la])=>proj([lo,la])).filter(p=>p&&isFinite(p[0]));
         if(pokPts.length===4){
-          d2.append('clipPath').attr('id','clip-pok')
+          defs.append('clipPath').attr('id','clip-pok')
             .append('polygon').attr('points',pokPts.map(p=>p.map(v=>v.toFixed(1)).join(',')).join(' '));
           const pkFeat=countries.features.find(d=>+d.id===586);
-          if(pkFeat) svg.append('path').datum(pkFeat).attr('d',path)
+          if(pkFeat) mapG.append('path').datum(pkFeat).attr('d',path)
             .attr('fill','#FF9933').attr('stroke','none')
             .attr('clip-path','url(#clip-pok)').style('pointer-events','none');
         }
         const acPts=[[78.0,37.8],[84.5,37.8],[84.5,33.0],[78.0,33.0]]
           .map(([lo,la])=>proj([lo,la])).filter(p=>p&&isFinite(p[0]));
         if(acPts.length===4){
-          d2.append('clipPath').attr('id','clip-ac')
+          defs.append('clipPath').attr('id','clip-ac')
             .append('polygon').attr('points',acPts.map(p=>p.map(v=>v.toFixed(1)).join(',')).join(' '));
           const cnFeat=countries.features.find(d=>+d.id===156);
-          if(cnFeat) svg.append('path').datum(cnFeat).attr('d',path)
+          if(cnFeat) mapG.append('path').datum(cnFeat).attr('d',path)
             .attr('fill','#FF9933').attr('stroke','none')
             .attr('clip-path','url(#clip-ac)').style('pointer-events','none');
         }
@@ -2169,7 +2193,7 @@ const MKT={
         const pctColor=pct==null?c.color:pct>=0?'#4ade80':'#f87171';
 
         // Outer pulse ring
-        const ring=svg.append('circle').attr('cx',cx).attr('cy',cy).attr('r',c.r+2)
+        const ring=mapG.append('circle').attr('cx',cx).attr('cy',cy).attr('r',c.r+2)
           .attr('fill','none').attr('stroke',c.color).attr('stroke-width',1).attr('opacity',.8)
           .style('pointer-events','none');
         ring.append('animate').attr('attributeName','r').attr('from',c.r+2).attr('to',c.r+14)
@@ -2178,13 +2202,13 @@ const MKT={
           .attr('dur',(1.8+Math.random()).toFixed(1)+'s').attr('repeatCount','indefinite');
 
         // Core dot with strong glow
-        svg.append('circle').attr('cx',cx).attr('cy',cy).attr('r',c.r)
+        mapG.append('circle').attr('cx',cx).attr('cy',cy).attr('r',c.r)
           .attr('fill',c.color).style('pointer-events','none')
           .style('filter',`drop-shadow(0 0 ${c.r+3}px ${c.color}) drop-shadow(0 0 ${c.r+6}px ${c.color}66)`);
 
         // City label — dark stroke halo for contrast on any background
         const tx=c.anchor==='end'?cx-c.r-5:cx+c.r+5;
-        svg.append('text').attr('x',tx).attr('y',cy-c.r-2)
+        mapG.append('text').attr('x',tx).attr('y',cy-c.r-2)
           .attr('text-anchor',c.anchor).attr('fill',c.color)
           .attr('stroke','#000').attr('stroke-width',2.8)
           .attr('paint-order','stroke fill')
@@ -2195,7 +2219,7 @@ const MKT={
 
         // Performance readout — same halo treatment
         if(pctStr){
-          svg.append('text').attr('x',tx).attr('y',cy+c.r+9)
+          mapG.append('text').attr('x',tx).attr('y',cy+c.r+9)
             .attr('text-anchor',c.anchor).attr('fill',pctColor)
             .attr('stroke','#000').attr('stroke-width',2.4)
             .attr('paint-order','stroke fill')
@@ -2206,7 +2230,7 @@ const MKT={
       });
 
     }catch(err){
-      svg.append('text').attr('x',W/2).attr('y',H/2).attr('text-anchor','middle')
+      mapG.append('text').attr('x',W/2).attr('y',H/2).attr('text-anchor','middle')
         .attr('fill','#555').attr('font-size',14).text('Click a region card below to explore markets');
     }
   }
