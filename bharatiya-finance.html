@@ -242,16 +242,18 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 .mkt-view{display:none}.mkt-view.active{display:block}
 
 /* Map */
-.map-wrap{position:relative;background:var(--map-ocean);overflow:hidden;border:1px solid var(--border);margin-bottom:20px}
+.map-wrap{position:relative;background:var(--map-ocean);overflow:hidden;border:1px solid #1e3a5f;margin-bottom:20px;box-shadow:0 0 40px rgba(0,100,200,.08) inset}
 .map-wrap svg{display:block;width:100%}
-.map-tooltip{position:fixed;background:var(--hdr);border:1px solid var(--border2);color:#e4e1da;padding:10px 14px;pointer-events:none;font-size:12px;z-index:400;display:none;min-width:160px;box-shadow:0 8px 32px rgba(0,0,0,.3)}
+.map-tooltip{position:fixed;background:#080f1e;border:1px solid #1e3a5f;color:#e4e1da;padding:10px 14px;pointer-events:none;font-size:12px;z-index:400;display:none;min-width:180px;box-shadow:0 8px 32px rgba(0,0,0,.6),0 0 20px rgba(0,100,255,.1)}
 .map-tt-region{font-family:var(--serif);font-size:13px;font-weight:700;margin-bottom:6px}
 .map-tt-row{display:flex;justify-content:space-between;gap:16px;font-size:11px;color:var(--muted);margin-top:2px}
 .map-tt-val{font-family:var(--mono);color:var(--text);font-weight:600}
-.map-legend{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--border)}
-.map-leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);cursor:pointer}
+.map-legend{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 16px;border-top:1px solid rgba(30,58,95,.8);background:rgba(4,8,20,.6);backdrop-filter:blur(4px)}
+.map-leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);cursor:pointer;transition:color .15s}
 .map-leg-item:hover{color:var(--text)}
-.map-leg-dot{width:10px;height:10px;border-radius:50%}
+.map-leg-dot{width:8px;height:8px;border-radius:50%;box-shadow:0 0 6px currentColor}
+@keyframes mapPulse{0%{r:5;opacity:.9}70%{r:14;opacity:0}100%{r:14;opacity:0}}
+@keyframes mapPulse2{0%{r:3;opacity:.6}70%{r:10;opacity:0}100%{r:10;opacity:0}}
 
 /* Region cards */
 .region-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
@@ -1059,7 +1061,7 @@ const _sb = window.supabase.createClient(
 // ══════════════════════════════════════════════
 
 const REGIONS_DEF = [
-  {id:'india', name:'Bhaarat', emoji:'🇮🇳', color:'#FF9933',
+  {id:'india', name:'Bhaarat', emoji:'🇮🇳', flag:'https://flagcdn.com/24x18/in.png', color:'#FF9933',
    // ISO numeric country IDs used in world-atlas
    countries:[356],
    indices:[
@@ -1070,7 +1072,7 @@ const REGIONS_DEF = [
     {sym:'^CNXAUTO', n:'Nifty Auto',   s:'AUTO',    base:22480, exch:'NSE', color:'#fb923c'},
     {sym:'^CNXPHARMA',n:'Nifty Pharma',s:'PHARMA',  base:21620, exch:'NSE', color:'#f472b6'},
    ]},
-  {id:'usa', name:'United States', emoji:'🇺🇸', color:'#3b82f6',
+  {id:'usa', name:'United States', emoji:'🇺🇸', flag:'https://flagcdn.com/24x18/us.png', color:'#3b82f6',
    countries:[840,124],
    indices:[
     {sym:'^GSPC', n:'S&P 500',           s:'SPX',   base:5611,  exch:'NYSE',   color:'#3b82f6'},
@@ -1078,7 +1080,7 @@ const REGIONS_DEF = [
     {sym:'^DJI',  n:'Dow Jones',         s:'DJIA',  base:41218, exch:'NYSE',   color:'#93c5fd'},
     {sym:'^RUT',  n:'Russell 2000',      s:'RUT',   base:2032,  exch:'NYSE',   color:'#bfdbfe'},
    ]},
-  {id:'europe', name:'Europe', emoji:'🇪🇺', color:'#8b5cf6',
+  {id:'europe', name:'Europe', emoji:'🇪🇺', flag:'https://flagcdn.com/24x18/eu.png', color:'#8b5cf6',
    countries:[276,250,826,724,380,528,752,756,40,56,208,246,616,372,620,191,300,703,705,348],
    indices:[
     {sym:'^FTSE',    n:'FTSE 100',     s:'UKX',   base:8347,  exch:'LSE',      color:'#8b5cf6'},
@@ -1087,20 +1089,20 @@ const REGIONS_DEF = [
     {sym:'^STOXX50E',n:'EURO STOXX 50',s:'SX5E',  base:5306,  exch:'Euronext', color:'#ddd6fe'},
     {sym:'^IBEX',    n:'IBEX 35',      s:'IBEX',  base:13142, exch:'BME',      color:'#ede9fe'},
    ]},
-  {id:'japan', name:'Japan', emoji:'🇯🇵', color:'#ec4899',
+  {id:'japan', name:'Japan', emoji:'🇯🇵', flag:'https://flagcdn.com/24x18/jp.png', color:'#ec4899',
    countries:[392],
    indices:[
     {sym:'^N225', n:'Nikkei 225', s:'N225', base:35617, exch:'TSE', color:'#ec4899'},
     {sym:'^TOPX', n:'TOPIX',      s:'TOPX', base:2608,  exch:'TSE', color:'#f9a8d4'},
    ]},
-  {id:'china', name:'Greater China', emoji:'🇨🇳', color:'#ef4444',
+  {id:'china', name:'Greater China', emoji:'🇨🇳', flag:'https://flagcdn.com/24x18/cn.png', color:'#ef4444',
    countries:[156,344,158],
    indices:[
     {sym:'000001.SS', n:'Shanghai Composite', s:'SHCOMP', base:3296,  exch:'SSE',  color:'#ef4444'},
     {sym:'399001.SZ', n:'Shenzhen Composite', s:'SZCOMP', base:9884,  exch:'SZSE', color:'#f87171'},
     {sym:'^HSI',      n:'Hang Seng',          s:'HSI',    base:21971, exch:'HKEX', color:'#fca5a5'},
    ]},
-  {id:'apac', name:'Asia-Pacific', emoji:'🌏', color:'#14b8a6',
+  {id:'apac', name:'Asia-Pacific', emoji:'🌏', flag:'https://flagcdn.com/24x18/sg.png', color:'#14b8a6',
    countries:[36,702,410,458,764,104,360,608,704,554],
    indices:[
     {sym:'^AXJO', n:'ASX 200',    s:'XJO',  base:7984, exch:'ASX', color:'#14b8a6'},
@@ -1108,7 +1110,7 @@ const REGIONS_DEF = [
     {sym:'^KS11', n:'KOSPI',      s:'KS11', base:2481, exch:'KRX', color:'#5eead4'},
     {sym:'^TWII', n:'TAIEX',      s:'TWII', base:21148,exch:'TWSE',color:'#99f6e4'},
    ]},
-  {id:'latam', name:'Latin America', emoji:'🌎', color:'#22c55e',
+  {id:'latam', name:'Latin America', emoji:'🌎', flag:'https://flagcdn.com/24x18/br.png', color:'#22c55e',
    countries:[76,484,152,32,604,858,170,218,591,340,222,320,558,188,214],
    indices:[
     {sym:'^BVSP', n:'Ibovespa',   s:'BVSP', base:131400,exch:'B3',  color:'#22c55e'},
@@ -1406,7 +1408,7 @@ const MKT={
     const r=REGIONS_DEF.find(x=>x.id===regionId);
     this.setBreadcrumb([
       {label:'Markets',action:()=>this.goOverview()},
-      {label:r.emoji+' '+r.name}
+      {label:r.name}
     ]);
     this.renderRegionPage(r);
   },
@@ -1421,7 +1423,7 @@ const MKT={
     const idx=ALL_INDICES.find(i=>i.sym===sym);
     this.setBreadcrumb([
       {label:'Markets',action:()=>this.goOverview()},
-      {label:r.emoji+' '+r.name,action:()=>this.goRegion(this.currentRegion)},
+      {label:r.name,action:()=>this.goRegion(this.currentRegion)},
       {label:idx?.n||sym}
     ]);
     document.getElementById('idxBackBtn').onclick=()=>this.goRegion(this.currentRegion);
@@ -1442,7 +1444,7 @@ const MKT={
     const r=REGIONS_DEF.find(x=>x.id===this.currentRegion)||REGIONS_DEF[0];
     const s=STOCKS.find(x=>x.sym===sym);
     const crumbs=[{label:'Markets',action:()=>this.goOverview()}];
-    if(fromSection!=='screener') crumbs.push({label:r.emoji+' '+r.name,action:()=>this.goRegion(this.currentRegion)});
+    if(fromSection!=='screener') crumbs.push({label:r.name,action:()=>this.goRegion(this.currentRegion)});
     crumbs.push({label:s?.n||sym});
     this.setBreadcrumb(crumbs);
     // Reset stock chart state to defaults
@@ -1474,7 +1476,7 @@ const MKT={
     const perfPct=r.indices.reduce((s,i)=>s+(ID_DATA[i.sym]?.pct||0),0)/r.indices.length;
     document.getElementById('regionHeader').innerHTML=`
       <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:8px">
-        <span style="font-size:36px">${r.emoji}</span>
+        <img src="${r.flag}" width="52" height="39" style="border-radius:4px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,.3)" onerror="this.outerHTML='<span style=\'font-size:36px\'>${r.emoji}</span>'"/>
         <div>
           <div style="font-size:20px;font-weight:800">${r.name}</div>
           <div style="font-size:13px;color:var(--muted)">${r.indices.length} indices tracked</div>
@@ -1487,7 +1489,7 @@ const MKT={
     // Index grid
     document.getElementById('regionIdxGrid').innerHTML=r.indices.map(i=>{
       const d=ID_DATA[i.sym]||{price:i.base,pct:0,chg:0};
-      return`<div class="idx-card" onclick="MKT.goIndex('${i.sym}','${r.id}')">
+      return`<div class="idx-card" onclick="location.href='/index/${encodeURIComponent(i.sym)}'">
         <div class="idx-card-sym">${i.s} · ${i.exch}</div>
         <div class="idx-card-name" style="color:${i.color}">${i.n}</div>
         <div class="idx-card-price">${fmt(d.price)}</div>
@@ -1993,7 +1995,8 @@ const MKT={
     legend.innerHTML=REGIONS_DEF.map(r=>`
       <div class="map-leg-item" onclick="MKT.goRegion('${r.id}')">
         <div class="map-leg-dot" style="background:${r.color}"></div>
-        <span>${r.emoji} ${r.name}</span>
+        <img src="${r.flag}" width="16" height="12" style="border-radius:2px;object-fit:cover;vertical-align:middle" onerror="this.style.display='none'"/>
+        <span>${r.name}</span>
       </div>`).join('');
     wrap.appendChild(legend);
 
@@ -2003,15 +2006,27 @@ const MKT={
 
     const proj=d3.geoNaturalEarth1().scale(W/6.1).translate([W/2,H/2]);
     const path=d3.geoPath().projection(proj);
+    const isDark=document.documentElement.getAttribute('data-theme')!=='light';
 
-    // Ocean — use CSS variable so light/dark mode works
-    const oceanColor=getComputedStyle(document.documentElement).getPropertyValue('--map-ocean').trim()||'#060d1e';
-    const gridColor=getComputedStyle(document.documentElement).getPropertyValue('--map-grid').trim()||'#0e1f3e';
+    // Ocean fill
+    const oceanColor=isDark?'#040810':'#8ab4d8';
     svg.append('rect').attr('width',W).attr('height',H).attr('fill',oceanColor);
-    // Graticule
-    svg.append('path').datum(d3.geoGraticule()()).attr('class','graticule').attr('d',path).attr('stroke',gridColor);
+
+    // Subtle scan-line pattern for cyber look (dark mode only)
+    if(isDark){
+      const defs=svg.append('defs');
+      const scanPat=defs.append('pattern').attr('id','scanlines').attr('width',2).attr('height',2).attr('patternUnits','userSpaceOnUse');
+      scanPat.append('line').attr('x1',0).attr('y1',0).attr('x2',0).attr('y2',2).attr('stroke','rgba(0,120,255,0.035)').attr('stroke-width',1);
+      svg.append('rect').attr('width',W).attr('height',H).attr('fill','url(#scanlines)').style('pointer-events','none');
+    }
+
+    // Graticule — finer, more cyber
+    const gridColor=isDark?'#0d2240':'#5a8ab0';
+    svg.append('path').datum(d3.geoGraticule().step([20,20])()).attr('d',path)
+      .attr('stroke',gridColor).attr('fill','none').attr('stroke-width',.4).attr('opacity',.7);
     // Sphere outline
-    svg.append('path').datum({type:'Sphere'}).attr('class','sphere').attr('d',path).attr('fill','none').attr('stroke',gridColor).attr('stroke-width',.8);
+    svg.append('path').datum({type:'Sphere'}).attr('d',path)
+      .attr('fill','none').attr('stroke',isDark?'#0f2a4a':'#4a7a9b').attr('stroke-width',1);
 
     const tt=document.getElementById('mapTT');
 
@@ -2030,21 +2045,22 @@ const MKT={
         .attr('d',path)
         .attr('fill',d=>{
           const r=countryToRegion(d.id);
-          if(!r){
-            // Soft neutral fill for non-tracked countries (not harsh dark)
-            const theme=document.documentElement.getAttribute('data-theme');
-            return theme==='light'?'#c8d8e8':'#182030';
-          }
-          if(+d.id===356) return r.color; // Bhaarat: full saffron
-          return r.color+'bb'; // other tracked regions: slightly transparent
+          if(!r) return isDark?'#0d1e30':'#b8cfe0';
+          if(+d.id===356) return r.color+'ee';
+          return r.color+'88';
         })
         .attr('stroke',d=>{
           const r=countryToRegion(d.id);
           if(+d.id===356) return '#FF9933';
-          return r?r.color+'55':'#2a3a5a';
+          return r?r.color+'99':isDark?'#162840':'#7aa5c0';
         })
-        .attr('stroke-width',d=>+d.id===356?1.8:.5)
-        .style('filter',d=>+d.id===356?`drop-shadow(0 0 10px ${REGIONS_DEF[0].color}bb) drop-shadow(0 0 3px #FF993388)`:null)
+        .attr('stroke-width',d=>+d.id===356?1.8:countryToRegion(d.id)?.id?1:.3)
+        .style('filter',d=>{
+          const r=countryToRegion(d.id);
+          if(!r) return null;
+          if(+d.id===356) return `drop-shadow(0 0 8px ${r.color}) drop-shadow(0 0 3px ${r.color}88)`;
+          return `drop-shadow(0 0 4px ${r.color}66)`;
+        })
         .on('mouseover',(e,d)=>{
           const r=countryToRegion(d.id);
           if(!r)return;
@@ -2053,7 +2069,7 @@ const MKT={
           tt.style.display='block';
           tt.style.left=(e.clientX+14)+'px';
           tt.style.top=(e.clientY-14)+'px';
-          tt.innerHTML=`<div class="map-tt-region">${r.emoji} ${r.name}</div>
+          tt.innerHTML=`<div class="map-tt-region" style="display:flex;align-items:center;gap:7px"><img src="${r.flag}" width="20" height="15" style="border-radius:2px;object-fit:cover" onerror="this.style.display='none'"/>${r.name}</div>
             ${r.indices.slice(0,3).map(i=>{const dv=ID_DATA[i.sym];return`
               <div class="map-tt-row"><span>${i.n}</span><span class="map-tt-val ${dv?.pct>=0?'pos':'neg'}">${dv?`${sgn(dv.pct)}${fmt(dv.pct)}%`:'–'}</span></div>`}).join('')}
             <div style="margin-top:6px;font-size:10px;color:var(--accent)">Click to explore →</div>`;
@@ -2146,16 +2162,59 @@ const MKT={
         }
       }
 
-      // Bhaarat label / pulse ring
-      const indiaCenter=proj([78.96,20.59]);
-      if(indiaCenter){
-        svg.append('circle').attr('cx',indiaCenter[0]).attr('cy',indiaCenter[1]).attr('r',8)
-          .attr('fill','none').attr('stroke','#FF9933').attr('stroke-width',1.5).attr('opacity',.6)
-          .append('animate').attr('attributeName','r').attr('values','8;16').attr('dur','2s').attr('repeatCount','indefinite');
-        svg.append('circle').attr('cx',indiaCenter[0]).attr('cy',indiaCenter[1]).attr('r',4).attr('fill','#FF9933');
-        svg.append('text').attr('x',indiaCenter[0]+8).attr('y',indiaCenter[1]-8)
-          .attr('fill','#FF9933').attr('font-size',10).attr('font-weight','700').text('BHAARAT');
-      }
+      // ── Financial city markers — pulse rings for all major exchanges ──
+      const CITIES=[
+        {lng:72.83,lat:18.96, label:'MUMBAI',   sym:'^NSEI',    color:'#FF9933', r:5, anchor:'end'},
+        {lng:77.21,lat:28.61, label:'DELHI',     sym:'^NSEI',    color:'#FF9933', r:3, anchor:'start', hide:true},
+        {lng:-74.0,lat:40.71, label:'NEW YORK',  sym:'^GSPC',    color:'#3b82f6', r:5, anchor:'end'},
+        {lng:-0.12,lat:51.51, label:'LONDON',    sym:'^FTSE',    color:'#8b5cf6', r:4, anchor:'end'},
+        {lng:139.69,lat:35.69,label:'TOKYO',     sym:'^N225',    color:'#ec4899', r:4, anchor:'start'},
+        {lng:121.47,lat:31.23,label:'SHANGHAI',  sym:'000001.SS',color:'#ef4444', r:4, anchor:'start'},
+        {lng:114.17,lat:22.28,label:'HONG KONG', sym:'^HSI',     color:'#f87171', r:3, anchor:'start'},
+        {lng:8.68,lat:50.11,  label:'FRANKFURT', sym:'^GDAXI',   color:'#a78bfa', r:3, anchor:'end'},
+        {lng:103.82,lat:1.35, label:'SINGAPORE', sym:'^STI',     color:'#14b8a6', r:3, anchor:'start'},
+        {lng:151.21,lat:-33.87,label:'SYDNEY',   sym:'^AXJO',    color:'#2dd4bf', r:3, anchor:'start'},
+        {lng:-46.63,lat:-23.55,label:'SAO PAULO',sym:'^BVSP',    color:'#22c55e', r:3, anchor:'end'},
+      ];
+
+      CITIES.filter(c=>!c.hide).forEach(c=>{
+        const pt=proj([c.lng,c.lat]);
+        if(!pt||!isFinite(pt[0])) return;
+        const [cx,cy]=pt;
+        const d=ID_DATA[c.sym];
+        const pct=d?.pct;
+        const pctStr=pct!=null?` ${pct>=0?'+':''}${pct.toFixed(1)}%`:'';
+        const pctColor=pct==null?c.color:pct>=0?'#22c55e':'#ef4444';
+
+        // Outer pulse ring
+        const ring=svg.append('circle').attr('cx',cx).attr('cy',cy).attr('r',c.r+2)
+          .attr('fill','none').attr('stroke',c.color).attr('stroke-width',1).attr('opacity',.8)
+          .style('pointer-events','none');
+        ring.append('animate').attr('attributeName','r').attr('from',c.r+2).attr('to',c.r+12)
+          .attr('dur',(1.8+Math.random()).toFixed(1)+'s').attr('repeatCount','indefinite');
+        ring.append('animate').attr('attributeName','opacity').attr('from',.7).attr('to',0)
+          .attr('dur',(1.8+Math.random()).toFixed(1)+'s').attr('repeatCount','indefinite');
+
+        // Core dot
+        svg.append('circle').attr('cx',cx).attr('cy',cy).attr('r',c.r)
+          .attr('fill',c.color).style('pointer-events','none')
+          .style('filter',`drop-shadow(0 0 ${c.r+2}px ${c.color})`);
+
+        // Label + perf
+        const tx=c.anchor==='end'?cx-c.r-4:cx+c.r+4;
+        svg.append('text').attr('x',tx).attr('y',cy-c.r-2)
+          .attr('text-anchor',c.anchor).attr('fill',c.color)
+          .attr('font-size',isDark?8:7).attr('font-weight','700')
+          .attr('font-family','JetBrains Mono,monospace').style('pointer-events','none')
+          .text(c.label);
+        if(pctStr){
+          svg.append('text').attr('x',tx).attr('y',cy+c.r+9)
+            .attr('text-anchor',c.anchor).attr('fill',pctColor)
+            .attr('font-size',7).attr('font-weight','700')
+            .attr('font-family','JetBrains Mono,monospace').style('pointer-events','none')
+            .text(pctStr);
+        }
+      });
     } catch(err){
       // Fallback if topojson fails
       svg.append('text').attr('x',W/2).attr('y',H/2).attr('text-anchor','middle')
@@ -2437,7 +2496,7 @@ function renderRegionGrid(){
     const topIdx=r.indices.slice(0,3);
     return`<div class="region-card" onclick="MKT.goRegion('${r.id}')">
       <div class="rc-top">
-        <span class="rc-emoji">${r.emoji}</span>
+        <img src="${r.flag}" width="28" height="21" style="border-radius:3px;object-fit:cover;flex-shrink:0" onerror="this.outerHTML='<span style=\'font-size:20px\'>${r.emoji}</span>'"/>
         <div><div class="rc-name">${r.name}</div><div class="rc-count">${r.indices.length} indices</div></div>
       </div>
       <div class="rc-indices">${topIdx.map(i=>{
@@ -2549,7 +2608,7 @@ async function renderNews3(){
 function renderSbIdx(){
   document.getElementById('sbIdx').innerHTML=REGIONS_DEF[0].indices.map(i=>{
     const d=ID_DATA[i.sym]||{price:i.base,pct:0};
-    return`<div class="irow" onclick="goToIndex('${i.sym}','india')" style="cursor:pointer">
+    return`<div class="irow" onclick="location.href='/index/${encodeURIComponent(i.sym)}'" style="cursor:pointer">
       <div class="irow-info"><div class="irow-name" style="color:${i.color}">${i.n}</div><div class="irow-price" data-sbprice="${i.sym}">${fmt(d.price)}</div></div>
       <div class="irow-spark" data-sbspark="${i.sym}">${spark(histI[i.sym]||[],60,26,1.4)}</div>
       <div class="irow-chg ${d.pct>=0?'pos':'neg'}" data-sbpct="${i.sym}">${sgn(d.pct)}${fmt(d.pct)}%</div>

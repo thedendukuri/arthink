@@ -669,6 +669,11 @@ app.get('/stock/:sym', (req, res) =>
   res.sendFile(path.join(__dirname, 'stock.html'))
 );
 
+// ── Serve index detail page ──────────────────────────────────
+app.get('/index/:sym', (req, res) =>
+  res.sendFile(path.join(__dirname, 'index-detail.html'))
+);
+
 // ── GET /api/stock/:sym/summary ──────────────────────────────
 // Price + company profile + key stats. 5-minute cache.
 // Strategy: quote() first (no field restriction = most reliable),

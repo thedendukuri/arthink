@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>prvaaha. — Index</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230d1f10'/%3E%3Cpath d='M2,22 L6,16 L10,20 L14,9 C16,4 18,14 21,10 C24,6 27,13 30,8' fill='none' stroke='%23FF9933' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,800;1,400;1,700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+:root{
+  --bg:#000000;--surface:#0a0a0a;--surface2:#111111;--surface3:#181818;
+  --border:#1c1c1c;--border2:#2a2a2a;
+  --text:#e4e1da;--text2:#a09c95;--muted:#5a5650;
+  --pos:#22c55e;--neg:#ef4444;--accent:#FF9933;--link:#c084fc;
+  --hdr:#FF9933;
+  --serif:'Playfair Display',Georgia,serif;
+  --mono:'JetBrains Mono','Courier New',monospace;
+  --sans:'Inter',-apple-system,sans-serif;
+}
+[data-theme="light"]{
+  --bg:#ffffff;--surface:#ffffff;--surface2:#f5f5f5;--surface3:#eeeeee;
+  --border:#e8e8e8;--border2:#d0d0d0;
+  --text:#0a0908;--text2:#4a4740;--muted:#78746c;
+  --pos:#166534;--neg:#991b1b;--accent:#c5560a;--link:#7e22ce;
+  --hdr:#FF9933;
+}
+@media(prefers-color-scheme:light){
+  :root:not([data-theme="dark"]){
+    --bg:#ffffff;--surface:#ffffff;--surface2:#f5f5f5;--surface3:#eeeeee;
+    --border:#e8e8e8;--border2:#d0d0d0;
+    --text:#0a0908;--text2:#4a4740;--muted:#78746c;
+    --pos:#166534;--neg:#991b1b;--accent:#c5560a;--link:#7e22ce;
+    --hdr:#FF9933;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font-family:inherit}
+.pos{color:var(--pos)}.neg{color:var(--neg)}
+
+/* Header */
+.hdr{background:var(--hdr);border-bottom:3px solid #138808;height:52px;display:flex;align-items:center;padding:0 24px;gap:0;position:sticky;top:0;z-index:500}
+.logo{display:flex;align-items:center;gap:10px;padding-right:20px;border-right:1px solid rgba(0,0,0,.18);flex-shrink:0;cursor:pointer}
+.logo-flag{width:24px;height:24px;border-radius:3px;overflow:hidden;display:flex;flex-direction:column;flex-shrink:0}
+.lf1{flex:1;background:#FF9933}.lf2{flex:1;background:#fff;display:flex;align-items:center;justify-content:center;font-size:6px;font-weight:900;color:#000080}.lf3{flex:1;background:#138808}
+.logo-name{font-family:var(--serif);font-size:18px;font-weight:700;color:#3d1a00;white-space:nowrap;font-style:italic}
+.logo-name em{color:#138808;font-style:italic}.logo-dot{color:#138808}
+.hdr-right{display:flex;align-items:center;gap:8px;margin-left:auto}
+.theme-btn{background:none;border:1px solid rgba(0,0,0,.2);width:30px;height:30px;display:flex;align-items:center;justify-content:center;color:rgba(0,0,0,.55);font-size:13px}
+.theme-btn:hover{border-color:#138808;color:#138808}
+
+/* Symbol Bar */
+.sym-bar{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:55px;z-index:400}
+.sym-bar-inner{max-width:1400px;margin:0 auto;padding:14px 24px;display:flex;align-items:flex-start;gap:28px;flex-wrap:wrap}
+.breadcrumb{font-family:var(--mono);font-size:10px;color:var(--muted);display:flex;align-items:center;gap:5px;margin-bottom:6px;letter-spacing:.3px}
+.breadcrumb a{cursor:pointer}.breadcrumb a:hover{color:var(--accent)}
+.breadcrumb .sep{color:var(--border2)}
+.sym-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.sym-tkr{font-family:var(--mono);font-size:22px;font-weight:700;letter-spacing:-.3px}
+.sym-co{font-size:14px;color:var(--text2);font-weight:500}
+.sym-exch{font-family:var(--mono);font-size:10px;color:var(--muted);background:var(--surface2);padding:2px 6px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;align-self:center}
+.sym-price-block{text-align:right;margin-left:auto}
+.sym-price{font-family:var(--mono);font-size:32px;font-weight:700;letter-spacing:-1px;line-height:1}
+.sym-change{font-family:var(--mono);font-size:14px;font-weight:600;margin-top:4px}
+.sym-time{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px}
+
+/* KPI Strip */
+.kpi-strip{background:var(--surface2);border-bottom:1px solid var(--border)}
+.kpi-inner{max-width:1400px;margin:0 auto;padding:0 24px;display:flex;gap:0;overflow-x:auto}
+.kpi{padding:10px 24px 10px 0;min-width:120px;flex-shrink:0;border-right:1px solid var(--border)}
+.kpi:last-child{border-right:none}
+.kpi-k{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;margin-bottom:4px}
+.kpi-v{font-family:var(--mono);font-size:13px;font-weight:700}
+
+/* Layout */
+.page{max-width:1400px;margin:0 auto;padding:24px;display:grid;grid-template-columns:1fr 320px;gap:24px}
+@media(max-width:900px){.page{grid-template-columns:1fr;padding:16px}}
+.main{}
+.sidebar{}
+
+/* Chart */
+.chart-card{background:var(--surface);border:1px solid var(--border);margin-bottom:20px}
+.chart-hdr{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.chart-title{font-size:12px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--muted)}
+.period-tabs{display:flex;gap:2px;margin-left:auto}
+.p-btn{background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--mono);font-size:10px;font-weight:600;padding:3px 8px;letter-spacing:.3px;transition:all .15s}
+.p-btn:hover,.p-btn.on{background:var(--accent);border-color:var(--accent);color:#000}
+.type-tabs{display:flex;gap:2px}
+.t-btn{background:none;border:1px solid var(--border);color:var(--muted);font-size:11px;padding:3px 8px;transition:all .15s}
+.t-btn.on{background:var(--surface3);border-color:var(--border2);color:var(--text)}
+#chartWrap{height:380px;position:relative}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);margin-bottom:16px}
+.card-hdr{padding:12px 16px;border-bottom:1px solid var(--border);font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;justify-content:space-between}
+.card-body{padding:16px}
+
+/* Stats grid */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border)}
+.stat-cell{background:var(--surface);padding:12px 14px}
+.stat-k{font-size:10px;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;margin-bottom:4px}
+.stat-v{font-family:var(--mono);font-size:13px;font-weight:700}
+
+/* Constituents table */
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{font-size:9px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface)}
+.tbl th.tr,.tbl td.tr{text-align:right}
+.tbl td{padding:9px 10px;border-bottom:1px solid var(--border)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--surface2)}
+.tbl tr{cursor:pointer;transition:background .1s}
+.weight-bar{display:flex;align-items:center;gap:6px}
+.weight-fill{height:3px;background:var(--accent);border-radius:2px;min-width:2px}
+
+/* About */
+.about-text{font-size:13px;line-height:1.7;color:var(--text2)}
+.about-text p{margin-bottom:12px}
+.about-text p:last-child{margin-bottom:0}
+
+/* Sidebar widgets */
+.sb-card{background:var(--surface);border:1px solid var(--border);margin-bottom:14px}
+.sb-card-hdr{padding:10px 14px;border-bottom:1px solid var(--border);font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
+.sb-card-body{padding:0}
+.sb-row{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border);font-size:12px;cursor:pointer;transition:background .1s}
+.sb-row:last-child{border-bottom:none}
+.sb-row:hover{background:var(--surface2)}
+.sb-sym{font-family:var(--mono);font-weight:700;font-size:11px}
+.sb-name{color:var(--text2);font-size:11px}
+.sb-pct{font-family:var(--mono);font-size:11px;font-weight:700}
+
+/* Tab bar */
+.tab-bar{display:flex;border-bottom:1px solid var(--border);margin-bottom:20px}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;padding:10px 16px;font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.3px;margin-bottom:-1px;transition:all .15s}
+.tab-btn.on{color:var(--text);border-bottom-color:var(--accent)}
+.tab-btn:hover{color:var(--text)}
+.tab-pane{display:none}.tab-pane.on{display:block}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="logo" onclick="location.href='/'">
+    <div class="logo-flag"><div class="lf1"></div><div class="lf2">⊙</div><div class="lf3"></div></div>
+    <span class="logo-name"><em>p</em>rvaaha<span class="logo-dot">.</span></span>
+  </div>
+  <div class="hdr-right">
+    <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">◐</button>
+  </div>
+</header>
+
+<div class="sym-bar">
+  <div class="sym-bar-inner">
+    <div style="flex:1;min-width:0">
+      <div class="breadcrumb" id="breadcrumb"></div>
+      <div class="sym-head">
+        <div class="sym-tkr" id="symTkr">—</div>
+        <div class="sym-co" id="symName">—</div>
+        <div class="sym-exch" id="symExch">—</div>
+      </div>
+    </div>
+    <div class="sym-price-block">
+      <div class="sym-price" id="symPrice">—</div>
+      <div class="sym-change" id="symChange">—</div>
+      <div class="sym-time" id="symTime">—</div>
+    </div>
+  </div>
+</div>
+
+<div class="kpi-strip">
+  <div class="kpi-inner" id="kpiStrip"></div>
+</div>
+
+<div class="page">
+  <div class="main">
+
+    <!-- Chart -->
+    <div class="chart-card">
+      <div class="chart-hdr">
+        <span class="chart-title">Price Chart</span>
+        <div class="type-tabs">
+          <button class="t-btn on" id="ctLine" onclick="setChartType('line',this)">Line</button>
+          <button class="t-btn" id="ctCandle" onclick="setChartType('candle',this)">Candle</button>
+        </div>
+        <div class="period-tabs" id="periodTabs"></div>
+      </div>
+      <div id="chartWrap"></div>
+    </div>
+
+    <!-- Tabs: Constituents | About -->
+    <div class="tab-bar">
+      <button class="tab-btn on" onclick="switchTab('constituents',this)">Constituents</button>
+      <button class="tab-btn" onclick="switchTab('about',this)">About</button>
+    </div>
+
+    <div id="tab-constituents" class="tab-pane on">
+      <div class="card">
+        <div class="card-hdr">
+          <span>Top Constituents</span>
+          <span id="constNote" style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:var(--muted)"></span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="tbl">
+            <thead><tr>
+              <th>Symbol</th><th>Company</th><th>Sector</th>
+              <th class="tr">Weight</th><th class="tr">Price</th><th class="tr">Change</th>
+            </tr></thead>
+            <tbody id="constBody">
+              <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-about" class="tab-pane">
+      <div class="card">
+        <div class="card-hdr">About this Index</div>
+        <div class="card-body about-text" id="aboutText"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sb-card">
+      <div class="sb-card-hdr">Related Indices</div>
+      <div class="sb-card-body" id="relatedIndices"></div>
+    </div>
+    <div class="sb-card">
+      <div class="sb-card-hdr">Key Stats</div>
+      <div class="sb-card-body" id="sideStats"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Theme ────────────────────────────────────────────────────
+const saved=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme:light)').matches?'light':'dark');
+document.documentElement.setAttribute('data-theme',saved);
+function toggleTheme(){
+  const t=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';
+  document.documentElement.setAttribute('data-theme',t);
+  localStorage.setItem('theme',t);
+  if(_chartSeries) buildChart();
+}
+
+const fmt=(n,d=2)=>(+n).toLocaleString('en-IN',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmt2=(n,d=2)=>(+n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const sgn=v=>v>=0?'+':'';
+const fmtVol=v=>!v?'—':v>=1e9?(v/1e9).toFixed(2)+'B':v>=1e7?(v/1e7).toFixed(1)+'Cr':v>=1e5?(v/1e5).toFixed(1)+'L':(v/1e3).toFixed(0)+'K';
+
+// ── Index metadata ──────────────────────────────────────────
+const INDEX_META = {
+  '^NSEI':{
+    shortName:'NIFTY', fullName:'Nifty 50', exch:'NSE', region:'Bhaarat',
+    color:'#FF9933', currency:'₹', isIndia:true,
+    about:`<p>The Nifty 50 is the flagship large-cap index of the National Stock Exchange of India (NSE). It tracks the weighted average of 50 of India's largest and most liquid publicly traded companies across key sectors.</p><p>Launched in 1996, Nifty 50 is the primary benchmark for Indian equity mutual funds and the underlying for derivatives contracts worth trillions of rupees daily. It is calculated using free-float market capitalisation methodology and rebalanced semi-annually.</p><p>The index covers over 65% of the float-adjusted market capitalisation of NSE-listed stocks and represents a broad cross-section of India's economy — from banking and IT to consumer goods, energy, and infrastructure.</p>`,
+    constituents:[
+      {sym:'RELIANCE.NS',s:'RELIANCE',n:'Reliance Industries',sect:'Energy',w:10.2},
+      {sym:'HDFCBANK.NS',s:'HDFCBANK',n:'HDFC Bank',sect:'Banking',w:9.1},
+      {sym:'ICICIBANK.NS',s:'ICICIBANK',n:'ICICI Bank',sect:'Banking',w:7.4},
+      {sym:'INFY.NS',s:'INFY',n:'Infosys',sect:'IT',w:6.3},
+      {sym:'TCS.NS',s:'TCS',n:'Tata Consultancy Services',sect:'IT',w:5.8},
+      {sym:'BHARTIARTL.NS',s:'BHARTIARTL',n:'Bharti Airtel',sect:'Telecom',w:3.9},
+      {sym:'KOTAKBANK.NS',s:'KOTAKBANK',n:'Kotak Mahindra Bank',sect:'Banking',w:3.5},
+      {sym:'LT.NS',s:'LT',n:'Larsen & Toubro',sect:'Infra',w:3.2},
+      {sym:'AXISBANK.NS',s:'AXISBANK',n:'Axis Bank',sect:'Banking',w:3.0},
+      {sym:'SBIN.NS',s:'SBIN',n:'State Bank of India',sect:'Banking',w:2.9},
+      {sym:'HCLTECH.NS',s:'HCLTECH',n:'HCL Technologies',sect:'IT',w:2.7},
+      {sym:'WIPRO.NS',s:'WIPRO',n:'Wipro',sect:'IT',w:2.1},
+      {sym:'MARUTI.NS',s:'MARUTI',n:'Maruti Suzuki',sect:'Auto',w:2.0},
+      {sym:'BAJFINANCE.NS',s:'BAJFINANCE',n:'Bajaj Finance',sect:'NBFC',w:1.9},
+      {sym:'SUNPHARMA.NS',s:'SUNPHARMA',n:'Sun Pharmaceutical',sect:'Pharma',w:1.8},
+    ],
+    peers:['^BSESN','^NSEBANK','^CNXIT','^CNXAUTO','^CNXPHARMA'],
+  },
+  '^BSESN':{
+    shortName:'SENSEX', fullName:'BSE Sensex', exch:'BSE', region:'Bhaarat',
+    color:'#a78bfa', currency:'₹', isIndia:true,
+    about:`<p>The S&P BSE Sensex (Sensitivity Index) is India's premier stock market index, tracking 30 well-established and financially sound companies listed on the Bombay Stock Exchange (BSE). It is one of Asia's oldest indices, established in 1986.</p><p>The Sensex serves as the heartbeat of Indian equities — when markets in India open, it's the Sensex number that flashes on every financial screen, every newspaper, every news channel. It is calculated using the free-float market capitalisation method.</p><p>While the Nifty 50 offers broader exposure with 50 stocks, the Sensex is the more iconic index — deeply embedded in the cultural and financial consciousness of India.</p>`,
+    constituents:[
+      {sym:'RELIANCE.NS',s:'RELIANCE',n:'Reliance Industries',sect:'Energy',w:12.1},
+      {sym:'HDFCBANK.NS',s:'HDFCBANK',n:'HDFC Bank',sect:'Banking',w:11.4},
+      {sym:'ICICIBANK.NS',s:'ICICIBANK',n:'ICICI Bank',sect:'Banking',w:8.2},
+      {sym:'INFY.NS',s:'INFY',n:'Infosys',sect:'IT',w:7.1},
+      {sym:'TCS.NS',s:'TCS',n:'Tata Consultancy Services',sect:'IT',w:6.4},
+      {sym:'BHARTIARTL.NS',s:'BHARTIARTL',n:'Bharti Airtel',sect:'Telecom',w:4.3},
+      {sym:'LT.NS',s:'LT',n:'Larsen & Toubro',sect:'Infra',w:3.8},
+      {sym:'AXISBANK.NS',s:'AXISBANK',n:'Axis Bank',sect:'Banking',w:3.4},
+      {sym:'SBIN.NS',s:'SBIN',n:'State Bank of India',sect:'Banking',w:3.1},
+      {sym:'KOTAKBANK.NS',s:'KOTAKBANK',n:'Kotak Mahindra Bank',sect:'Banking',w:3.0},
+      {sym:'HCLTECH.NS',s:'HCLTECH',n:'HCL Technologies',sect:'IT',w:2.5},
+      {sym:'MARUTI.NS',s:'MARUTI',n:'Maruti Suzuki',sect:'Auto',w:2.3},
+      {sym:'M&M.NS',s:'M&M',n:'Mahindra & Mahindra',sect:'Auto',w:2.0},
+      {sym:'NESTLEIND.NS',s:'NESTLEIND',n:'Nestle India',sect:'FMCG',w:1.8},
+      {sym:'ULTRACEMCO.NS',s:'ULTRACEMCO',n:'UltraTech Cement',sect:'Cement',w:1.7},
+    ],
+    peers:['^NSEI','^NSEBANK','^CNXIT','^CNXAUTO'],
+  },
+  '^NSEBANK':{
+    shortName:'BNIFTY', fullName:'Bank Nifty', exch:'NSE', region:'Bhaarat',
+    color:'#38bdf8', currency:'₹', isIndia:true,
+    about:`<p>The Nifty Bank Index tracks the performance of the most liquid and large-cap Indian banking stocks listed on the NSE. It comprises 12 banking sector stocks and is one of the most actively traded indices in India's derivative markets.</p><p>Bank Nifty futures and options have among the highest trading volumes globally, making it a critical hedging and speculative instrument for traders. The index reflects the health of India's banking system — a sector that is central to the country's economic growth story.</p><p>The index is rebalanced quarterly. Key constituents include HDFC Bank, ICICI Bank, Axis Bank, SBI, and Kotak Mahindra Bank, which together account for the bulk of India's private and public sector banking assets.</p>`,
+    constituents:[
+      {sym:'HDFCBANK.NS',s:'HDFCBANK',n:'HDFC Bank',sect:'Private Bank',w:28.4},
+      {sym:'ICICIBANK.NS',s:'ICICIBANK',n:'ICICI Bank',sect:'Private Bank',w:22.6},
+      {sym:'AXISBANK.NS',s:'AXISBANK',n:'Axis Bank',sect:'Private Bank',w:10.1},
+      {sym:'SBIN.NS',s:'SBIN',n:'State Bank of India',sect:'PSU Bank',w:9.4},
+      {sym:'KOTAKBANK.NS',s:'KOTAKBANK',n:'Kotak Mahindra Bank',sect:'Private Bank',w:8.8},
+      {sym:'INDUSINDBK.NS',s:'INDUSINDBK',n:'IndusInd Bank',sect:'Private Bank',w:5.2},
+      {sym:'BANDHANBNK.NS',s:'BANDHANBNK',n:'Bandhan Bank',sect:'Private Bank',w:2.8},
+      {sym:'FEDERALBNK.NS',s:'FEDERALBNK',n:'Federal Bank',sect:'Private Bank',w:2.4},
+      {sym:'IDFCFIRSTB.NS',s:'IDFCFIRSTB',n:'IDFC First Bank',sect:'Private Bank',w:2.1},
+      {sym:'AUBANK.NS',s:'AUBANK',n:'AU Small Finance Bank',sect:'SFB',w:1.9},
+      {sym:'PNB.NS',s:'PNB',n:'Punjab National Bank',sect:'PSU Bank',w:1.8},
+      {sym:'BANKBARODA.NS',s:'BANKBARODA',n:'Bank of Baroda',sect:'PSU Bank',w:1.6},
+    ],
+    peers:['^NSEI','^BSESN','^CNXIT'],
+  },
+  '^CNXIT':{
+    shortName:'NIFTYIT', fullName:'Nifty IT', exch:'NSE', region:'Bhaarat',
+    color:'#34d399', currency:'₹', isIndia:true,
+    about:`<p>The Nifty IT Index tracks Indian information technology companies listed on the NSE. It comprises the 10 largest IT sector stocks by free-float market capitalisation, representing India's globally competitive technology export industry.</p><p>India's IT sector is a ₹25+ lakh crore industry that earns the bulk of its revenue from clients in the US and Europe. This makes the Nifty IT sensitive to global tech spending cycles, the USD/INR exchange rate, and US visa policies — factors that differentiate it meaningfully from domestic-demand driven indices.</p>`,
+    constituents:[
+      {sym:'TCS.NS',s:'TCS',n:'Tata Consultancy Services',sect:'IT Services',w:32.1},
+      {sym:'INFY.NS',s:'INFY',n:'Infosys',sect:'IT Services',w:24.8},
+      {sym:'HCLTECH.NS',s:'HCLTECH',n:'HCL Technologies',sect:'IT Services',w:13.2},
+      {sym:'WIPRO.NS',s:'WIPRO',n:'Wipro',sect:'IT Services',w:8.4},
+      {sym:'TECHM.NS',s:'TECHM',n:'Tech Mahindra',sect:'IT Services',w:5.6},
+      {sym:'LTIM.NS',s:'LTIM',n:'LTIMindtree',sect:'IT Services',w:4.9},
+      {sym:'MPHASIS.NS',s:'MPHASIS',n:'Mphasis',sect:'IT Services',w:3.1},
+      {sym:'PERSISTENT.NS',s:'PERSISTENT',n:'Persistent Systems',sect:'IT Services',w:2.8},
+      {sym:'COFORGE.NS',s:'COFORGE',n:'Coforge',sect:'IT Services',w:2.4},
+      {sym:'OFSS.NS',s:'OFSS',n:'Oracle Financial Services',sect:'Fintech',w:2.7},
+    ],
+    peers:['^NSEI','^BSESN','^NSEBANK'],
+  },
+  '^CNXAUTO':{
+    shortName:'AUTO', fullName:'Nifty Auto', exch:'NSE', region:'Bhaarat',
+    color:'#fb923c', currency:'₹', isIndia:true,
+    about:`<p>The Nifty Auto Index tracks 15 of the most liquid automobile and auto ancillary stocks on the NSE. It covers the full automotive value chain: two-wheelers, passenger vehicles, commercial vehicles, tractors, and auto components.</p><p>India is the world's third-largest automobile market and the largest two-wheeler market globally. The auto sector is a key indicator of discretionary consumer spending and rural income levels — making Nifty Auto a useful economic barometer alongside the headline indices.</p>`,
+    constituents:[
+      {sym:'MARUTI.NS',s:'MARUTI',n:'Maruti Suzuki',sect:'Passenger Vehicles',w:18.6},
+      {sym:'M&M.NS',s:'M&M',n:'Mahindra & Mahindra',sect:'SUV/Tractor',w:16.2},
+      {sym:'TATAMOTORS.NS',s:'TATAMOTORS',n:'Tata Motors',sect:'Commercial Vehicles',w:14.8},
+      {sym:'BAJAJ-AUTO.NS',s:'BAJAJ-AUTO',n:'Bajaj Auto',sect:'Two-Wheelers',w:12.4},
+      {sym:'HEROMOTOCO.NS',s:'HEROMOTOCO',n:'Hero MotoCorp',sect:'Two-Wheelers',w:10.1},
+      {sym:'EICHERMOT.NS',s:'EICHERMOT',n:'Eicher Motors',sect:'Two-Wheelers',w:8.3},
+      {sym:'TVSMOTOR.NS',s:'TVSMOTOR',n:'TVS Motor',sect:'Two-Wheelers',w:5.9},
+      {sym:'ASHOKLEY.NS',s:'ASHOKLEY',n:'Ashok Leyland',sect:'Commercial Vehicles',w:4.2},
+      {sym:'BOSCHLTD.NS',s:'BOSCHLTD',n:'Bosch India',sect:'Components',w:3.6},
+      {sym:'MOTHERSON.NS',s:'MOTHERSON',n:'Motherson Sumi',sect:'Components',w:3.1},
+    ],
+    peers:['^NSEI','^BSESN','^CNXPHARMA'],
+  },
+  '^CNXPHARMA':{
+    shortName:'PHARMA', fullName:'Nifty Pharma', exch:'NSE', region:'Bhaarat',
+    color:'#f472b6', currency:'₹', isIndia:true,
+    about:`<p>The Nifty Pharma Index tracks 10 of India's most liquid pharmaceutical stocks on the NSE. India is the world's largest supplier of generic drugs, providing over 20% of global generic medicine exports. The sector earns significant foreign exchange and is a point of national pride.</p><p>The index is sensitive to USFDA inspection outcomes, US drug pricing policy, and API (active pharmaceutical ingredient) import costs from China. It is less correlated to domestic economic cycles than most other sector indices, making it a useful diversification tool.</p>`,
+    constituents:[
+      {sym:'SUNPHARMA.NS',s:'SUNPHARMA',n:'Sun Pharmaceutical',sect:'Pharma',w:31.2},
+      {sym:'DRREDDY.NS',s:'DRREDDY',n:"Dr. Reddy's Laboratories",sect:'Pharma',w:16.8},
+      {sym:'CIPLA.NS',s:'CIPLA',n:'Cipla',sect:'Pharma',w:12.4},
+      {sym:'DIVISLAB.NS',s:'DIVISLAB',n:"Divi's Laboratories",sect:'APIs',w:10.6},
+      {sym:'AUROPHARMA.NS',s:'AUROPHARMA',n:'Aurobindo Pharma',sect:'Generics',w:7.8},
+      {sym:'LUPIN.NS',s:'LUPIN',n:'Lupin',sect:'Pharma',w:6.9},
+      {sym:'TORNTPHARM.NS',s:'TORNTPHARM',n:'Torrent Pharmaceuticals',sect:'Pharma',w:5.4},
+      {sym:'ALKEM.NS',s:'ALKEM',n:'Alkem Laboratories',sect:'Pharma',w:3.8},
+      {sym:'BIOCON.NS',s:'BIOCON',n:'Biocon',sect:'Biotech',w:3.2},
+      {sym:'GLENMARK.NS',s:'GLENMARK',n:'Glenmark Pharmaceuticals',sect:'Pharma',w:2.9},
+    ],
+    peers:['^NSEI','^BSESN','^CNXIT','^NSEBANK'],
+  },
+  // ── Global indices ────────────────────────────────────────
+  '^GSPC':{shortName:'SPX',fullName:'S&P 500',exch:'NYSE',region:'United States',color:'#3b82f6',currency:'$',about:`<p>The S&P 500 is the world's most widely followed equity benchmark, tracking 500 of the largest publicly traded companies in the United States. It represents approximately 80% of total US market capitalisation and is the primary benchmark for the vast majority of global equity funds.</p><p>The index is market-cap weighted and maintained by S&P Dow Jones Indices. It spans 11 sectors with technology, healthcare, and financials being the largest. The S&P 500 is widely regarded as the single best indicator of US large-cap equities performance.</p>`,constituents:[{sym:'AAPL',s:'AAPL',n:'Apple',sect:'Tech',w:7.1},{sym:'MSFT',s:'MSFT',n:'Microsoft',sect:'Tech',w:6.4},{sym:'NVDA',s:'NVDA',n:'NVIDIA',sect:'Semiconductors',w:6.0},{sym:'AMZN',s:'AMZN',n:'Amazon',sect:'E-Commerce',w:3.8},{sym:'GOOGL',s:'GOOGL',n:'Alphabet',sect:'Tech',w:3.5},{sym:'META',s:'META',n:'Meta Platforms',sect:'Social Media',w:2.8},{sym:'TSLA',s:'TSLA',n:'Tesla',sect:'EV',w:2.1},{sym:'BRK-B',s:'BRK-B',n:'Berkshire Hathaway',sect:'Finance',w:1.9},{sym:'AVGO',s:'AVGO',n:'Broadcom',sect:'Semiconductors',w:1.7},{sym:'JPM',s:'JPM',n:'JPMorgan Chase',sect:'Banking',w:1.6}],peers:['^IXIC','^DJI','^RUT']},
+  '^IXIC':{shortName:'COMP',fullName:'NASDAQ Composite',exch:'NASDAQ',region:'United States',color:'#60a5fa',currency:'$',about:`<p>The NASDAQ Composite tracks all equity securities listed on the NASDAQ stock exchange — over 3,000 stocks in total. It is heavily weighted toward technology, with the tech sector accounting for roughly 50% of the index by market cap.</p><p>The index includes domestic and international companies and is the primary benchmark for growth-oriented technology investing. Its volatility tends to be higher than the S&P 500 due to its concentration in high-growth, higher-valuation sectors.</p>`,constituents:[{sym:'AAPL',s:'AAPL',n:'Apple',sect:'Tech',w:9.1},{sym:'MSFT',s:'MSFT',n:'Microsoft',sect:'Tech',w:8.2},{sym:'NVDA',s:'NVDA',n:'NVIDIA',sect:'Semiconductors',w:7.8},{sym:'AMZN',s:'AMZN',n:'Amazon',sect:'E-Commerce',w:4.9},{sym:'GOOGL',s:'GOOGL',n:'Alphabet',sect:'Tech',w:4.4},{sym:'META',s:'META',n:'Meta Platforms',sect:'Social Media',w:3.6},{sym:'TSLA',s:'TSLA',n:'Tesla',sect:'EV',w:2.7},{sym:'AVGO',s:'AVGO',n:'Broadcom',sect:'Semiconductors',w:2.2},{sym:'COST',s:'COST',n:'Costco',sect:'Retail',w:1.4},{sym:'NFLX',s:'NFLX',n:'Netflix',sect:'Streaming',w:1.3}],peers:['^GSPC','^DJI','^RUT']},
+  '^DJI':{shortName:'DJIA',fullName:'Dow Jones Industrial Average',exch:'NYSE',region:'United States',color:'#93c5fd',currency:'$',about:`<p>The Dow Jones Industrial Average (DJIA) is the oldest continuously maintained US stock index. It tracks 30 large-cap blue-chip US companies and is price-weighted — meaning higher-priced stocks have more influence regardless of market cap.</p><p>Though the Dow is price-weighted (an unusual methodology), it remains one of the most recognisable financial benchmarks globally. Its 30 constituents include some of the most iconic American corporations across industrials, finance, healthcare, and consumer goods.</p>`,constituents:[{sym:'UNH',s:'UNH',n:'UnitedHealth Group',sect:'Healthcare',w:10.4},{sym:'GS',s:'GS',n:'Goldman Sachs',sect:'Finance',w:8.2},{sym:'MSFT',s:'MSFT',n:'Microsoft',sect:'Tech',w:6.8},{sym:'HD',s:'HD',n:'Home Depot',sect:'Retail',w:5.9},{sym:'CAT',s:'CAT',n:'Caterpillar',sect:'Industrials',w:5.4},{sym:'CRM',s:'CRM',n:'Salesforce',sect:'SaaS',w:5.1},{sym:'AMGN',s:'AMGN',n:'Amgen',sect:'Biotech',w:4.7},{sym:'BA',s:'BA',n:'Boeing',sect:'Aerospace',w:4.2},{sym:'JPM',s:'JPM',n:'JPMorgan Chase',sect:'Banking',w:4.1},{sym:'MCD',s:'MCD',n:"McDonald's",sect:'Restaurants',w:3.9}],peers:['^GSPC','^IXIC']},
+  '^N225':{shortName:'N225',fullName:'Nikkei 225',exch:'TSE',region:'Japan',color:'#ec4899',currency:'¥',about:`<p>The Nikkei 225 is Japan's premier stock market index, tracking 225 blue-chip companies listed on the Tokyo Stock Exchange. It is price-weighted, similar to the Dow Jones, and serves as the primary benchmark for Japanese equities.</p><p>Japan's stock market is the third largest in the world by market capitalisation. The Nikkei is sensitive to the yen's exchange rate (most large Japanese companies are exporters), the Bank of Japan's monetary policy, and global risk appetite.</p>`,constituents:[{sym:'6758.T',s:'SONY',n:'Sony Group',sect:'Electronics',w:4.2},{sym:'8306.T',s:'MUFG',n:'Mitsubishi UFJ Financial',sect:'Banking',w:3.8},{sym:'9984.T',s:'SOFTBANK',n:'SoftBank Group',sect:'Tech',w:3.4},{sym:'6861.T',s:'KEYENCE',n:'Keyence',sect:'Automation',w:3.1},{sym:'7203.T',s:'TOYOTA',n:'Toyota Motor',sect:'Auto',w:2.9}],peers:['^TOPX','^HSI','^AXJO']},
+  '^HSI':{shortName:'HSI',fullName:'Hang Seng Index',exch:'HKEX',region:'Greater China',color:'#fca5a5',currency:'HK$',about:`<p>The Hang Seng Index tracks 82 of the largest companies listed on the Hong Kong Stock Exchange. It serves as the benchmark for Hong Kong equities and a key proxy for Greater China market sentiment.</p><p>The index includes mainland Chinese companies listed in Hong Kong (H-shares and red chips) alongside Hong Kong-incorporated firms. Financial services, real estate, and technology constitute the largest sector weights.</p>`,constituents:[{sym:'0700.HK',s:'TENCENT',n:'Tencent Holdings',sect:'Tech',w:9.8},{sym:'9988.HK',s:'ALIBABA',n:'Alibaba Group',sect:'E-Commerce',w:7.2},{sym:'0941.HK',s:'CHINA MOBILE',n:'China Mobile',sect:'Telecom',w:5.6},{sym:'1299.HK',s:'AIA',n:'AIA Group',sect:'Insurance',w:5.1},{sym:'2318.HK',s:'PING AN',n:'Ping An Insurance',sect:'Insurance',w:4.4}],peers:['000001.SS','^N225','^AXJO']},
+  '^FTSE':{shortName:'UKX',fullName:'FTSE 100',exch:'LSE',region:'Europe',color:'#8b5cf6',currency:'£',about:`<p>The FTSE 100 Index tracks the 100 largest companies by market capitalisation listed on the London Stock Exchange. It is maintained by FTSE Russell and is the primary benchmark for UK equities.</p><p>Despite being a UK index, the FTSE 100 is highly international — its constituent companies derive approximately 75% of revenues from outside the UK. Energy, mining, banking, and consumer staples dominate the index, making it more of a global blue-chip index than a pure UK domestic indicator.</p>`,constituents:[{sym:'SHEL.L',s:'SHELL',n:'Shell',sect:'Energy',w:9.2},{sym:'HSBA.L',s:'HSBC',n:'HSBC Holdings',sect:'Banking',w:7.1},{sym:'AZN.L',s:'ASTRAZENECA',n:'AstraZeneca',sect:'Pharma',w:6.8},{sym:'ULVR.L',s:'UNILEVER',n:'Unilever',sect:'FMCG',w:4.9},{sym:'BP.L',s:'BP',n:'BP',sect:'Energy',w:4.4}],peers:['^GDAXI','^FCHI','^STOXX50E']},
+  '^GDAXI':{shortName:'DAX',fullName:'DAX 40',exch:'XETRA',region:'Europe',color:'#a78bfa',currency:'€',about:`<p>The DAX tracks the 40 largest and most liquid companies traded on the Frankfurt Stock Exchange. It is Germany's primary benchmark and one of the most important equity indices in the world.</p><p>Germany is Europe's largest economy and an export powerhouse. The DAX is heavily weighted toward industrials, autos, chemicals, and financials — reflecting Germany's manufacturing-led economic model. It is calculated as a total return index (dividends reinvested), which makes it appear higher than price-return indices of similar scale.</p>`,constituents:[{sym:'SAP.DE',s:'SAP',n:'SAP SE',sect:'Enterprise Software',w:12.4},{sym:'SIE.DE',s:'SIEMENS',n:'Siemens',sect:'Industrials',w:8.6},{sym:'ALV.DE',s:'ALLIANZ',n:'Allianz SE',sect:'Insurance',w:7.8},{sym:'MRK.DE',s:'MERCK',n:'Merck KGaA',sect:'Pharma',w:5.4},{sym:'DTE.DE',s:'TELEKOM',n:'Deutsche Telekom',sect:'Telecom',w:4.9}],peers:['^FTSE','^FCHI','^STOXX50E']},
+  '^AXJO':{shortName:'XJO',fullName:'ASX 200',exch:'ASX',region:'Asia-Pacific',color:'#14b8a6',currency:'A$',about:`<p>The S&P/ASX 200 is the benchmark index for the Australian equity market, tracking the 200 largest ASX-listed stocks by float-adjusted market capitalisation. It covers over 80% of Australian equity market capitalisation.</p><p>Australia's market is heavily skewed toward financials (the Big Four banks) and resources (iron ore, copper, gold, coal). This makes the ASX 200 sensitive to commodity prices, Chinese economic activity, and the Reserve Bank of Australia's interest rate decisions.</p>`,constituents:[{sym:'BHP.AX',s:'BHP',n:'BHP Group',sect:'Mining',w:11.2},{sym:'CBA.AX',s:'CBA',n:'Commonwealth Bank',sect:'Banking',w:9.8},{sym:'CSL.AX',s:'CSL',n:'CSL Limited',sect:'Biotech',w:6.4},{sym:'NAB.AX',s:'NAB',n:'National Australia Bank',sect:'Banking',w:5.6},{sym:'WBC.AX',s:'WBC',n:'Westpac Banking',sect:'Banking',w:5.1}],peers:['^STI','^KS11','^N225']},
+  '^BVSP':{shortName:'BVSP',fullName:'Ibovespa',exch:'B3',region:'Latin America',color:'#22c55e',currency:'R$',about:`<p>The Ibovespa (Índice Bovespa) is Brazil's primary stock market index, tracking the most actively traded stocks on the B3 exchange in São Paulo. It is a total return index, meaning dividends are reinvested.</p><p>Brazil is Latin America's largest economy and the Ibovespa is dominated by financials (Itaú, Bradesco), commodities (Vale, Petrobras), and consumer companies. The index is highly sensitive to commodity cycles, the Brazilian real's exchange rate, and domestic political developments.</p>`,constituents:[{sym:'VALE3.SA',s:'VALE3',n:'Vale',sect:'Mining',w:12.8},{sym:'PETR4.SA',s:'PETR4',n:'Petrobras',sect:'Energy',w:10.4},{sym:'ITUB4.SA',s:'ITUB4',n:'Itaú Unibanco',sect:'Banking',w:9.2},{sym:'BBDC4.SA',s:'BBDC4',n:'Bradesco',sect:'Banking',w:5.8},{sym:'BBAS3.SA',s:'BBAS3',n:'Banco do Brasil',sect:'Banking',w:4.6}],peers:['^MXX']},
+};
+
+// ── Page state ──────────────────────────────────────────────
+const rawSym = decodeURIComponent(location.pathname.split('/index/')[1]||'');
+const SYM = rawSym || '^NSEI';
+const meta = INDEX_META[SYM] || {
+  shortName:SYM, fullName:SYM, exch:'—', region:'—',
+  color:'#FF9933', currency:'', isIndia:false,
+  about:'<p>Detailed information for this index is not yet available.</p>',
+  constituents:[], peers:[],
+};
+
+const PERIODS=['1D','5D','1M','3M','1Y'];
+let _period='1M', _chartType='line', _chartSeries=null, _chart=null;
+let _liveTimer=null;
+
+// ── On load ─────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',async()=>{
+  document.title=`prvaaha. — ${meta.fullName}`;
+  renderHeader();
+  renderKPI({});
+  renderPeriodTabs();
+  renderRelated();
+  renderAbout();
+  buildChart();
+  const q=await fetchQuote();
+  renderHeader(q);
+  renderKPI(q);
+  startLivePulse();
+});
+
+function renderHeader(q={}){
+  document.getElementById('symTkr').textContent=meta.shortName;
+  document.getElementById('symName').textContent=meta.fullName;
+  document.getElementById('symExch').textContent=meta.exch+' · '+meta.region;
+  const price=q.regularMarketPrice;
+  const chg=q.regularMarketChange;
+  const pct=q.regularMarketChangePercent;
+  const priceEl=document.getElementById('symPrice');
+  const chgEl=document.getElementById('symChange');
+  if(price!=null){
+    priceEl.textContent=(meta.currency||'')+(meta.isIndia?fmt(price):fmt2(price));
+    priceEl.style.color=pct>=0?'var(--pos)':'var(--neg)';
+    chgEl.textContent=`${sgn(chg)}${meta.isIndia?fmt(chg,2):fmt2(chg,2)} (${sgn(pct)}${fmt2(pct,2)}%)`;
+    chgEl.className='sym-change '+(pct>=0?'pos':'neg');
+    const t=q.regularMarketTime;
+    if(t) document.getElementById('symTime').textContent=
+      new Date(t*1000).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',timeZoneName:'short'});
+  } else {
+    priceEl.textContent='—';
+    chgEl.textContent='—';
+  }
+}
+
+function renderKPI(q){
+  const c=meta.currency||'';
+  const f=v=>v!=null?(c+(meta.isIndia?fmt(v,2):fmt2(v,2))):'—';
+  const items=[
+    {k:'Open',        v:f(q.regularMarketOpen)},
+    {k:'Day High',    v:f(q.regularMarketDayHigh)},
+    {k:'Day Low',     v:f(q.regularMarketDayLow)},
+    {k:'Prev Close',  v:f(q.regularMarketPreviousClose)},
+    {k:'52W High',    v:f(q.fiftyTwoWeekHigh)},
+    {k:'52W Low',     v:f(q.fiftyTwoWeekLow)},
+    {k:'Volume',      v:fmtVol(q.regularMarketVolume)},
+  ];
+  document.getElementById('kpiStrip').innerHTML=items.map(x=>
+    `<div class="kpi"><div class="kpi-k">${x.k}</div><div class="kpi-v">${x.v}</div></div>`
+  ).join('');
+}
+
+function renderPeriodTabs(){
+  document.getElementById('periodTabs').innerHTML=PERIODS.map(p=>
+    `<button class="p-btn${p===_period?' on':''}" onclick="setPeriod('${p}',this)">${p}</button>`
+  ).join('');
+}
+
+function setPeriod(p,btn){
+  _period=p;
+  document.querySelectorAll('.p-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  buildChart();
+}
+
+function setChartType(t,btn){
+  _chartType=t;
+  document.querySelectorAll('.t-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  buildChart();
+}
+
+function switchTab(name,btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('tab-'+name).classList.add('on');
+}
+
+async function fetchQuote(){
+  try{
+    const r=await fetch(`/api/quote?syms=${encodeURIComponent(SYM)}`,{signal:AbortSignal.timeout(8000)});
+    if(!r.ok) return {};
+    const j=await r.json();
+    return j?.quoteResponse?.result?.[0]||{};
+  }catch{return{};}
+}
+
+async function buildChart(){
+  const wrap=document.getElementById('chartWrap');
+  wrap.innerHTML='';
+  if(_chart){try{_chart.remove();}catch{} _chart=null;}
+
+  const isDark=document.documentElement.getAttribute('data-theme')!=='light';
+  const color=meta.color||'#FF9933';
+
+  _chart=LightweightCharts.createChart(wrap,{
+    width:wrap.clientWidth,
+    height:380,
+    layout:{background:{type:'Solid',color:'transparent'},textColor:isDark?'#a09c95':'#4a4740'},
+    grid:{vertLines:{color:isDark?'#1c1c1c':'#e8e8e8'},horzLines:{color:isDark?'#1c1c1c':'#e8e8e8'}},
+    crosshair:{mode:LightweightCharts.CrosshairMode.Normal},
+    rightPriceScale:{borderColor:isDark?'#1c1c1c':'#e8e8e8'},
+    timeScale:{borderColor:isDark?'#1c1c1c':'#e8e8e8',timeVisible:true},
+    handleScroll:true,handleScale:true,
+    attributionLogo:false,
+  });
+
+  const periodMap={
+    '1D':{period:'1d',interval:'5m'},'5D':{period:'5d',interval:'15m'},
+    '1M':{period:'1mo',interval:'1d'},'3M':{period:'3mo',interval:'1d'},
+    '1Y':{period:'1y',interval:'1d'},
+  };
+  const {period,interval}=periodMap[_period]||{period:'1mo',interval:'1d'};
+
+  wrap.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:380px;color:var(--muted);font-size:12px;font-family:var(--mono)">Loading chart…</div>';
+  try{
+    const r=await fetch(`/api/chart?sym=${encodeURIComponent(SYM)}&period=${period}&interval=${interval}`,{signal:AbortSignal.timeout(15000)});
+    if(!r.ok) throw new Error('chart API error');
+    const j=await r.json();
+    const bars=j.ohlc||[];
+    if(!bars.length) throw new Error('no data');
+
+    wrap.innerHTML='';
+    _chart=LightweightCharts.createChart(wrap,{
+      width:wrap.clientWidth,height:380,
+      layout:{background:{type:'Solid',color:'transparent'},textColor:isDark?'#a09c95':'#4a4740'},
+      grid:{vertLines:{color:isDark?'#1c1c1c':'#e8e8e8'},horzLines:{color:isDark?'#1c1c1c':'#e8e8e8'}},
+      crosshair:{mode:LightweightCharts.CrosshairMode.Normal},
+      rightPriceScale:{borderColor:isDark?'#1c1c1c':'#e8e8e8'},
+      timeScale:{borderColor:isDark?'#1c1c1c':'#e8e8e8',timeVisible:_period==='1D'||_period==='5D'},
+      handleScroll:true,handleScale:true,
+      attributionLogo:false,
+    });
+
+    if(_chartType==='candle'){
+      _chartSeries=_chart.addCandlestickSeries({
+        upColor:'#22c55e',downColor:'#ef4444',borderUpColor:'#22c55e',borderDownColor:'#ef4444',
+        wickUpColor:'#22c55e',wickDownColor:'#ef4444',
+      });
+    } else {
+      _chartSeries=_chart.addAreaSeries({
+        lineColor:color,topColor:color+'44',bottomColor:color+'00',lineWidth:2,
+      });
+    }
+
+    const toTime=s=>Math.floor(new Date(s).getTime()/1000);
+    const data=bars.map(b=>({
+      time:toTime(b.date),open:b.open,high:b.high,low:b.low,close:b.close,value:b.close,
+    })).sort((a,b)=>a.time-b.time);
+
+    const dedup=[];const seen=new Set();
+    for(const d of data){if(!seen.has(d.time)){seen.add(d.time);dedup.push(d);}}
+    _chartSeries.setData(dedup);
+    _chart.timeScale().fitContent();
+
+    window.addEventListener('resize',()=>{if(_chart)_chart.applyOptions({width:wrap.clientWidth});});
+  }catch(e){
+    wrap.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:380px;color:var(--muted);font-size:12px;font-family:var(--mono)">Chart unavailable — ${e.message}</div>`;
+  }
+}
+
+function renderAbout(){
+  document.getElementById('aboutText').innerHTML=meta.about||'<p>No description available.</p>';
+}
+
+async function renderConstituents(){
+  const body=document.getElementById('constBody');
+  const note=document.getElementById('constNote');
+  const cs=meta.constituents||[];
+  if(!cs.length){
+    body.innerHTML='<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Constituent data not available for this index.</td></tr>';
+    return;
+  }
+  note.textContent=`${cs.length} shown · weights approximate`;
+  const maxW=Math.max(...cs.map(c=>c.w));
+
+  // Render immediately with placeholders
+  body.innerHTML=cs.map(c=>`
+    <tr onclick="location.href='/stock/${encodeURIComponent(c.sym)}'">
+      <td><b style="font-family:var(--mono);font-size:11px">${c.s}</b></td>
+      <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.n}</td>
+      <td style="color:var(--muted);font-size:11px">${c.sect}</td>
+      <td class="tr">
+        <div class="weight-bar" style="justify-content:flex-end">
+          <span style="font-family:var(--mono);font-size:11px">${c.w.toFixed(1)}%</span>
+          <div class="weight-fill" style="width:${(c.w/maxW*48).toFixed(0)}px"></div>
+        </div>
+      </td>
+      <td class="tr" id="cp-${c.sym.replace(/[^a-z0-9]/gi,'_')}"><span style="color:var(--muted);font-size:11px">—</span></td>
+      <td class="tr" id="cc-${c.sym.replace(/[^a-z0-9]/gi,'_')}"><span style="color:var(--muted);font-size:11px">—</span></td>
+    </tr>`).join('');
+
+  // Fetch live prices
+  const syms=cs.map(c=>c.sym);
+  try{
+    const r=await fetch(`/api/quote?syms=${encodeURIComponent(syms.join(','))}`,{signal:AbortSignal.timeout(12000)});
+    if(!r.ok) return;
+    const j=await r.json();
+    const qs=j?.quoteResponse?.result||[];
+    for(const q of qs){
+      const id=q.symbol.replace(/[^a-z0-9]/gi,'_');
+      const pEl=document.getElementById('cp-'+id);
+      const cEl=document.getElementById('cc-'+id);
+      if(!pEl) continue;
+      const c=meta.isIndia?meta.currency||'₹':'$';
+      if(q.regularMarketPrice!=null)
+        pEl.innerHTML=`<b style="font-family:var(--mono);font-size:12px">${c}${meta.isIndia?fmt(q.regularMarketPrice):fmt2(q.regularMarketPrice)}</b>`;
+      if(q.regularMarketChangePercent!=null){
+        const pct=q.regularMarketChangePercent;
+        cEl.innerHTML=`<span style="color:${pct>=0?'var(--pos)':'var(--neg)'};font-weight:700;font-family:var(--mono);font-size:12px">${sgn(pct)}${fmt2(pct)}%</span>`;
+      }
+    }
+  }catch{}
+}
+
+function renderRelated(){
+  const peers=meta.peers||[];
+  const NAMES={
+    '^NSEI':'Nifty 50','^BSESN':'Sensex','^NSEBANK':'Bank Nifty',
+    '^CNXIT':'Nifty IT','^CNXAUTO':'Nifty Auto','^CNXPHARMA':'Nifty Pharma',
+    '^GSPC':'S&P 500','^IXIC':'NASDAQ','^DJI':'Dow Jones','^RUT':'Russell 2000',
+    '^FTSE':'FTSE 100','^GDAXI':'DAX','^FCHI':'CAC 40','^STOXX50E':'EURO STOXX 50',
+    '^N225':'Nikkei 225','^HSI':'Hang Seng','000001.SS':'Shanghai Comp','^AXJO':'ASX 200',
+    '^STI':'Straits Times','^KS11':'KOSPI','^BVSP':'Ibovespa','^MXX':'IPC Mexico',
+  };
+  document.getElementById('relatedIndices').innerHTML=peers.map(s=>`
+    <div class="sb-row" onclick="location.href='/index/${encodeURIComponent(s)}'">
+      <div>
+        <div class="sb-sym">${s.replace(/^\^/,'')}</div>
+        <div class="sb-name">${NAMES[s]||s}</div>
+      </div>
+      <div class="sb-pct" id="ri-${s.replace(/[^a-z0-9]/gi,'_')}">—</div>
+    </div>`).join('');
+
+  // Fetch live pcts for related
+  if(peers.length){
+    fetch(`/api/quote?syms=${encodeURIComponent(peers.join(','))}`,{signal:AbortSignal.timeout(8000)})
+      .then(r=>r.json()).then(j=>{
+        for(const q of j?.quoteResponse?.result||[]){
+          const el=document.getElementById('ri-'+q.symbol.replace(/[^a-z0-9]/gi,'_'));
+          if(!el) continue;
+          const p=q.regularMarketChangePercent;
+          if(p!=null){el.textContent=`${sgn(p)}${fmt2(p,2)}%`;el.className='sb-pct '+(p>=0?'pos':'neg');}
+        }
+      }).catch(()=>{});
+  }
+}
+
+function renderSideStats(q){
+  const c=meta.currency||'';
+  const f=v=>v!=null?(c+(meta.isIndia?fmt(v,2):fmt2(v,2))):'—';
+  const items=[
+    {k:'Day Range',v:`${f(q.regularMarketDayLow)} – ${f(q.regularMarketDayHigh)}`},
+    {k:'52W Range',v:`${f(q.fiftyTwoWeekLow)} – ${f(q.fiftyTwoWeekHigh)}`},
+    {k:'Volume',v:fmtVol(q.regularMarketVolume)},
+    {k:'Prev Close',v:f(q.regularMarketPreviousClose)},
+    {k:'Open',v:f(q.regularMarketOpen)},
+  ];
+  document.getElementById('sideStats').innerHTML=items.map(x=>`
+    <div class="sb-row" style="cursor:default">
+      <span style="color:var(--muted);font-size:11px">${x.k}</span>
+      <span style="font-family:var(--mono);font-size:11px;font-weight:600">${x.v}</span>
+    </div>`).join('');
+}
+
+function startLivePulse(){
+  clearInterval(_liveTimer);
+  _liveTimer=setInterval(async()=>{
+    const q=await fetchQuote();
+    renderHeader(q);
+    renderSideStats(q);
+  },15000);
+}
+
+// Kick off constituents render
+renderConstituents();
+</script>
+</body>
+</html>
