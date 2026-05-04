@@ -213,6 +213,20 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 .stbl td.tr{text-align:right;font-family:var(--mono)}
 .stbl tr:hover td{background:var(--surface)}.stbl tr:last-child td{border-bottom:none}
 
+/* ── INDIA ALL-STOCKS TABLE ── */
+.india-tbl-controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.india-tbl-controls input{flex:1;min-width:200px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:7px 12px;font-size:12px;font-family:var(--sans);outline:none}
+.india-tbl-controls input:focus{border-color:var(--accent)}
+.india-tbl-controls select{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:7px 10px;font-size:12px;font-family:var(--sans);outline:none;cursor:pointer}
+.india-pagination{display:flex;align-items:center;gap:6px;padding:14px 0;flex-wrap:wrap}
+.india-pagination button{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 12px;font-size:11px;font-weight:700;font-family:var(--mono);cursor:pointer;letter-spacing:.3px;transition:background .15s}
+.india-pagination button:hover{background:var(--surface3,var(--border))}
+.india-pagination button.active{background:var(--accent);color:#000;border-color:var(--accent)}
+.india-pagination button:disabled{opacity:.35;cursor:not-allowed}
+.india-pagination .pg-info{font-family:var(--mono);font-size:11px;color:var(--muted);margin:0 6px}
+.india-pg-jump{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 8px;font-size:11px;width:60px;font-family:var(--mono);outline:none;text-align:center}
+.india-pg-jump:focus{border-color:var(--accent)}
+.price-loading{color:var(--muted);font-family:var(--mono)}
 /* ── SCREENER ── */
 .scr-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 .scr-sel{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:6px 10px;font-size:12px;outline:none;cursor:pointer;font-family:var(--sans)}
@@ -707,13 +721,46 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
       <div id="regionHeader"></div>
       <div class="label">Indices</div>
       <div class="idx-grid" id="regionIdxGrid"></div>
-      <div class="label">Stocks</div>
-      <div style="overflow-x:auto">
-        <table class="stbl"><thead><tr>
-          <th>Company</th><th>Sector</th>
-          <th class="tr">Price</th><th class="tr">Chg %</th>
-          <th class="tr">Mkt Cap</th><th class="tr">P/E</th><th class="tr">Volume</th>
-        </tr></thead><tbody id="regionStockBody"></tbody></table>
+
+      <!-- India: full API-driven paginated table -->
+      <div id="india-stocks-section" style="display:none">
+        <div class="label" style="margin-top:20px">All Listed Companies
+          <span id="india-stocks-count" style="font-family:var(--mono);font-size:11px;font-weight:400;color:var(--muted);margin-left:8px"></span>
+        </div>
+        <div class="india-tbl-controls">
+          <input id="india-search" type="text" placeholder="Search by name or symbol…" oninput="IST.onSearch(this.value)" autocomplete="off"/>
+          <select id="india-exch-filter" onchange="IST.onFilter()" class="scr-sel">
+            <option value="">NSE + BSE</option>
+            <option value="NSE">NSE only</option>
+            <option value="BSE">BSE only</option>
+          </select>
+          <select id="india-sector-filter" onchange="IST.onFilter()" class="scr-sel">
+            <option value="">All Sectors</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="stbl">
+            <thead><tr>
+              <th>Symbol</th><th>Company</th><th>Exch</th>
+              <th class="tr">Price</th><th class="tr">Chg %</th>
+              <th class="tr">Volume</th><th class="tr">Mkt Cap</th>
+            </tr></thead>
+            <tbody id="india-stocks-body"></tbody>
+          </table>
+        </div>
+        <div class="india-pagination" id="india-pagination"></div>
+      </div>
+
+      <!-- Other regions: small curated table -->
+      <div id="region-stocks-other" style="display:none">
+        <div class="label">Stocks</div>
+        <div style="overflow-x:auto">
+          <table class="stbl"><thead><tr>
+            <th>Company</th><th>Sector</th>
+            <th class="tr">Price</th><th class="tr">Chg %</th>
+            <th class="tr">Mkt Cap</th><th class="tr">P/E</th><th class="tr">Volume</th>
+          </tr></thead><tbody id="regionStockBody"></tbody></table>
+        </div>
       </div>
     </div>
   </div>
@@ -1448,20 +1495,29 @@ const MKT={
         <div class="idx-card-spark">${spark(histI[i.sym]||[],180,40,1.5)}</div>
       </div>`;
     }).join('');
-    // Stocks table (Bhaarat only for now; others show N/A)
-    const stocks=STOCKS.filter(s=>s.region===r.id);
-    document.getElementById('regionStockBody').innerHTML=stocks.length?stocks.map(s=>{
-      const d=SD[s.sym]||{price:s.base,pct:0,vol:0};
-      return`<tr style="cursor:pointer" onclick="goToStock('${s.sym}','region')">
-        <td><b>${s.n}</b><br><span style="color:var(--muted);font-size:11px">${s.s}</span></td>
-        <td style="color:var(--muted)">${s.sect}</td>
-        <td class="tr"><b>₹${fmt(d.price)}</b></td>
-        <td class="tr" style="color:${clr(d.pct)};font-weight:700">${sgn(d.pct)}${fmt(d.pct)}%</td>
-        <td class="tr" style="color:var(--muted)">₹${s.mcap}L Cr</td>
-        <td class="tr">${s.pe}</td>
-        <td class="tr" style="color:var(--muted)">${fmtVol(d.vol)}</td>
-      </tr>`;
-    }).join(''):`<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">International stock data coming soon</td></tr>`;
+    // India: use the full API-driven paginated table
+    if(r.id==='india'){
+      document.getElementById('india-stocks-section').style.display='block';
+      document.getElementById('region-stocks-other').style.display='none';
+      IST.init();
+    } else {
+      // Other regions: small curated table
+      document.getElementById('india-stocks-section').style.display='none';
+      document.getElementById('region-stocks-other').style.display='block';
+      const stocks=STOCKS.filter(s=>s.region===r.id);
+      document.getElementById('regionStockBody').innerHTML=stocks.length?stocks.map(s=>{
+        const d=SD[s.sym]||{price:s.base,pct:0,vol:0};
+        return`<tr style="cursor:pointer" onclick="goToStock('${s.sym}','region')">
+          <td><b>${s.n}</b><br><span style="color:var(--muted);font-size:11px">${s.s}</span></td>
+          <td style="color:var(--muted)">${s.sect}</td>
+          <td class="tr"><b>${fmt(d.price)}</b></td>
+          <td class="tr" style="color:${clr(d.pct)};font-weight:700">${sgn(d.pct)}${fmt(d.pct)}%</td>
+          <td class="tr" style="color:var(--muted)">${s.mcap}L Cr</td>
+          <td class="tr">${s.pe}</td>
+          <td class="tr" style="color:var(--muted)">${fmtVol(d.vol)}</td>
+        </tr>`;
+      }).join(''):`<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">International stock data coming soon</td></tr>`;
+    }
   },
 
   async renderIndexPage(sym){
@@ -2888,6 +2944,195 @@ function goToIndex(sym,region){
   history.replaceState(null,'','#index:'+sym+':'+region);
   showSection('markets',navEl,()=>MKT.goIndex(sym,region));
 }
+
+// ══════════════════════════════════════════════
+// IST — India Stocks Table
+// Full NSE+BSE paginated stock browser.
+// ══════════════════════════════════════════════
+const IST = {
+  page: 1,
+  pageSize: 50,
+  totalPages: 1,
+  total: 0,
+  search: '',
+  exchange: '',
+  sector: '',
+  sectors: [],
+  _searchTimer: null,
+  _priceTimer: null,
+  _currentSyms: [],
+
+  init() {
+    this.page = 1;
+    this.search = document.getElementById('india-search').value = '';
+    this.exchange = document.getElementById('india-exch-filter').value = '';
+    this.sector = '';
+    this.load();
+  },
+
+  onSearch(val) {
+    clearTimeout(this._searchTimer);
+    this._searchTimer = setTimeout(() => {
+      this.search = val.trim();
+      this.page = 1;
+      this.load();
+    }, 320);
+  },
+
+  onFilter() {
+    this.exchange = document.getElementById('india-exch-filter').value;
+    this.sector   = document.getElementById('india-sector-filter').value;
+    this.page = 1;
+    this.load();
+  },
+
+  async load() {
+    const tbody = document.getElementById('india-stocks-body');
+    const countEl = document.getElementById('india-stocks-count');
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted);font-family:var(--mono);font-size:12px">Loading…</td></tr>`;
+    document.getElementById('india-pagination').innerHTML = '';
+
+    const params = new URLSearchParams({
+      page: this.page,
+      limit: this.pageSize,
+      search: this.search,
+      exchange: this.exchange,
+      sector: this.sector,
+    });
+
+    try {
+      const res  = await fetch(`/api/markets/india/stocks?${params}`, { signal: AbortSignal.timeout(10_000) });
+      const data = await res.json();
+
+      if (!data.loaded || !data.stocks?.length) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--muted)">
+          ${!data.loaded ? 'Stock list is loading — please wait a moment and try again.' : 'No companies match your filters.'}
+        </td></tr>`;
+        countEl.textContent = '';
+        return;
+      }
+
+      this.totalPages = data.pages;
+      this.total = data.total;
+      this._currentSyms = data.stocks.map(s => s.sym);
+
+      // Populate sector dropdown once
+      if (data.sectors?.length && this.sectors.length === 0) {
+        this.sectors = data.sectors;
+        const sel = document.getElementById('india-sector-filter');
+        const cur = sel.value;
+        sel.innerHTML = '<option value="">All Sectors</option>' +
+          data.sectors.map(s => `<option value="${escH(s)}"${s===cur?' selected':''}>${escH(s)}</option>`).join('');
+      }
+
+      const cur = this.exchange || 'NSE+BSE';
+      countEl.textContent = `${fmtN(data.total)} companies · ${cur} · page ${data.page} of ${data.pages}`;
+
+      // Render rows with price placeholders
+      tbody.innerHTML = data.stocks.map(s => `
+        <tr style="cursor:pointer" onclick="goToStock('${escH(s.sym)}','india')">
+          <td><b style="font-family:var(--mono);font-size:12px">${escH(s.shortSym)}</b></td>
+          <td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escH(s.name)}</td>
+          <td><span style="font-size:10px;padding:2px 5px;background:${s.exchange==='NSE'?'rgba(255,153,51,.15)':'rgba(59,130,246,.15)'};color:${s.exchange==='NSE'?'var(--accent)':'#60a5fa'};font-weight:700">${s.exchange}</span></td>
+          <td class="tr price-loading" id="p-${s.sym.replace(/\./g,'-')}">—</td>
+          <td class="tr price-loading" id="c-${s.sym.replace(/\./g,'-')}">—</td>
+          <td class="tr price-loading" id="v-${s.sym.replace(/\./g,'-')}">—</td>
+          <td class="tr price-loading" id="m-${s.sym.replace(/\./g,'-')}">—</td>
+        </tr>`).join('');
+
+      this.renderPagination();
+
+      // Kick off price fetch
+      clearTimeout(this._priceTimer);
+      this._priceTimer = setTimeout(() => this.fetchPrices(), 50);
+
+    } catch(e) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--neg)">Failed to load: ${escH(e.message)}</td></tr>`;
+    }
+  },
+
+  async fetchPrices() {
+    if (!this._currentSyms.length) return;
+    try {
+      const syms = this._currentSyms.join(',');
+      const res  = await fetch(`/api/markets/india/prices?syms=${encodeURIComponent(syms)}`, { signal: AbortSignal.timeout(15_000) });
+      if (!res.ok) return;
+      const prices = await res.json();
+
+      for (const [sym, p] of Object.entries(prices)) {
+        const id = sym.replace(/\./g, '-');
+        const pEl = document.getElementById(`p-${id}`);
+        const cEl = document.getElementById(`c-${id}`);
+        const vEl = document.getElementById(`v-${id}`);
+        const mEl = document.getElementById(`m-${id}`);
+        if (!pEl) continue;
+
+        const price = p.price;
+        const pct   = p.pct;
+        const col   = pct == null ? 'var(--muted)' : pct >= 0 ? 'var(--pos)' : 'var(--neg)';
+
+        if (pEl) pEl.innerHTML = price != null ? `<b>₹${fmt(price)}</b>` : '—';
+        if (cEl) {
+          cEl.style.color = col;
+          cEl.style.fontWeight = '700';
+          cEl.textContent = pct != null ? `${sgn(pct)}${fmt(pct)}%` : '—';
+        }
+        if (vEl) vEl.textContent = p.vol != null ? fmtVol(p.vol) : '—';
+        if (mEl) mEl.textContent = p.mktCap != null ? fmtCap(p.mktCap) : '—';
+      }
+    } catch {}
+  },
+
+  renderPagination() {
+    const pg  = this.page;
+    const tot = this.totalPages;
+    const el  = document.getElementById('india-pagination');
+    if (tot <= 1) { el.innerHTML = ''; return; }
+
+    let pages = [];
+    if (tot <= 7) {
+      for (let i = 1; i <= tot; i++) pages.push(i);
+    } else {
+      pages = [1];
+      if (pg > 3) pages.push('…');
+      for (let i = Math.max(2, pg-1); i <= Math.min(tot-1, pg+1); i++) pages.push(i);
+      if (pg < tot-2) pages.push('…');
+      pages.push(tot);
+    }
+
+    const btn = (label, page, disabled=false, active=false) =>
+      `<button onclick="IST.goPage(${page})" ${disabled?'disabled':''} class="${active?'active':''}">${label}</button>`;
+
+    el.innerHTML =
+      btn('‹ Prev', pg-1, pg===1) +
+      pages.map(p => p==='…' ? `<span class="pg-info">…</span>` : btn(p, p, false, p===pg)).join('') +
+      btn('Next ›', pg+1, pg===tot) +
+      `<span class="pg-info">Jump to</span>
+       <input class="india-pg-jump" type="number" min="1" max="${tot}" value="${pg}"
+         onkeydown="if(event.key==='Enter')IST.goPage(parseInt(this.value))"
+         onblur="IST.goPage(parseInt(this.value))"/>`;
+  },
+
+  goPage(n) {
+    const p = Math.max(1, Math.min(this.totalPages, n || 1));
+    if (p === this.page) return;
+    this.page = p;
+    this.load();
+    // Scroll to top of table
+    document.getElementById('india-stocks-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  },
+};
+
+// Format market cap (crore/lakh crore)
+function fmtCap(v) {
+  if (!v) return '—';
+  const cr = v / 1e7; // convert rupees to crores
+  if (cr >= 1e5) return `₹${(cr/1e5).toFixed(1)}L Cr`;
+  if (cr >= 100)  return `₹${Math.round(cr/100)/10}K Cr`;
+  return `₹${Math.round(cr)} Cr`;
+}
+// Format large numbers
+function fmtN(n) { return n >= 1000 ? (n/1000).toFixed(1)+'K' : String(n); }
 
 // Navigate to stock detail page
 function goToStock(sym,fromSection){

@@ -669,34 +669,40 @@ app.get('/stock/:sym', (req, res) =>
 
 // ── GET /api/stock/:sym/summary ──────────────────────────────
 // Price + company profile + key stats. 5-minute cache.
+// Strategy: quote() first (no field restriction = most reliable),
+// then quoteSummary() per-module with validateResult:false so one
+// bad module never kills the entire response.
 app.get('/api/stock/:sym/summary', async (req, res) => {
   const sym = decodeURIComponent(req.params.sym);
   const key = `stock-summary:${sym}`;
   const cached = getCache(key, 5 * 60_000);
   if (cached) return res.json(cached);
   try {
-    const [quote, summary] = await Promise.all([
-      yahooFinance.quote(sym, {
-        fields: [
-          'regularMarketPrice','regularMarketChange','regularMarketChangePercent',
-          'regularMarketVolume','regularMarketOpen','regularMarketDayHigh',
-          'regularMarketDayLow','regularMarketPreviousClose',
-          'fiftyTwoWeekHigh','fiftyTwoWeekLow','marketCap','symbol',
-          'shortName','longName','exchange','currency',
-          'regularMarketTime','averageDailyVolume3Month',
-        ],
-      }),
-      yahooFinance.quoteSummary(sym, {
-        modules: ['assetProfile','summaryDetail','defaultKeyStatistics','financialData'],
-      }).catch(() => ({})),
-    ]);
-    const data = {
-      quote,
-      profile     : summary.assetProfile          || null,
-      summaryDetail: summary.summaryDetail         || null,
-      stats       : summary.defaultKeyStatistics   || null,
-      financial   : summary.financialData          || null,
+    // Full quote — no fields filter so we get trailingPE, eps, beta, etc.
+    const quote = await yahooFinance.quote(sym, {}, { validateResult: false });
+
+    // Helper: fetch one quoteSummary module without throwing
+    const safeModule = async (mod) => {
+      try {
+        const r = await yahooFinance.quoteSummary(sym, { modules: [mod] }, { validateResult: false });
+        return r[mod] || null;
+      } catch { return null; }
     };
+
+    // Fetch profile modules independently — a missing one won't break the rest
+    const [profile, summaryDetail, stats, financial] = await Promise.all([
+      safeModule('assetProfile'),
+      safeModule('summaryDetail'),
+      safeModule('defaultKeyStatistics'),
+      safeModule('financialData'),
+    ]);
+
+    // Normalise regularMarketTime — yahoo-finance2 returns a Date object
+    if (quote.regularMarketTime instanceof Date) {
+      quote.regularMarketTime = Math.floor(quote.regularMarketTime.getTime() / 1000);
+    }
+
+    const data = { quote, profile, summaryDetail, stats, financial };
     setCache(key, data);
     res.json(data);
   } catch (err) {
@@ -707,27 +713,204 @@ app.get('/api/stock/:sym/summary', async (req, res) => {
 
 // ── GET /api/stock/:sym/financials ───────────────────────────
 // Income / Balance / Cash-Flow statements + earnings. 30-minute cache.
+// Fetch each statement type independently so one failure doesn't wipe all data.
 app.get('/api/stock/:sym/financials', async (req, res) => {
   const sym = decodeURIComponent(req.params.sym);
   const key = `stock-fin:${sym}`;
   const cached = getCache(key, 30 * 60_000);
   if (cached) return res.json(cached);
+
+  const safeModule = async (mod) => {
+    try {
+      const r = await yahooFinance.quoteSummary(sym, { modules: [mod] }, { validateResult: false });
+      return { [mod]: r[mod] || null };
+    } catch { return { [mod]: null }; }
+  };
+
   try {
-    const data = await yahooFinance.quoteSummary(sym, {
-      modules: [
-        'incomeStatementHistory',
-        'incomeStatementHistoryQuarterly',
-        'balanceSheetHistory',
-        'balanceSheetHistoryQuarterly',
-        'cashflowStatementHistory',
-        'cashflowStatementHistoryQuarterly',
-        'earningsHistory',
-      ],
-    }).catch(() => ({}));
+    const modules = [
+      'incomeStatementHistory',
+      'incomeStatementHistoryQuarterly',
+      'balanceSheetHistory',
+      'balanceSheetHistoryQuarterly',
+      'cashflowStatementHistory',
+      'cashflowStatementHistoryQuarterly',
+      'earningsHistory',
+    ];
+    const results = await Promise.all(modules.map(safeModule));
+    const data = Object.assign({}, ...results);
     setCache(key, data);
     res.json(data);
   } catch (err) {
     console.error('[stock-financials]', err.message);
+    res.status(502).json({ error: err.message });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+// India Full Stock List  (NSE + BSE)
+// Loaded at startup by fetchNSEList() + fetchBSEList().
+// Served via /api/markets/india/stocks (paginated).
+// Prices fetched on-demand via /api/markets/india/prices.
+// ══════════════════════════════════════════════════════════════
+
+let INDIA_STOCKS = []; // { sym, shortSym, name, isin, exchange, sector }
+
+function extractCookies(response) {
+  try {
+    const arr = response.headers.getSetCookie?.() || [];
+    if (arr.length) return arr.map(c => c.split(';')[0]).join('; ');
+  } catch {}
+  return (response.headers.get('set-cookie') || '').split(',').map(c => c.split(';')[0]).join('; ');
+}
+
+async function fetchNSEList() {
+  const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36';
+  // Establish NSE session (get cookies)
+  const homeRes = await fetch('https://www.nseindia.com', {
+    headers: { 'User-Agent': UA, 'Accept': 'text/html' },
+    signal: AbortSignal.timeout(12_000),
+    redirect: 'follow',
+  });
+  const cookies = extractCookies(homeRes);
+  await new Promise(r => setTimeout(r, 1200)); // brief pause — NSE rate-limits
+
+  const csvRes = await fetch('https://nsearchives.nseindia.com/content/equities/EQUITY_L.csv', {
+    headers: {
+      'User-Agent': UA,
+      'Referer': 'https://www.nseindia.com/',
+      'Accept': 'text/csv,text/plain,*/*',
+      'Cookie': cookies,
+    },
+    signal: AbortSignal.timeout(20_000),
+  });
+  if (!csvRes.ok) throw new Error(`NSE CSV HTTP ${csvRes.status}`);
+  const text = await csvRes.text();
+
+  // CSV columns: SYMBOL, NAME OF COMPANY, SERIES, DATE OF LISTING, PAID UP VALUE, MARKET LOT, ISIN NUMBER, FACE VALUE
+  const stocks = [];
+  for (const line of text.split('\n').slice(1)) {
+    const p = line.split(',');
+    if (p.length < 7) continue;
+    const sym = p[0].trim();
+    const name = p[1].trim().replace(/^"|"$/g, '');
+    const isin = p[6].trim();
+    if (!sym || !name || sym === 'SYMBOL') continue;
+    stocks.push({ sym: sym + '.NS', shortSym: sym, name, isin, exchange: 'NSE', sector: '' });
+  }
+  return stocks;
+}
+
+async function fetchBSEList() {
+  const res = await fetch(
+    'https://api.bseindia.com/BseIndiaAPI/api/ListofScripData/w?Type=0&Scode=',
+    {
+      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
+      signal: AbortSignal.timeout(20_000),
+    }
+  );
+  if (!res.ok) throw new Error(`BSE API HTTP ${res.status}`);
+  const data = await res.json();
+  return (data.Table || [])
+    .map(s => ({
+      sym      : String(s.SCRIP_CD).trim() + '.BO',
+      shortSym : String(s.SCRIP_CD).trim(),
+      name     : (s.LONG_NAME || s.SHORT_NAME || '').trim(),
+      isin     : (s.ISIN_NO || '').trim(),
+      exchange : 'BSE',
+      sector   : (s.INDUSTRY || '').trim(),
+    }))
+    .filter(s => s.name && s.shortSym);
+}
+
+async function loadIndiaStocks() {
+  console.log('[india-stocks] Starting load…');
+  let nse = [], bse = [];
+
+  try { nse = await fetchNSEList(); console.log(`[india-stocks] NSE: ${nse.length} stocks`); }
+  catch (e) { console.warn('[india-stocks] NSE fetch failed:', e.message); }
+
+  try { bse = await fetchBSEList(); console.log(`[india-stocks] BSE: ${bse.length} stocks`); }
+  catch (e) { console.warn('[india-stocks] BSE fetch failed:', e.message); }
+
+  // Merge: add BSE stocks not already present on NSE (dedup by ISIN)
+  const nseIsins = new Set(nse.map(s => s.isin).filter(Boolean));
+  const bseOnly  = bse.filter(s => !s.isin || !nseIsins.has(s.isin));
+
+  INDIA_STOCKS = [...nse, ...bseOnly];
+  INDIA_STOCKS.sort((a, b) => a.name.localeCompare(b.name));
+  console.log(`[india-stocks] Total loaded: ${INDIA_STOCKS.length}`);
+}
+
+// ── GET /api/markets/india/stocks ────────────────────────────
+// Paginated, filterable list of all NSE+BSE stocks.
+// Query params: page (default 1), limit (default 50, max 100),
+//               search, exchange (NSE|BSE), sector
+app.get('/api/markets/india/stocks', (req, res) => {
+  const { page = '1', limit = '50', search = '', exchange = '', sector = '' } = req.query;
+
+  let list = INDIA_STOCKS;
+  if (exchange) list = list.filter(s => s.exchange === exchange.toUpperCase());
+  if (sector)   list = list.filter(s => s.sector?.toLowerCase().includes(sector.toLowerCase()));
+  if (search) {
+    const q = search.toLowerCase();
+    list = list.filter(s =>
+      s.name.toLowerCase().includes(q) ||
+      s.shortSym.toLowerCase().includes(q) ||
+      (s.isin && s.isin.toLowerCase() === q)
+    );
+  }
+
+  const total   = list.length;
+  const pageNum = Math.max(1, parseInt(page)  || 1);
+  const pgSize  = Math.min(100, Math.max(10, parseInt(limit) || 50));
+  const offset  = (pageNum - 1) * pgSize;
+
+  // Collect unique sectors for filter dropdown
+  const sectors = [...new Set(INDIA_STOCKS.map(s => s.sector).filter(Boolean))].sort();
+
+  res.json({
+    stocks : list.slice(offset, offset + pgSize),
+    total,
+    page   : pageNum,
+    pages  : Math.ceil(total / pgSize) || 1,
+    loaded : INDIA_STOCKS.length > 0,
+    sectors,
+  });
+});
+
+// ── GET /api/markets/india/prices?syms=SYM1.NS,SYM2.NS,… ────
+// Batch price fetch for up to 100 symbols. 5-minute cache.
+app.get('/api/markets/india/prices', async (req, res) => {
+  const syms = (req.query.syms || '').split(',').map(s => s.trim()).filter(Boolean).slice(0, 100);
+  if (!syms.length) return res.status(400).json({ error: 'syms required' });
+
+  const cacheKey = 'india-prices:' + syms.slice().sort().join(',');
+  const cached   = getCache(cacheKey, 5 * 60_000);
+  if (cached) return res.json(cached);
+
+  try {
+    const raw  = await yahooFinance.quote(syms, {
+      fields: ['regularMarketPrice','regularMarketChangePercent','regularMarketChange',
+               'regularMarketVolume','marketCap','symbol'],
+    }, { validateResult: false });
+
+    const quotes = Array.isArray(raw) ? raw : [raw];
+    const result = {};
+    for (const q of quotes) {
+      if (!q?.symbol) continue;
+      result[q.symbol] = {
+        price  : q.regularMarketPrice,
+        pct    : q.regularMarketChangePercent,
+        chg    : q.regularMarketChange,
+        vol    : q.regularMarketVolume,
+        mktCap : q.marketCap,
+      };
+    }
+    setCache(cacheKey, result);
+    res.json(result);
+  } catch (err) {
+    console.error('[india-prices]', err.message);
     res.status(502).json({ error: err.message });
   }
 });
@@ -742,4 +925,10 @@ app.listen(PORT, () => {
   ║   → /api/test     to verify live quotes   ║
   ╚═══════════════════════════════════════════╝
   `);
+  // Load India stock list in the background — don't block startup
+  loadIndiaStocks().catch(e => console.error('[india-stocks] load error:', e.message));
+  // Refresh every 24 hours
+  setInterval(() => {
+    loadIndiaStocks().catch(e => console.error('[india-stocks] refresh error:', e.message));
+  }, 24 * 60 * 60_000);
 });
