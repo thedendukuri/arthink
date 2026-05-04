@@ -664,32 +664,6 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
       <!-- Region Cards -->
       <div class="label">Markets by Region</div>
       <div class="region-grid" id="regionGrid"></div>
-      <!-- All Listed Companies — same IST component as Bhaarat region page -->
-      <div class="label">All Listed Companies
-        <span id="scr-stocks-count" style="font-family:var(--mono);font-size:11px;font-weight:400;color:var(--muted);margin-left:8px"></span>
-      </div>
-      <div class="india-tbl-controls">
-        <input id="scr-search" type="text" placeholder="Search by name or symbol…" oninput="SCR.onSearch(this.value)" autocomplete="off"/>
-        <select id="scr-exch-filter" onchange="SCR.onFilter()" class="scr-sel">
-          <option value="">NSE + BSE</option>
-          <option value="NSE">NSE only</option>
-          <option value="BSE">BSE only</option>
-        </select>
-        <select id="scr-sector-filter" onchange="SCR.onFilter()" class="scr-sel">
-          <option value="">All Sectors</option>
-        </select>
-      </div>
-      <div style="overflow-x:auto">
-        <table class="stbl">
-          <thead><tr>
-            <th>Symbol</th><th>Company</th><th>Exch</th>
-            <th class="tr">Price</th><th class="tr">Chg %</th>
-            <th class="tr">Volume</th><th class="tr">Mkt Cap</th>
-          </tr></thead>
-          <tbody id="scr-stocks-body"></tbody>
-        </table>
-      </div>
-      <div class="india-pagination" id="scr-pagination"></div>
     </div>
   </div>
 
@@ -1369,7 +1343,6 @@ const MKT={
   goOverview(){
     this._setViews('mkt-overview');
     this.setBreadcrumb([{label:'Markets'}]);
-    SCR.init();
     renderRegionGrid();
     // Init interval options for default period, then draw charts
     onGlobalPeriodChange();
@@ -1964,7 +1937,7 @@ const MKT={
   // ── WORLD MAP ──
   async buildMap(){
     const wrap=document.getElementById('mapWrap');
-    const W=wrap.clientWidth||960,H=Math.round(W*.42);
+    const W=wrap.clientWidth||960,H=Math.round(W*.44);
 
     // Legend
     const legend=document.createElement('div');
@@ -1983,30 +1956,47 @@ const MKT={
 
     const proj=d3.geoNaturalEarth1().scale(W/6.1).translate([W/2,H/2]);
     const path=d3.geoPath().projection(proj);
-    const isDark=document.documentElement.getAttribute('data-theme')!=='light';
 
-    // Ocean fill
-    const oceanColor=isDark?'#040810':'#8ab4d8';
-    svg.append('rect').attr('width',W).attr('height',H).attr('fill',oceanColor);
+    // ── SVG Filters & Gradients ───────────────────────────────────────
+    const defs=svg.append('defs');
 
-    // Subtle scan-line pattern for cyber look (dark mode only)
-    if(isDark){
-      const defs=svg.append('defs');
-      const scanPat=defs.append('pattern').attr('id','scanlines').attr('width',2).attr('height',2).attr('patternUnits','userSpaceOnUse');
-      scanPat.append('line').attr('x1',0).attr('y1',0).attr('x2',0).attr('y2',2).attr('stroke','rgba(0,120,255,0.035)').attr('stroke-width',1);
-      svg.append('rect').attr('width',W).attr('height',H).attr('fill','url(#scanlines)').style('pointer-events','none');
-    }
+    // City-lights grain filter — fractal noise clipped to landmass shape
+    // produces the NASA night-lights speckled-gold look
+    const gf=defs.append('filter').attr('id','cityGrain')
+      .attr('x','0%').attr('y','0%').attr('width','100%').attr('height','100%')
+      .attr('color-interpolation-filters','sRGB');
+    gf.append('feTurbulence').attr('type','fractalNoise')
+      .attr('baseFrequency','0.78').attr('numOctaves','4')
+      .attr('seed','17').attr('result','noise');
+    gf.append('feColorMatrix').attr('type','matrix')
+      // boost R+G channels for warm gold, zero blue, moderate alpha
+      .attr('values','0 0 0 0 1.0  0 0 0 0 0.60  0 0 0 0 0.02  0 0 0 0.62 0')
+      .attr('in','noise').attr('result','goldNoise');
+    gf.append('feComposite').attr('in','goldNoise').attr('in2','SourceGraphic')
+      .attr('operator','in').attr('result','masked');
+    const gfm=gf.append('feMerge');
+    gfm.append('feMergeNode').attr('in','SourceGraphic');
+    gfm.append('feMergeNode').attr('in','masked');
 
-    // Graticule — finer, more cyber
-    const gridColor=isDark?'#0d2240':'#5a8ab0';
+    // Vignette radial gradient (darken edges)
+    const vig=defs.append('radialGradient').attr('id','vigGrad')
+      .attr('cx','50%').attr('cy','50%').attr('r','70%');
+    vig.append('stop').attr('offset','0%').attr('stop-color','rgba(0,0,0,0)');
+    vig.append('stop').attr('offset','100%').attr('stop-color','rgba(0,0,0,0.5)');
+
+    // ── Ocean ─────────────────────────────────────────────────────────
+    // Deep space-black with faint blue tint (like looking down from orbit)
+    svg.append('rect').attr('width',W).attr('height',H).attr('fill','#030c18');
+    svg.append('rect').attr('width',W).attr('height',H)
+      .attr('fill','url(#vigGrad)').style('pointer-events','none');
+
+    // ── Lat/lon grid — very faint blue lines ──────────────────────────
     svg.append('path').datum(d3.geoGraticule().step([20,20])()).attr('d',path)
-      .attr('stroke',gridColor).attr('fill','none').attr('stroke-width',.4).attr('opacity',.7);
-    // Sphere outline
+      .attr('stroke','#0b2a40').attr('fill','none').attr('stroke-width',.3).attr('opacity',.9);
     svg.append('path').datum({type:'Sphere'}).attr('d',path)
-      .attr('fill','none').attr('stroke',isDark?'#0f2a4a':'#4a7a9b').attr('stroke-width',1);
+      .attr('fill','none').attr('stroke','#0d3050').attr('stroke-width',.7);
 
     const tt=document.getElementById('mapTT');
-
     const countryToRegion=id=>{
       for(const r of REGIONS_DEF) if(r.countries.includes(+id)) return r;
       return null;
@@ -2017,32 +2007,74 @@ const MKT={
       const countries=topojson.feature(world,world.objects.countries);
       const borders=topojson.mesh(world,world.objects.countries,(a,b)=>a!==b);
 
-      svg.selectAll('.country').data(countries.features).join('path')
-        .attr('class','country')
-        .attr('d',path)
+      // ── Layer 1: dark land base (like unlit terrain) ──────────────
+      svg.selectAll('.cb').data(countries.features).join('path')
+        .attr('class','cb').attr('d',path)
+        .attr('fill','#0e0800').attr('stroke','none');
+
+      // ── Layer 2: city-lights grain overlay ───────────────────────
+      // Region countries glow gold; non-region land is very dim
+      svg.selectAll('.cl').data(countries.features).join('path')
+        .attr('class','cl').attr('d',path)
         .attr('fill',d=>{
-          const r=countryToRegion(d.id);
-          if(!r) return isDark?'#0d1e30':'#b8cfe0';
-          if(+d.id===356) return r.color+'ee';
-          return r.color+'88';
+          if(+d.id===356) return '#FF9933';         // Bhaarat — saffron
+          return countryToRegion(d.id)?'#c87018':'#6b3d10'; // gold / dim
         })
-        .attr('stroke',d=>{
-          const r=countryToRegion(d.id);
-          if(+d.id===356) return '#FF9933';
-          return r?r.color+'99':isDark?'#162840':'#7aa5c0';
+        .attr('opacity',d=>{
+          if(+d.id===356) return .92;
+          return countryToRegion(d.id)?.id ? .68 : .16;
         })
-        .attr('stroke-width',d=>+d.id===356?1.8:countryToRegion(d.id)?.id?1:.3)
-        .style('filter',d=>{
-          const r=countryToRegion(d.id);
-          if(!r) return null;
-          if(+d.id===356) return `drop-shadow(0 0 8px ${r.color}) drop-shadow(0 0 3px ${r.color}88)`;
-          return `drop-shadow(0 0 4px ${r.color}66)`;
-        })
+        .attr('stroke','none')
+        .style('filter','url(#cityGrain)');
+
+      // ── Country borders — barely visible seams ────────────────────
+      svg.append('path').datum(borders)
+        .attr('fill','none').attr('stroke','#1a0d00')
+        .attr('stroke-width',.3).attr('d',path);
+
+      // ── Bhaarat extra glow halo ───────────────────────────────────
+      const indFeat=countries.features.find(d=>+d.id===356);
+      if(indFeat){
+        svg.append('path').datum(indFeat).attr('d',path)
+          .attr('fill','#FF9933').attr('opacity',.15)
+          .attr('stroke','#FF9933').attr('stroke-width',1)
+          .style('filter','drop-shadow(0 0 16px #FF993399) drop-shadow(0 0 7px #FF993355)')
+          .style('pointer-events','none');
+      }
+
+      // ── Financial hub connection arcs ─────────────────────────────
+      // Quadratic bezier arcs between major exchange cities
+      const HUB={
+        mumbai:  [72.83,18.96], newYork: [-74.0,40.71],
+        london:  [-0.12,51.51], tokyo:   [139.69,35.69],
+        hongkong:[114.17,22.28],singapore:[103.82,1.35],
+        frankfurt:[8.68,50.11], saoPaulo:[-46.63,-23.55],
+      };
+      [
+        ['mumbai','london'],   ['mumbai','singapore'],
+        ['newYork','london'],  ['london','frankfurt'],
+        ['tokyo','hongkong'],  ['hongkong','singapore'],
+        ['newYork','saoPaulo'],
+      ].forEach(([a,b])=>{
+        const pa=proj(HUB[a]),pb=proj(HUB[b]);
+        if(!pa||!pb||!isFinite(pa[0])||!isFinite(pb[0])) return;
+        const mx=(pa[0]+pb[0])/2, my=(pa[1]+pb[1])/2 - W*0.055;
+        svg.append('path')
+          .attr('d',`M${pa[0].toFixed(1)},${pa[1].toFixed(1)} Q${mx.toFixed(1)},${my.toFixed(1)} ${pb[0].toFixed(1)},${pb[1].toFixed(1)}`)
+          .attr('fill','none')
+          .attr('stroke','rgba(80,190,255,0.16)')
+          .attr('stroke-width',.7)
+          .attr('stroke-dasharray','3,5')
+          .style('pointer-events','none');
+      });
+
+      // ── Interactive hit layer (transparent — for hover/click) ─────
+      svg.selectAll('.ch').data(countries.features).join('path')
+        .attr('class','ch').attr('d',path)
+        .attr('fill','transparent').attr('stroke','none')
         .on('mouseover',(e,d)=>{
           const r=countryToRegion(d.id);
           if(!r)return;
-          d3.select(e.target).attr('opacity',.7);
-          const avgPct=r.indices.reduce((s,i)=>s+(ID_DATA[i.sym]?.pct||0),0)/r.indices.length;
           tt.style.display='block';
           tt.style.left=(e.clientX+14)+'px';
           tt.style.top=(e.clientY-14)+'px';
@@ -2052,47 +2084,25 @@ const MKT={
             <div style="margin-top:6px;font-size:10px;color:var(--accent)">Click to explore →</div>`;
         })
         .on('mousemove',e=>{tt.style.left=(e.clientX+14)+'px';tt.style.top=(e.clientY-14)+'px';})
-        .on('mouseout',(e)=>{d3.select(e.target).attr('opacity',1);tt.style.display='none';})
+        .on('mouseout',()=>{tt.style.display='none';})
         .on('click',(e,d)=>{const r=countryToRegion(d.id);if(r)MKT.goRegion(r.id);});
 
-      // Country borders
-      svg.append('path').datum(borders).attr('fill','none').attr('stroke','#1a2744').attr('stroke-width',.4).attr('d',path);
-
-      // ── BHAARAT CLAIMED TERRITORY OVERLAY ──
-      // When served: fetch authoritative India-claimed boundary GeoJSON from server
-      // (proxied from Datameet / Survey of Bhaarat source, winding-order fixed server-side).
-      // When opened as local file: fall back to Pakistan/China clipPath approximation.
-
-      // Draw GeoJSON rings as plain SVG polygons via proj() — never d3.geoPath.
-      // This permanently eliminates the spherical winding-order orange-globe issue
-      // regardless of whether the source GeoJSON is CCW or CW wound.
-      function drawGeoJSONAsSVG(geojson, fill, stroke){
-        const features = geojson.type==='FeatureCollection'
-          ? geojson.features
-          : geojson.type==='Feature' ? [geojson] : [];
-
+      // ── BHAARAT CLAIMED TERRITORY OVERLAY ────────────────────────
+      function drawGeoJSONAsSVG(geojson,fill,stroke){
+        const features=geojson.type==='FeatureCollection'
+          ?geojson.features:geojson.type==='Feature'?[geojson]:[];
         features.forEach(f=>{
-          if(!f.geometry) return;
-          const polys = f.geometry.type==='Polygon'
-            ? [f.geometry.coordinates]
-            : f.geometry.type==='MultiPolygon'
-              ? f.geometry.coordinates
-              : [];
-
+          if(!f.geometry)return;
+          const polys=f.geometry.type==='Polygon'?[f.geometry.coordinates]
+            :f.geometry.type==='MultiPolygon'?f.geometry.coordinates:[];
           polys.forEach(rings=>{
-            // Render exterior ring only (index 0) — interior holes ignored for fill overlay
-            const ring = rings[0];
-            if(!ring) return;
-            const pts = ring
-              .map(([lo,la])=>proj([lo,la]))
-              .filter(p=>p&&isFinite(p[0])&&isFinite(p[1]));
-            if(pts.length < 3) return;
+            const ring=rings[0];if(!ring)return;
+            const pts=ring.map(([lo,la])=>proj([lo,la])).filter(p=>p&&isFinite(p[0])&&isFinite(p[1]));
+            if(pts.length<3)return;
             svg.append('polygon')
-              .attr('points', pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' '))
-              .attr('fill', fill)
-              .attr('stroke', stroke||fill)
-              .attr('stroke-width', 0.6)
-              .attr('stroke-linejoin','round')
+              .attr('points',pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' '))
+              .attr('fill',fill).attr('stroke',stroke||fill)
+              .attr('stroke-width',.6).attr('stroke-linejoin','round')
               .style('pointer-events','none');
           });
         });
@@ -2100,13 +2110,11 @@ const MKT={
 
       if(IS_SERVED){
         try{
-          const claimed = await fetch('/api/geodata?src=india-claimed',
+          const claimed=await fetch('/api/geodata?src=india-claimed',
             {signal:AbortSignal.timeout(12_000)}).then(r=>r.json());
-          if(claimed && claimed.type){
-            drawGeoJSONAsSVG(claimed, '#FF9933', '#FF9933');
-          }
+          if(claimed&&claimed.type) drawGeoJSONAsSVG(claimed,'#FF9933','#FF9933');
         }catch(geoErr){
-          console.warn('[geodata] fetch failed, using topojson clip fallback:', geoErr.message);
+          console.warn('[geodata] fetch failed, using topojson clip fallback:',geoErr.message);
           _drawClaimedFallback();
         }
       } else {
@@ -2114,23 +2122,21 @@ const MKT={
       }
 
       function _drawClaimedFallback(){
-        const defs=svg.select('defs').empty()?svg.append('defs'):svg.select('defs');
-        // PoK — clip Pakistan's topojson shape to the northern Kashmir band
+        const d2=svg.select('defs').empty()?svg.append('defs'):svg.select('defs');
         const pokPts=[[70.5,37.8],[78.5,37.8],[78.5,33.0],[70.5,33.0]]
           .map(([lo,la])=>proj([lo,la])).filter(p=>p&&isFinite(p[0]));
         if(pokPts.length===4){
-          defs.append('clipPath').attr('id','clip-pok')
+          d2.append('clipPath').attr('id','clip-pok')
             .append('polygon').attr('points',pokPts.map(p=>p.map(v=>v.toFixed(1)).join(',')).join(' '));
           const pkFeat=countries.features.find(d=>+d.id===586);
           if(pkFeat) svg.append('path').datum(pkFeat).attr('d',path)
             .attr('fill','#FF9933').attr('stroke','none')
             .attr('clip-path','url(#clip-pok)').style('pointer-events','none');
         }
-        // Aksai Chin — clip China's topojson shape to western Ladakh band
         const acPts=[[78.0,37.8],[84.5,37.8],[84.5,33.0],[78.0,33.0]]
           .map(([lo,la])=>proj([lo,la])).filter(p=>p&&isFinite(p[0]));
         if(acPts.length===4){
-          defs.append('clipPath').attr('id','clip-ac')
+          d2.append('clipPath').attr('id','clip-ac')
             .append('polygon').attr('points',acPts.map(p=>p.map(v=>v.toFixed(1)).join(',')).join(' '));
           const cnFeat=countries.features.find(d=>+d.id===156);
           if(cnFeat) svg.append('path').datum(cnFeat).attr('d',path)
@@ -2139,61 +2145,63 @@ const MKT={
         }
       }
 
-      // ── Financial city markers — pulse rings for all major exchanges ──
+      // ── Financial city markers — glowing pulse rings ──────────────
       const CITIES=[
-        {lng:72.83,lat:18.96, label:'MUMBAI',   sym:'^NSEI',    color:'#FF9933', r:5, anchor:'end'},
-        {lng:77.21,lat:28.61, label:'DELHI',     sym:'^NSEI',    color:'#FF9933', r:3, anchor:'start', hide:true},
-        {lng:-74.0,lat:40.71, label:'NEW YORK',  sym:'^GSPC',    color:'#3b82f6', r:5, anchor:'end'},
-        {lng:-0.12,lat:51.51, label:'LONDON',    sym:'^FTSE',    color:'#8b5cf6', r:4, anchor:'end'},
-        {lng:139.69,lat:35.69,label:'TOKYO',     sym:'^N225',    color:'#ec4899', r:4, anchor:'start'},
-        {lng:121.47,lat:31.23,label:'SHANGHAI',  sym:'000001.SS',color:'#ef4444', r:4, anchor:'start'},
-        {lng:114.17,lat:22.28,label:'HONG KONG', sym:'^HSI',     color:'#f87171', r:3, anchor:'start'},
-        {lng:8.68,lat:50.11,  label:'FRANKFURT', sym:'^GDAXI',   color:'#a78bfa', r:3, anchor:'end'},
-        {lng:103.82,lat:1.35, label:'SINGAPORE', sym:'^STI',     color:'#14b8a6', r:3, anchor:'start'},
-        {lng:151.21,lat:-33.87,label:'SYDNEY',   sym:'^AXJO',    color:'#2dd4bf', r:3, anchor:'start'},
-        {lng:-46.63,lat:-23.55,label:'SAO PAULO',sym:'^BVSP',    color:'#22c55e', r:3, anchor:'end'},
+        {lng:72.83, lat:18.96,  label:'MUMBAI',    sym:'^NSEI',     color:'#FF9933', r:5, anchor:'end'},
+        {lng:-74.0, lat:40.71,  label:'NEW YORK',   sym:'^GSPC',     color:'#60a5fa', r:5, anchor:'end'},
+        {lng:-0.12, lat:51.51,  label:'LONDON',     sym:'^FTSE',     color:'#a78bfa', r:4, anchor:'end'},
+        {lng:139.69,lat:35.69,  label:'TOKYO',      sym:'^N225',     color:'#f472b6', r:4, anchor:'start'},
+        {lng:121.47,lat:31.23,  label:'SHANGHAI',   sym:'000001.SS', color:'#f87171', r:4, anchor:'start'},
+        {lng:114.17,lat:22.28,  label:'HONG KONG',  sym:'^HSI',      color:'#fb923c', r:3, anchor:'start'},
+        {lng:8.68,  lat:50.11,  label:'FRANKFURT',  sym:'^GDAXI',    color:'#c084fc', r:3, anchor:'end'},
+        {lng:103.82,lat:1.35,   label:'SINGAPORE',  sym:'^STI',      color:'#2dd4bf', r:3, anchor:'start'},
+        {lng:151.21,lat:-33.87, label:'SYDNEY',     sym:'^AXJO',     color:'#34d399', r:3, anchor:'start'},
+        {lng:-46.63,lat:-23.55, label:'SÃO PAULO',  sym:'^BVSP',     color:'#4ade80', r:3, anchor:'end'},
       ];
 
-      CITIES.filter(c=>!c.hide).forEach(c=>{
+      CITIES.forEach(c=>{
         const pt=proj([c.lng,c.lat]);
-        if(!pt||!isFinite(pt[0])) return;
+        if(!pt||!isFinite(pt[0]))return;
         const [cx,cy]=pt;
         const d=ID_DATA[c.sym];
         const pct=d?.pct;
-        const pctStr=pct!=null?` ${pct>=0?'+':''}${pct.toFixed(1)}%`:'';
-        const pctColor=pct==null?c.color:pct>=0?'#22c55e':'#ef4444';
+        const pctStr=pct!=null?`${pct>=0?'+':''}${pct.toFixed(1)}%`:'';
+        const pctColor=pct==null?c.color:pct>=0?'#4ade80':'#f87171';
 
         // Outer pulse ring
         const ring=svg.append('circle').attr('cx',cx).attr('cy',cy).attr('r',c.r+2)
           .attr('fill','none').attr('stroke',c.color).attr('stroke-width',1).attr('opacity',.8)
           .style('pointer-events','none');
-        ring.append('animate').attr('attributeName','r').attr('from',c.r+2).attr('to',c.r+12)
+        ring.append('animate').attr('attributeName','r').attr('from',c.r+2).attr('to',c.r+14)
           .attr('dur',(1.8+Math.random()).toFixed(1)+'s').attr('repeatCount','indefinite');
-        ring.append('animate').attr('attributeName','opacity').attr('from',.7).attr('to',0)
+        ring.append('animate').attr('attributeName','opacity').attr('from',.75).attr('to',0)
           .attr('dur',(1.8+Math.random()).toFixed(1)+'s').attr('repeatCount','indefinite');
 
-        // Core dot
+        // Core dot with strong glow
         svg.append('circle').attr('cx',cx).attr('cy',cy).attr('r',c.r)
           .attr('fill',c.color).style('pointer-events','none')
-          .style('filter',`drop-shadow(0 0 ${c.r+2}px ${c.color})`);
+          .style('filter',`drop-shadow(0 0 ${c.r+3}px ${c.color}) drop-shadow(0 0 ${c.r+6}px ${c.color}66)`);
 
-        // Label + perf
-        const tx=c.anchor==='end'?cx-c.r-4:cx+c.r+4;
+        // City label
+        const tx=c.anchor==='end'?cx-c.r-5:cx+c.r+5;
         svg.append('text').attr('x',tx).attr('y',cy-c.r-2)
           .attr('text-anchor',c.anchor).attr('fill',c.color)
-          .attr('font-size',isDark?8:7).attr('font-weight','700')
-          .attr('font-family','JetBrains Mono,monospace').style('pointer-events','none')
-          .text(c.label);
+          .attr('font-size',8).attr('font-weight','700')
+          .attr('font-family','JetBrains Mono,monospace')
+          .attr('letter-spacing','.6')
+          .style('pointer-events','none').text(c.label);
+
+        // Performance readout
         if(pctStr){
           svg.append('text').attr('x',tx).attr('y',cy+c.r+9)
             .attr('text-anchor',c.anchor).attr('fill',pctColor)
             .attr('font-size',7).attr('font-weight','700')
-            .attr('font-family','JetBrains Mono,monospace').style('pointer-events','none')
-            .text(pctStr);
+            .attr('font-family','JetBrains Mono,monospace')
+            .style('pointer-events','none').text(pctStr);
         }
       });
-    } catch(err){
-      // Fallback if topojson fails
+
+    }catch(err){
       svg.append('text').attr('x',W/2).attr('y',H/2).attr('text-anchor','middle')
         .attr('fill','#555').attr('font-size',14).text('Click a region card below to explore markets');
     }
