@@ -541,6 +541,61 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 .add-to-wl-btn{background:none;border:1px solid var(--border2);color:var(--muted);font-size:10px;font-weight:700;padding:4px 10px;cursor:pointer;letter-spacing:.4px;text-transform:uppercase;font-family:var(--sans);transition:all .15s;margin-left:8px}
 .add-to-wl-btn:hover{border-color:var(--accent);color:var(--accent)}
 .add-to-wl-btn.in-wl{border-color:var(--accent);color:var(--accent);background:rgba(255,153,51,.08)}
+
+/* ── USER PROFILE PAGE ── */
+.prof-outer{max-width:1280px;margin:0 auto;padding:24px 24px 60px}
+.prof-hdr{background:var(--surface);border:1px solid var(--border);padding:24px 28px;margin-bottom:20px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.prof-avatar-lg{width:64px;height:64px;border-radius:50%;background:#138808;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:22px;font-weight:800;color:#fff;flex-shrink:0;letter-spacing:-1px}
+.prof-hdr-info{flex:1;min-width:160px}
+.prof-hdr-name{font-family:var(--serif);font-size:24px;font-weight:800;letter-spacing:-.3px;margin-bottom:3px}
+.prof-hdr-email{font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:8px}
+.prof-hdr-badges{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.prof-badge{font-size:9px;font-weight:800;padding:3px 9px;text-transform:uppercase;letter-spacing:.6px}
+.prof-badge-plan{background:rgba(255,153,51,.1);color:var(--accent);border:1px solid rgba(255,153,51,.25)}
+.prof-badge-since{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.prof-hdr-stats{display:flex;gap:0;flex-shrink:0;border-left:1px solid var(--border)}
+.prof-hdr-stat{text-align:center;padding:4px 22px;border-right:1px solid var(--border)}
+.prof-stat-val{font-family:var(--mono);font-size:22px;font-weight:700}
+.prof-stat-k{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.prof-layout{display:grid;grid-template-columns:200px 1fr;gap:0;background:var(--surface);border:1px solid var(--border)}
+@media(max-width:768px){.prof-layout{grid-template-columns:1fr}}
+.prof-nav{border-right:1px solid var(--border);padding:4px 0;min-width:0}
+.prof-nav-item{display:flex;align-items:center;gap:10px;width:100%;padding:11px 18px;border:none;border-left:2px solid transparent;background:none;color:var(--muted);font-size:11px;font-weight:600;letter-spacing:.3px;cursor:pointer;font-family:var(--sans);text-align:left;transition:all .12s;white-space:nowrap}
+.prof-nav-item:hover{color:var(--text);background:var(--surface2)}
+.prof-nav-item.on{color:var(--text);background:var(--surface2);border-left-color:var(--accent)}
+.prof-nav-icon{font-size:13px;width:16px;text-align:center;flex-shrink:0}
+.prof-nav-divider{height:1px;background:var(--border);margin:4px 0}
+.prof-nav-section{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:10px 18px 4px}
+.prof-content{min-width:0;padding:24px 28px}
+.prof-tab{display:none}.prof-tab.active{display:block}
+.prof-section-title{font-family:var(--mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between}
+.prof-stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+@media(max-width:600px){.prof-stat-grid{grid-template-columns:1fr 1fr}}
+.prof-stat-card{background:var(--surface2);border:1px solid var(--border);padding:16px 18px}
+.prof-stat-card-val{font-family:var(--mono);font-size:26px;font-weight:700}
+.prof-stat-card-k{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
+.prof-activity-row{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.prof-activity-row:last-child{border-bottom:none}
+.prof-act-icon{width:28px;height:28px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;margin-top:2px}
+.prof-act-title{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:480px}
+.prof-act-time{font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:3px}
+.prof-setting-row{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--border);gap:20px}
+.prof-setting-row:last-child{border-bottom:none}
+.prof-setting-label{font-size:12px;font-weight:600;margin-bottom:2px}
+.prof-setting-desc{font-size:11px;color:var(--muted)}
+.prof-setting-ctrl{flex-shrink:0}
+.prof-input{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 12px;font-size:13px;font-family:var(--sans);outline:none;margin-bottom:10px;display:block}
+.prof-input:focus{border-color:var(--accent)}
+.prof-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:7px 16px;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;cursor:pointer;font-family:var(--sans);transition:all .12s}
+.prof-btn:hover{border-color:var(--border2);background:var(--dim)}
+.prof-btn-accent{background:var(--accent);border-color:var(--accent);color:#000!important}
+.prof-btn-accent:hover{opacity:.9;background:var(--accent)}
+.prof-btn-danger{border-color:rgba(239,68,68,.35);color:var(--neg)}
+.prof-btn-danger:hover{background:rgba(239,68,68,.08)}
+.prof-save-ok{color:#138808;font-size:11px;font-weight:700;display:none;margin-left:10px}
+.prof-danger{border:1px solid rgba(239,68,68,.22);padding:18px 20px;margin-top:28px;background:rgba(239,68,68,.03)}
+.prof-danger-title{font-size:10px;font-weight:800;color:var(--neg);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.prof-session-row{background:var(--surface2);border:1px solid var(--border);padding:12px 16px;max-width:440px;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between}
 </style>
 </head>
 <body>
@@ -876,6 +931,203 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
   <div class="page" style="grid-template-columns:1fr">
     <div id="watchlist-container"></div>
   </div>
+</div>
+
+<!-- ══ PROFILE ══ -->
+<div id="sec-profile" class="section">
+  <div class="prof-outer">
+
+    <!-- ─ Header card ─ -->
+    <div class="prof-hdr">
+      <div class="prof-avatar-lg" id="profAvatarLg">AB</div>
+      <div class="prof-hdr-info">
+        <div class="prof-hdr-name" id="profName">—</div>
+        <div class="prof-hdr-email" id="profEmail">—</div>
+        <div class="prof-hdr-badges">
+          <span class="prof-badge prof-badge-plan">✦ Full Access Unlocked</span>
+          <span class="prof-badge prof-badge-since" id="profSince" style="display:none"></span>
+        </div>
+      </div>
+      <div class="prof-hdr-stats">
+        <div class="prof-hdr-stat">
+          <div class="prof-stat-val" id="profWlCount">0</div>
+          <div class="prof-stat-k">Watchlist</div>
+        </div>
+        <div class="prof-hdr-stat">
+          <div class="prof-stat-val" id="profAlertCount">0</div>
+          <div class="prof-stat-k">Alerts</div>
+        </div>
+        <div class="prof-hdr-stat">
+          <div class="prof-stat-val" id="profReadCount">0</div>
+          <div class="prof-stat-k">Read</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─ Tab layout ─ -->
+    <div class="prof-layout">
+
+      <!-- Left nav -->
+      <nav class="prof-nav" id="profNav">
+        <div class="prof-nav-section">Account</div>
+        <button class="prof-nav-item on" onclick="PROF.tab('overview',this)">
+          <span class="prof-nav-icon">◈</span> Overview
+        </button>
+        <button class="prof-nav-item" onclick="PROF.tab('watchlist',this)">
+          <span class="prof-nav-icon">◎</span> Watchlist
+        </button>
+        <div class="prof-nav-divider"></div>
+        <div class="prof-nav-section">Preferences</div>
+        <button class="prof-nav-item" onclick="PROF.tab('settings',this)">
+          <span class="prof-nav-icon">⊕</span> Settings
+        </button>
+        <div class="prof-nav-divider"></div>
+        <div class="prof-nav-section">Security</div>
+        <button class="prof-nav-item" onclick="PROF.tab('account',this)">
+          <span class="prof-nav-icon">⊙</span> Account &amp; Security
+        </button>
+        <div class="prof-nav-divider"></div>
+        <button class="prof-nav-item" style="color:var(--neg);margin-top:4px" onclick="AUTH.signOut()">
+          <span class="prof-nav-icon" style="color:var(--neg)">↪</span> Sign Out
+        </button>
+      </nav>
+
+      <!-- Right content -->
+      <div class="prof-content">
+
+        <!-- ── OVERVIEW ── -->
+        <div class="prof-tab active" id="prof-overview">
+          <div class="prof-section-title">Overview</div>
+          <div class="prof-stat-grid">
+            <div class="prof-stat-card">
+              <div class="prof-stat-card-val" id="profWlCount2">0</div>
+              <div class="prof-stat-card-k">Watchlist Items</div>
+            </div>
+            <div class="prof-stat-card">
+              <div class="prof-stat-card-val" id="profAlertCount2">—</div>
+              <div class="prof-stat-card-k">Price Alerts</div>
+            </div>
+            <div class="prof-stat-card">
+              <div class="prof-stat-card-val" id="profReadCount2">0</div>
+              <div class="prof-stat-card-k">Articles Read</div>
+            </div>
+          </div>
+          <div class="prof-section-title">Recent Activity</div>
+          <div id="prof-activity-list" style="min-height:60px"></div>
+        </div>
+
+        <!-- ── WATCHLIST ── -->
+        <div class="prof-tab" id="prof-watchlist">
+          <div class="prof-section-title">Watchlist
+            <span id="prof-wl-badge" style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0"></span>
+          </div>
+          <div id="prof-wl-body"></div>
+        </div>
+
+        <!-- ── SETTINGS ── -->
+        <div class="prof-tab" id="prof-settings">
+          <div class="prof-section-title">Display &amp; Preferences</div>
+          <div class="prof-setting-row">
+            <div><div class="prof-setting-label">Theme</div><div class="prof-setting-desc">Dark or light mode</div></div>
+            <div class="prof-setting-ctrl">
+              <select class="scr-sel" id="prof-theme-sel" onchange="PROF.applyTheme(this.value)">
+                <option value="dark">Dark</option>
+                <option value="light">Light</option>
+              </select>
+            </div>
+          </div>
+          <div class="prof-setting-row">
+            <div><div class="prof-setting-label">Default Landing Page</div><div class="prof-setting-desc">Section loaded when you open prvaaha.</div></div>
+            <div class="prof-setting-ctrl">
+              <select class="scr-sel" id="prof-landing-sel">
+                <option value="home">Home</option>
+                <option value="markets">Markets</option>
+                <option value="news">News</option>
+                <option value="alpha">Alpha Engine</option>
+                <option value="watchlist">Watchlist</option>
+              </select>
+            </div>
+          </div>
+          <div class="prof-setting-row">
+            <div><div class="prof-setting-label">Default Chart Type</div><div class="prof-setting-desc">Line or candlestick by default on all charts</div></div>
+            <div class="prof-setting-ctrl">
+              <select class="scr-sel" id="prof-chart-sel">
+                <option value="line">Line</option>
+                <option value="candle">Candlestick</option>
+              </select>
+            </div>
+          </div>
+          <div class="prof-setting-row">
+            <div><div class="prof-setting-label">Default Chart Period</div><div class="prof-setting-desc">Time window pre-selected on all charts</div></div>
+            <div class="prof-setting-ctrl">
+              <select class="scr-sel" id="prof-period-sel">
+                <option value="1D">1 Day</option>
+                <option value="5D">5 Days</option>
+                <option value="1M">1 Month</option>
+                <option value="3M">3 Months</option>
+                <option value="1Y">1 Year</option>
+              </select>
+            </div>
+          </div>
+          <div class="prof-setting-row">
+            <div><div class="prof-setting-label">News Region Default</div><div class="prof-setting-desc">Pre-selected region tab on the News page</div></div>
+            <div class="prof-setting-ctrl">
+              <select class="scr-sel" id="prof-news-region-sel">
+                <option value="ALL">All Markets</option>
+                <option value="india">🇮🇳 Bhaarat</option>
+                <option value="world">🌐 World</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top:18px;display:flex;align-items:center">
+            <button class="prof-btn prof-btn-accent" onclick="PROF.saveSettings()">Save Preferences</button>
+            <span class="prof-save-ok" id="prof-save-ok">✓ Saved</span>
+          </div>
+        </div>
+
+        <!-- ── ACCOUNT & SECURITY ── -->
+        <div class="prof-tab" id="prof-account">
+          <div class="prof-section-title">Profile Details</div>
+          <div style="max-width:440px;margin-bottom:28px">
+            <label style="display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:6px">Display Name</label>
+            <input class="prof-input" id="prof-name-input" type="text" placeholder="Your name" autocomplete="name"/>
+            <label style="display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:6px">Email Address</label>
+            <input class="prof-input" id="prof-email-display" type="email" disabled style="opacity:.45;cursor:not-allowed"/>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:16px">Email cannot be changed. Contact support if needed.</div>
+            <div style="display:flex;align-items:center">
+              <button class="prof-btn prof-btn-accent" onclick="PROF.updateName()">Update Name</button>
+              <span class="prof-save-ok" id="prof-name-ok">✓ Updated</span>
+            </div>
+          </div>
+
+          <div class="prof-section-title">Password</div>
+          <div style="max-width:440px;margin-bottom:28px">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6">Send a password reset link to your registered email. You'll be prompted to choose a new password.</div>
+            <div style="display:flex;align-items:center">
+              <button class="prof-btn" id="prof-reset-btn" onclick="PROF.sendPasswordReset()">Send Reset Link</button>
+              <span class="prof-save-ok" id="prof-reset-ok">✓ Reset link sent — check your inbox</span>
+            </div>
+          </div>
+
+          <div class="prof-section-title">Active Sessions</div>
+          <div class="prof-session-row" style="margin-bottom:24px">
+            <div>
+              <div style="font-size:12px;font-weight:600">Current Session</div>
+              <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px">This browser · Active now</div>
+            </div>
+            <span style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;background:rgba(34,197,94,.1);color:var(--pos);padding:3px 9px">Active</span>
+          </div>
+
+          <div class="prof-danger">
+            <div class="prof-danger-title">⚠ Danger Zone</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.55">Deleting your account is permanent and cannot be undone. All your watchlists, saved searches, and personalisation data will be erased.</div>
+            <button class="prof-btn prof-btn-danger" onclick="PROF.confirmDelete()">Delete My Account</button>
+          </div>
+        </div>
+
+      </div><!-- /prof-content -->
+    </div><!-- /prof-layout -->
+  </div><!-- /prof-outer -->
 </div>
 
 <!-- ══ MF ══ -->
@@ -2966,7 +3218,7 @@ function renderIpoPage(){
 // ══════════════════════════════════════════════
 // NAVIGATION
 // ══════════════════════════════════════════════
-const SECS=['home','markets','news','newsdetail','ipo','screener','alpha','watchlist','mf','crypto'];
+const SECS=['home','markets','news','newsdetail','ipo','screener','alpha','watchlist','mf','crypto','profile'];
 
 function showSection(id,el,afterFn){
   SECS.forEach(s=>{const e=document.getElementById('sec-'+s);if(e)e.className='section'+(s===id?' active':'');});
@@ -2981,6 +3233,7 @@ function showSection(id,el,afterFn){
   else if(id==='crypto') renderCrypto();
   else if(id==='news') renderNewsPage();
   else if(id==='ipo') renderIpoPage();
+  else if(id==='profile') PROF.render();
   if(afterFn) setTimeout(afterFn,10);
   // Update URL hash so reload restores position
   if(!afterFn) history.replaceState(null,'','#'+id);
@@ -3553,6 +3806,190 @@ function updateStatus(){
 }
 
 // ══════════════════════════════════════════════
+// PROF — User Profile & Settings Page
+// ══════════════════════════════════════════════
+const PROF = {
+  _activeTab: 'overview',
+
+  render() {
+    if (!AUTH.user) { showSection('home'); return; }
+    const u = AUTH.user;
+    // Header
+    const initials = u.name.replace(/[^a-zA-Z\s]/g,'').trim().split(/\s+/).map(w=>w[0]||'').join('').slice(0,2).toUpperCase() || u.name.slice(0,2).toUpperCase();
+    const avatarEl = document.getElementById('profAvatarLg');
+    if (avatarEl) avatarEl.textContent = initials;
+    const nameEl = document.getElementById('profName');
+    if (nameEl) nameEl.textContent = u.name;
+    const emailEl = document.getElementById('profEmail');
+    if (emailEl) emailEl.textContent = u.email;
+    // Member since
+    const sinceEl = document.getElementById('profSince');
+    if (sinceEl && u.createdAt) {
+      const d = new Date(u.createdAt);
+      sinceEl.textContent = 'Member since ' + d.toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+      sinceEl.style.display = '';
+    }
+    // Stats
+    const wl = this._getWl();
+    const readCount = JSON.parse(localStorage.getItem('prvaaha_read')||'[]').length;
+    ['profWlCount','profWlCount2'].forEach(id => { const e = document.getElementById(id); if(e) e.textContent = wl.length; });
+    ['profReadCount','profReadCount2'].forEach(id => { const e = document.getElementById(id); if(e) e.textContent = readCount; });
+    // Account form
+    const nameInput = document.getElementById('prof-name-input');
+    if (nameInput) nameInput.value = u.name;
+    const emailDisp = document.getElementById('prof-email-display');
+    if (emailDisp) emailDisp.value = u.email;
+    // Settings
+    this._loadSettings();
+    // Restore active tab
+    const activeBtn = document.querySelector(`#profNav .prof-nav-item[data-tab="${this._activeTab}"]`)
+      || document.querySelector('#profNav .prof-nav-item.on');
+    this.tab(this._activeTab, activeBtn);
+  },
+
+  tab(id, btn) {
+    this._activeTab = id;
+    document.querySelectorAll('.prof-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('#profNav .prof-nav-item').forEach(b => b.classList.remove('on'));
+    const panel = document.getElementById('prof-' + id);
+    if (panel) panel.classList.add('active');
+    if (btn) btn.classList.add('on');
+    if (id === 'watchlist') this._renderWatchlist();
+    if (id === 'overview') this._renderActivity();
+  },
+
+  _getWl() {
+    try { return JSON.parse(localStorage.getItem('prvaaha_wl')||'[]'); } catch(e) { return []; }
+  },
+
+  _renderWatchlist() {
+    const wl = this._getWl();
+    const body = document.getElementById('prof-wl-body');
+    const badge = document.getElementById('prof-wl-badge');
+    if (badge) badge.textContent = wl.length ? `${wl.length} item${wl.length===1?'':'s'}` : 'Empty';
+    if (!body) return;
+    if (!wl.length) {
+      body.innerHTML = `<div class="wl-empty"><div class="wl-empty-icon">◎</div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:6px">Your watchlist is empty</div>
+        <div style="font-size:11px">Search for stocks in the header and add them to track here.</div></div>`;
+      return;
+    }
+    body.innerHTML = `<div class="wl-grid">${wl.map(sym=>`
+      <div class="wl-card" style="cursor:pointer" onclick="goToStock('${sym}','india')">
+        <button class="wl-card-remove" onclick="event.stopPropagation();PROF._removeWl('${sym}')" title="Remove">×</button>
+        <div class="wl-card-ticker">${sym}</div>
+        <div class="wl-card-name" style="color:var(--muted);font-size:11px;margin-top:2px;margin-bottom:10px">Tap to open chart</div>
+        <div class="wl-card-price" id="pwl-price-${sym}">—</div>
+        <div class="wl-card-chg" id="pwl-chg-${sym}">—</div>
+      </div>`).join('')}</div>`;
+    // Fill live prices from SD (stock data object)
+    wl.forEach(sym => {
+      const d = SD[sym] || {};
+      const priceEl = document.getElementById('pwl-price-'+sym);
+      const chgEl = document.getElementById('pwl-chg-'+sym);
+      if (priceEl && d.price) priceEl.textContent = '₹' + fmt(d.price);
+      if (chgEl && d.pct !== undefined) {
+        chgEl.textContent = (d.pct>=0?'+':'')+fmt(d.pct)+'%';
+        chgEl.className = 'wl-card-chg ' + (d.pct>=0?'pos':'neg');
+      }
+    });
+  },
+
+  _removeWl(sym) {
+    let wl = this._getWl().filter(s => s !== sym);
+    localStorage.setItem('prvaaha_wl', JSON.stringify(wl));
+    this._renderWatchlist();
+    ['profWlCount','profWlCount2'].forEach(id => { const e = document.getElementById(id); if(e) e.textContent = wl.length; });
+  },
+
+  _renderActivity() {
+    const reads = JSON.parse(localStorage.getItem('prvaaha_read')||'[]').slice(-10).reverse();
+    const el = document.getElementById('prof-activity-list');
+    if (!el) return;
+    if (!reads.length) {
+      el.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:16px 0">No recent activity yet. Explore Markets, read articles, or search for stocks to get started.</div>';
+      return;
+    }
+    el.innerHTML = reads.map(r => `
+      <div class="prof-activity-row">
+        <div class="prof-act-icon">${r.type==='stock'?'📈':r.type==='index'?'📊':'📰'}</div>
+        <div>
+          <div class="prof-act-title">${r.title||r.sym||'Article'}</div>
+          <div class="prof-act-time">${r.time ? new Date(r.time).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'}) : '—'}</div>
+        </div>
+      </div>`).join('');
+  },
+
+  _loadSettings() {
+    try {
+      const s = JSON.parse(localStorage.getItem('prvaaha_settings')||'{}');
+      const curTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+      const themeEl = document.getElementById('prof-theme-sel'); if(themeEl) themeEl.value = s.theme||curTheme;
+      const landingEl = document.getElementById('prof-landing-sel'); if(landingEl) landingEl.value = s.landing||'home';
+      const chartEl = document.getElementById('prof-chart-sel'); if(chartEl) chartEl.value = s.chartType||'line';
+      const periodEl = document.getElementById('prof-period-sel'); if(periodEl) periodEl.value = s.period||'1M';
+      const newsEl = document.getElementById('prof-news-region-sel'); if(newsEl) newsEl.value = s.newsRegion||'ALL';
+    } catch(e) {}
+  },
+
+  applyTheme(val) {
+    document.documentElement.setAttribute('data-theme', val);
+    const btn = document.getElementById('themeBtn');
+    if (btn) btn.textContent = val==='dark' ? '🌙' : '☀️';
+  },
+
+  saveSettings() {
+    try {
+      const s = {
+        theme:      document.getElementById('prof-theme-sel')?.value    || 'dark',
+        landing:    document.getElementById('prof-landing-sel')?.value  || 'home',
+        chartType:  document.getElementById('prof-chart-sel')?.value    || 'line',
+        period:     document.getElementById('prof-period-sel')?.value   || '1M',
+        newsRegion: document.getElementById('prof-news-region-sel')?.value || 'ALL',
+      };
+      localStorage.setItem('prvaaha_settings', JSON.stringify(s));
+      this.applyTheme(s.theme);
+      const ok = document.getElementById('prof-save-ok');
+      if (ok) { ok.style.display='inline'; setTimeout(()=>ok.style.display='none',2500); }
+    } catch(e) {}
+  },
+
+  async updateName() {
+    const nameInput = document.getElementById('prof-name-input');
+    if (!nameInput) return;
+    const newName = nameInput.value.trim();
+    if (!newName) return;
+    const { error } = await _sb.auth.updateUser({ data: { full_name: newName, display_name: newName, name: newName } });
+    if (!error) {
+      AUTH.user.name = newName;
+      AUTH.updateUI();
+      document.getElementById('profName').textContent = newName;
+      const ok = document.getElementById('prof-name-ok');
+      if (ok) { ok.style.display='inline'; setTimeout(()=>ok.style.display='none',2500); }
+    }
+  },
+
+  async sendPasswordReset() {
+    const btn = document.getElementById('prof-reset-btn');
+    if (!btn || !AUTH.user?.email) return;
+    const orig = btn.textContent;
+    btn.textContent = 'Sending…'; btn.disabled = true;
+    const { error } = await _sb.auth.resetPasswordForEmail(AUTH.user.email);
+    btn.textContent = orig; btn.disabled = false;
+    if (!error) {
+      const ok = document.getElementById('prof-reset-ok');
+      if (ok) { ok.style.display='inline'; setTimeout(()=>ok.style.display='none',5000); }
+    }
+  },
+
+  confirmDelete() {
+    if (confirm('Are you absolutely sure? This permanently deletes your account and all data.\n\nThis action cannot be undone.')) {
+      AUTH._toast('Account deletion requires contacting support at support@prvaaha.com.');
+    }
+  },
+};
+
+// ══════════════════════════════════════════════
 // LIVE FETCH
 // When running via server.js → hits /api/quote (our Node proxy → Yahoo)
 // When opened as a plain file  → falls back to simulation
@@ -3611,7 +4048,8 @@ const AUTH={
     return{
       id:u.id,
       email:u.email,
-      name:u.user_metadata?.name||u.email.split('@')[0],
+      name:u.user_metadata?.full_name||u.user_metadata?.display_name||u.user_metadata?.name||u.email.split('@')[0],
+      createdAt:u.created_at||null,
       isAuthenticated:true,
       subscriptionStatus:'none',
     };
@@ -3711,17 +4149,24 @@ const AUTH={
     const dd=document.createElement('div');
     dd.id='user-dropdown';
     dd.style.cssText=`position:fixed;top:${r.bottom+6}px;right:${window.innerWidth-r.right}px;background:var(--surface);border:1px solid var(--border2);min-width:200px;box-shadow:0 16px 48px rgba(0,0,0,.55);z-index:600;padding:4px 0;font-family:var(--sans)`;
+    const ddItem=(label,fn,color='var(--text)')=>`
+      <button onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'"
+        onclick="${fn};document.getElementById('user-dropdown')?.remove()"
+        style="display:block;width:100%;text-align:left;padding:9px 16px;background:none;border:none;color:${color};font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans);letter-spacing:.2px">
+        ${label}
+      </button>`;
     dd.innerHTML=`
       <div style="padding:12px 16px 10px;border-bottom:1px solid var(--border)">
         <div style="font-size:12px;font-weight:700;color:var(--text)">${this.user.name}</div>
         <div style="font-size:10px;color:var(--muted);margin-top:2px">${this.user.email}</div>
         <div style="margin-top:6px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--accent)">✦ Full Access Unlocked</div>
       </div>
-      <button onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'"
-        onclick="AUTH.signOut()"
-        style="display:block;width:100%;text-align:left;padding:10px 16px;background:none;border:none;color:var(--neg);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans)">
-        Sign Out
-      </button>`;
+      ${ddItem('My Profile','showSection(\'profile\')')}
+      ${ddItem('Watchlist','showSection(\'watchlist\')')}
+      ${ddItem('Settings','showSection(\'profile\');setTimeout(()=>PROF.tab(\'settings\'),80)')}
+      <div style="height:1px;background:var(--border);margin:2px 0"></div>
+      ${ddItem('Sign Out','AUTH.signOut()','var(--neg)')}
+    `;
     document.body.appendChild(dd);
     setTimeout(()=>document.addEventListener('click',()=>dd.remove(),{once:true}),50);
   },
