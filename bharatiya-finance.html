@@ -2734,11 +2734,73 @@ function renderRegionGrid(){
 // ══════════════════════════════════════════════
 // HOME SECTION RENDERS
 // ══════════════════════════════════════════════
-// Home page news — uses live API cache, falls back to static NEWS
+// Supabase articles → normalised article shape
 // ══════════════════════════════════════════════
+const _SBCAT={
+  'Economic Times Stocks':      'STOCKS',
+  'Economic Times Economy':     'ECONOMY',
+  'Economic Times Industry':    'INDUSTRY',
+  'Economic Times Wealth':      'WEALTH',
+  'Economic Times Markets':     'MARKETS',
+  'Economic Times Tech':        'TECH',
+  'Economic Times Top Stories': 'TOP',
+  'The Hindu News':             'NEWS',
+  'The Hindu Business':         'BUSINESS',
+  'Google News India Business': 'BUSINESS',
+  'Google News India Startups': 'STARTUP',
+  'Google News India Economy':  'ECONOMY',
+  'Moneycontrol Latest':        'MARKETS',
+};
+
+function _decodeHtml(s){
+  if(!s) return '';
+  return s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+           .replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'");
+}
+
+function _mapSbArticle(r){
+  return{
+    id:        r.id,
+    title:     _decodeHtml(r.title),
+    link:      r.canonical_url,
+    source:    r.source_name,
+    category:  _SBCAT[r.source_name]||'MARKETS',
+    region:    r.region||'india',
+    pubDate:   r.published_at||r.created_at||null,
+    excerpt:   _decodeHtml(r.summary),
+    thumbnail: null,
+  };
+}
+
+// Fetch up to `limit` articles from Supabase, newest first
+async function fetchSupabaseNews(limit=200){
+  try{
+    const{data,error}=await _sb
+      .from('articles')
+      .select('id,canonical_url,title,summary,source_name,published_at,created_at,region')
+      .order('created_at',{ascending:false})
+      .limit(limit);
+    if(error||!data?.length) return[];
+    return data.map(_mapSbArticle);
+  }catch(e){return[];}
+}
+
+// ── Primary news fetch — Supabase first, /api/news as fallback ──
 async function fetchHomeNews(){
-  // Re-use the News page cache if already loaded
+  // Re-use in-memory cache (cleared by NEWS_TTL in renderNewsPage)
   if(_newsArticles.length) return _newsArticles;
+
+  // 1️⃣ Try Supabase articles table
+  const sbNews=await fetchSupabaseNews(200);
+  if(sbNews.length){
+    _newsLastFetch=Date.now();
+    const existingIds=new Set(sbNews.map(a=>String(a.id)));
+    const manual=MANUAL_NEWS.filter(a=>!existingIds.has(String(a.id)));
+    _newsArticles=[...manual,...sbNews];
+    return _newsArticles;
+  }
+
+  // 2️⃣ Fallback: server /api/news endpoint
   try{
     const resp=await fetch('/api/news',{signal:AbortSignal.timeout(12000)});
     if(!resp.ok) throw new Error(resp.status);
@@ -2748,8 +2810,8 @@ async function fetchHomeNews(){
     _newsLastFetch=Date.now();
   }catch(e){ _newsArticles=[]; }
   // Prepend any manually added articles (deduplicated by id)
-  const existingIds=new Set(_newsArticles.map(a=>a.id));
-  const manual=MANUAL_NEWS.filter(a=>!existingIds.has(a.id));
+  const existingIds=new Set(_newsArticles.map(a=>String(a.id)));
+  const manual=MANUAL_NEWS.filter(a=>!existingIds.has(String(a.id)));
   _newsArticles=[...manual,..._newsArticles];
   return _newsArticles;
 }
@@ -3165,6 +3227,7 @@ async function renderNewsPage(){
   const el=document.getElementById('news-all');
   const now=Date.now();
   updateDateBar();
+  // Use cache if fresh
   if(_newsArticles.length && now-_newsLastFetch < NEWS_TTL){
     buildNewsSrcPills(_newsArticles);
     updateRegionCounts();
@@ -3172,15 +3235,11 @@ async function renderNewsPage(){
     return;
   }
   el.innerHTML=newsSkeletonHTML();
-  try {
-    const resp=await fetch('/api/news',{signal:AbortSignal.timeout(15000)});
-    if(!resp.ok) throw new Error(resp.status);
-    const data=await resp.json();
-    _newsArticles=data.articles||[];
-    _newsArchives=data.archives||[];
-    _newsLastFetch=now;
-  } catch(e){
-    // Fallback: show static NEWS with timestamps
+  // Clear cache so fetchHomeNews re-fetches
+  _newsArticles=[];
+  await fetchHomeNews();
+  // If still empty (both Supabase and API failed), fall back to static
+  if(!_newsArticles.length){
     const timeToMs={'Just now':0,'4 min ago':4,'19 min ago':19,'36 min ago':36,
       '1 hr ago':60,'1.5 hr ago':90,'2 hr ago':120,'3 hr ago':180,'4 hr ago':240};
     _newsArticles=(typeof NEWS!=='undefined'?NEWS:[]).map((n,i)=>({
