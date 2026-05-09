@@ -2816,21 +2816,10 @@ async function fetchHomeNews(){
   return _newsArticles;
 }
 
-// ── Manually added news items (prepended to live feed) ───────
-// Add articles here to have them appear at the top of the feed.
-const MANUAL_NEWS = [
-  {
-    id       : 'bbc-ce8pdvp5x5ro',
-    title    : "Modi's BJP conquers Bengal, one of India's toughest political frontiers",
-    link     : 'https://www.bbc.com/news/articles/ce8pdvp5x5ro',
-    source   : 'BBC',
-    category : 'ELECTION',
-    region   : 'india',
-    pubDate  : new Date('2026-05-04T06:00:00Z').toISOString(),
-    excerpt  : "The BJP's stunning victory in West Bengal marks the end of Mamata Banerjee's 14-year grip on power and a landmark moment for Modi's party ahead of the 2029 general elections.",
-    thumbnail: 'https://ichef.bbci.co.uk/news/1536/cpsprodpb/81cb/live/d80c74f0-478a-11f1-af14-6bc26cdb4d7e.jpg.webp',
-  },
-];
+// ── Manually pinned articles (prepended above live Supabase feed) ──
+// Leave empty now that Supabase articles are live.
+// To pin a story: add an object with {id,title,link,source,category,region,pubDate,excerpt,thumbnail}
+const MANUAL_NEWS = [];
 
 async function renderHero(){
   const heroEl=document.getElementById('heroEl');
