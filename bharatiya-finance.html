@@ -2288,15 +2288,18 @@ const MKT={
         .attr('fill','#0e0800').attr('stroke','none');
 
       // ── Layer 2: city-lights grain overlay ───────────────────────
+      // Each region uses its own color (dimmed) so US=blue, Europe=purple, etc.
+      // India (#356) stays full saffron; untracked countries stay near-black.
       mapG.selectAll('.cl').data(countries.features).join('path')
         .attr('class','cl').attr('d',path)
         .attr('fill',d=>{
           if(+d.id===356) return '#FF9933';
-          return countryToRegion(d.id)?'#c87018':'#6b3d10';
+          const r=countryToRegion(d.id);
+          return r ? r.color : '#6b3d10';
         })
         .attr('opacity',d=>{
           if(+d.id===356) return .92;
-          return countryToRegion(d.id)?.id ? .68 : .16;
+          return countryToRegion(d.id) ? .45 : .14;
         })
         .attr('stroke','none')
         .style('filter','url(#cityGrain)');
