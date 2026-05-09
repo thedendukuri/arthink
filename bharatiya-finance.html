@@ -1022,7 +1022,7 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
           <span class="prof-nav-icon">⊙</span> Account &amp; Security
         </button>
         <div class="prof-nav-divider"></div>
-        <button class="prof-nav-item" style="color:var(--neg);margin-top:4px" onclick="AUTH.signOut()">
+        <button class="prof-nav-item" style="color:var(--neg);margin-top:4px" onclick="if(confirm('Sign out of prvaaha.?'))AUTH.signOut()">
           <span class="prof-nav-icon" style="color:var(--neg)">↪</span> Sign Out
         </button>
       </nav>
@@ -4337,7 +4337,10 @@ const AUTH={
       this.updateUI();
     }
     // Keep UI in sync whenever auth state changes (tab focus, token refresh, sign-out)
-    _sb.auth.onAuthStateChange((_event,session)=>{
+    _sb.auth.onAuthStateChange((event,session)=>{
+      // TOKEN_REFRESHED is a background housekeeping event — skip it so the
+      // open dropdown isn't nuked mid-interaction by a silent token refresh
+      if(event==='TOKEN_REFRESHED') return;
       this.user=session?.user ? this._map(session.user) : null;
       this.updateUI();
     });
@@ -4452,7 +4455,7 @@ const AUTH={
     dd.style.cssText=`position:fixed;top:${r.bottom+6}px;right:${window.innerWidth-r.right}px;background:var(--surface);border:1px solid var(--border2);min-width:200px;box-shadow:0 16px 48px rgba(0,0,0,.55);z-index:600;padding:4px 0;font-family:var(--sans)`;
     const ddItem=(label,fn,color='var(--text)')=>`
       <button onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'"
-        onclick="${fn};document.getElementById('user-dropdown')?.remove()"
+        onclick="event.stopPropagation();${fn};document.getElementById('user-dropdown')?.remove()"
         style="display:block;width:100%;text-align:left;padding:9px 16px;background:none;border:none;color:${color};font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans);letter-spacing:.2px">
         ${label}
       </button>`;
@@ -4466,7 +4469,7 @@ const AUTH={
       ${ddItem('Watchlist','showSection(\'watchlist\')')}
       ${ddItem('Settings','showSection(\'profile\');setTimeout(()=>PROF.tab(\'settings\'),80)')}
       <div style="height:1px;background:var(--border);margin:2px 0"></div>
-      ${ddItem('Sign Out','AUTH.signOut()','var(--neg)')}
+      ${ddItem('Sign Out','if(confirm(\'Sign out of prvaaha.?\'))AUTH.signOut()','var(--neg)')}
     `;
     document.body.appendChild(dd);
     setTimeout(()=>document.addEventListener('click',()=>dd.remove(),{once:true}),50);
