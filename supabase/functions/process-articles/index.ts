@@ -8,16 +8,56 @@ const supabase = createClient(
 
 const BATCH_SIZE = 100
 
+/** Extract the best image URL from a raw RSS entry JSONB object */
+function extractImageUrl(rawXml: any): string | null {
+  if (!rawXml || typeof rawXml !== "object") return null
+
+  // 1. ET feeds: attachments array with mimeType image/*
+  if (Array.isArray(rawXml.attachments)) {
+    for (const att of rawXml.attachments) {
+      if (att?.url && (att?.mimeType ?? "").startsWith("image/")) {
+        return att.url
+      }
+    }
+    for (const att of rawXml.attachments) {
+      if (att?.url) return att.url
+    }
+  }
+
+  // 2. The Hindu / standard media:content
+  const mediaContent = rawXml["media:content"] ?? rawXml.mediaContent
+  if (Array.isArray(mediaContent) && mediaContent[0]?.url) {
+    return mediaContent[0].url
+  }
+  if (mediaContent?.url) return mediaContent.url
+
+  // 3. Standard RSS <enclosure> tag
+  const enclosure = rawXml.enclosure
+  if (enclosure?.url && (enclosure?.type ?? "").startsWith("image/")) {
+    return enclosure.url
+  }
+
+  // 4. media:thumbnail
+  const mediaThumbnail = rawXml["media:thumbnail"] ?? rawXml.mediaThumbnail
+  if (mediaThumbnail?.url) return mediaThumbnail.url
+  if (Array.isArray(mediaThumbnail) && mediaThumbnail[0]?.url) return mediaThumbnail[0].url
+
+  // 5. image field directly
+  if (rawXml.image?.url) return rawXml.image.url
+  if (typeof rawXml.image === "string") return rawXml.image
+
+  return null
+}
+
 Deno.serve(async () => {
   const runStart = Date.now()
 
   try {
     // ── 1. Fetch unprocessed raw items (promoted_at IS NULL) ──────
-    // Join feeds so we get source_name, region, category
     const { data: rawItems, error: fetchError } = await supabase
       .from("raw_feed_items")
       .select(`
-        id, feed_id, title, link, summary, author, published_at, content_hash,
+        id, feed_id, title, link, summary, author, published_at, content_hash, raw_xml,
         feeds ( name, region, category )
       `)
       .is("promoted_at", null)
@@ -50,7 +90,6 @@ Deno.serve(async () => {
 
     for (const raw of rawItems as any[]) {
       if (!raw.link || !raw.title) {
-        // Malformed item — mark promoted so it doesn't block the queue
         toDuplicate.push({ raw_id: raw.id, skip: true })
         continue
       }
@@ -71,6 +110,7 @@ Deno.serve(async () => {
           source_article_id: raw.id,
           author:            raw.author ?? null,
           published_at:      raw.published_at ?? null,
+          image_url:         extractImageUrl(raw.raw_xml),
           region:            raw.feeds?.region ?? null,
           language:          "en",
           dedupe_key:        raw.content_hash ?? null,
@@ -89,7 +129,6 @@ Deno.serve(async () => {
         .select("id, canonical_url")
 
       if (insertError) {
-        // If there's a partial conflict (race condition), fall back to upsert
         const { error: upsertError } = await supabase
           .from("articles")
           .upsert(toInsert, { onConflict: "canonical_url", ignoreDuplicates: true })
@@ -97,8 +136,6 @@ Deno.serve(async () => {
         if (upsertError) insertErrors.push(upsertError.message)
       } else {
         insertedCount = inserted?.length ?? 0
-
-        // Add newly inserted urls to existingByUrl so duplicate pass can reference them
         for (const a of (inserted ?? [])) {
           existingByUrl.set(a.canonical_url, a.id)
         }

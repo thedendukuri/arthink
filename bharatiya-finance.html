@@ -2748,7 +2748,7 @@ function _mapSbArticle(r){
     region:    r.region||'india',
     pubDate:   r.published_at||r.created_at||null,
     excerpt:   _decodeHtml(r.summary),
-    thumbnail: null,
+    thumbnail: r.image_url||null,
   };
 }
 
@@ -2757,7 +2757,7 @@ async function fetchSupabaseNews(limit=200){
   try{
     const{data,error}=await _sb
       .from('articles')
-      .select('id,canonical_url,title,summary,source_name,published_at,created_at,region')
+      .select('id,canonical_url,title,summary,source_name,published_at,created_at,region,image_url')
       .order('created_at',{ascending:false})
       .limit(limit);
     if(error||!data?.length) return[];
