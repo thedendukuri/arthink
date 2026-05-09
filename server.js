@@ -130,9 +130,14 @@ async function yahooQuotes(symbols) {
       'regularMarketDayLow','regularMarketPreviousClose',
       'fiftyTwoWeekHigh','fiftyTwoWeekLow','marketCap','symbol',
     ],
-  });
+  }, { validateResult: false });
   return Array.isArray(raw) ? raw : [raw];
 }
+
+// Global safety net — log unhandled rejections instead of crashing the process
+process.on('unhandledRejection', (reason) => {
+  console.error('[unhandledRejection]', reason instanceof Error ? reason.message : reason);
+});
 
 // ── GET /api/chart?sym=AAPL&period=1d&interval=5m ───────────
 // Uses Schwab for US symbols (real-time intraday), Yahoo for others.
@@ -168,6 +173,13 @@ app.get('/api/chart', async (req, res) => {
     // Fall back to Yahoo if Schwab not available or failed
     if (!ohlc) {
       ohlc = await yahooChart(sym, period, interval, req.query.from, req.query.to, isCustom);
+    }
+
+    // 1D intraday returns 0 bars when the market is closed (weekends/holidays).
+    // Auto-fall back to 5D (15m bars) so the chart always shows something.
+    if (!ohlc.length && period === '1d' && !isCustom) {
+      console.log(`[chart] ${sym} 1d empty (market closed?) — falling back to 5d`);
+      ohlc = await yahooChart(sym, '5d', '15m', null, null, false);
     }
 
     const payload = { ohlc, meta: { symbol: sym, source: useSchwab && ohlc?.length ? 'schwab' : 'yahoo' } };
