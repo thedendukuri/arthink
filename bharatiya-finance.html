@@ -2294,14 +2294,11 @@ const MKT={
         .attr('fill',d=>{
           if(+d.id===356) return '#FF9933';
           const r=countryToRegion(d.id);
-          return r ? r.color : '#1a1200';
+          return r ? r.color : '#4a5568';
         })
-        .attr('opacity',d=>{
-          if(+d.id===356) return .95;
-          return countryToRegion(d.id) ? .90 : .12;
-        })
+        .attr('opacity',.90)
         .attr('stroke','none')
-        .style('filter',d=>countryToRegion(d.id)||+d.id===356 ? 'url(#cityGrain)' : 'none');
+        .style('filter','url(#cityGrain)');
 
       // ── Country borders ───────────────────────────────────────────
       mapG.append('path').datum(borders)
