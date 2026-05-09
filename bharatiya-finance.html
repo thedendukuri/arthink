@@ -4101,7 +4101,17 @@ const PROF = {
   _activeTab: 'overview',
 
   render() {
-    if (!AUTH.user) { showSection('home'); return; }
+    if (!AUTH.user) {
+      // Brief grace period in case onAuthStateChange hasn't fired yet
+      if (!this._renderRetried) {
+        this._renderRetried = true;
+        setTimeout(() => { this._renderRetried = false; this.render(); }, 400);
+        return;
+      }
+      this._renderRetried = false;
+      showSection('home'); return;
+    }
+    this._renderRetried = false;
     const u = AUTH.user;
     // Header
     const initials = u.name.replace(/[^a-zA-Z\s]/g,'').trim().split(/\s+/).map(w=>w[0]||'').join('').slice(0,2).toUpperCase() || u.name.slice(0,2).toUpperCase();
@@ -4350,15 +4360,16 @@ const AUTH={
     if(!email||!pass){this._showErr('si-err','Please fill in all fields.');return;}
     const btn=document.querySelector('#auth-form-in .signin');
     if(btn){btn.textContent='Signing in…';btn.disabled=true;}
-    const{error}=await _sb.auth.signInWithPassword({email,password:pass});
+    const{data,error}=await _sb.auth.signInWithPassword({email,password:pass});
     if(btn){btn.textContent='Sign In →';btn.disabled=false;}
     if(error){
       this._showErr('si-err',error.message.includes('Invalid')?'Incorrect email or password.':error.message);
       return;
     }
-    // onAuthStateChange fires and calls updateUI automatically
+    // Set user immediately from response — don't wait for onAuthStateChange
+    if(data?.user){ this.user=this._map(data.user); this.updateUI(); }
     closeAuthModal();
-    this._toast(`Welcome back, ${this.user?.name||''}!`);
+    this._toast(`Welcome back, ${this.user?.name||''}! 🎉`);
   },
 
   async doSignUp(){
@@ -4375,8 +4386,9 @@ const AUTH={
     if(error){this._showErr('su-err',error.message);return;}
     if(data.session){
       // Email confirmation disabled — signed in immediately
+      if(data.user){ this.user=this._map(data.user); this.updateUI(); }
       closeAuthModal();
-      this._toast(`Welcome to prvaaha., ${name}! Full access unlocked.`);
+      this._toast(`Welcome to prvaaha., ${name}! Full access unlocked. 🎉`);
     } else {
       // Email confirmation required
       closeAuthModal();
@@ -4420,7 +4432,7 @@ const AUTH={
         ${this.user.name.split(' ')[0]}
         <span style="font-size:9px;opacity:.5">▾</span>
       </span>`;
-      btn.style.cssText='background:rgba(0,0,0,.15);border:1px solid rgba(0,0,0,.25);color:#1a0a00;padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans);white-space:nowrap';
+      btn.style.cssText='background:rgba(255,153,51,.15);border:1px solid rgba(255,153,51,.3);color:var(--accent);padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans);white-space:nowrap';
       btn.onclick=(e)=>{e.stopPropagation();this._dropdown();};
     } else {
       btn.textContent='Sign In';
