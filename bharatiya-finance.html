@@ -237,6 +237,16 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 .scr-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 .scr-sel{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:6px 10px;font-size:12px;outline:none;cursor:pointer;font-family:var(--sans)}
 .scr-sel:focus{border-color:var(--accent)}
+.scr-header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.scr-mode-group{display:flex}
+.scr-mode-btn{background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:6px 14px;font-size:11px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;cursor:pointer;transition:all .15s;font-family:var(--mono)}
+.scr-mode-btn:first-child{border-right:none}
+.scr-mode-btn.active{background:var(--accent);color:#000;border-color:var(--accent)}
+.scr-mode-btn:hover:not(.active){color:var(--text);background:var(--surface2)}
+.scr-search-inp{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:6px 10px;font-size:12px;outline:none;font-family:var(--sans);flex:1;min-width:180px;max-width:320px}
+.scr-search-inp:focus{border-color:var(--accent)}
+.scr-search-inp::placeholder{color:var(--muted)}
+.scr-status{font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:8px;min-height:18px}
 
 /* ── MARKETS ── */
 .mkt-wrap{max-width:1280px;margin:0 auto;padding:0 24px 40px}
@@ -907,21 +917,40 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 
 <!-- ══ SCREENER ══ -->
 <div id="sec-screener" class="section">
-  <div class="page" style="grid-template-columns:1fr">
-    <div class="label">Stock Screener</div>
-    <div class="scr-bar">
-      <select class="scr-sel" id="f-sect" onchange="renderScreener()"><option value="">All Sectors</option><option>Banking</option><option>IT</option><option>FMCG</option><option>Pharma</option><option>Auto</option><option>Metals</option><option>Energy</option><option>Infra</option><option>NBFC</option></select>
-      <select class="scr-sel" id="f-sort" onchange="renderScreener()"><option value="mcap">Sort: Mkt Cap</option><option value="pct">Sort: % Change</option><option value="price">Sort: Price</option><option value="vol">Sort: Volume</option></select>
-      <select class="scr-sel" id="f-dir" onchange="renderScreener()"><option value="desc">High → Low</option><option value="asc">Low → High</option></select>
+  <div class="mkt-wrap">
+    <div class="label" style="margin-bottom:14px">Stock Screener</div>
+    <div class="scr-header">
+      <div class="scr-mode-group">
+        <button id="scr-btn-top" class="scr-mode-btn active" onclick="SCR.setMode('top15')">⭐ Top 15</button>
+        <button id="scr-btn-browse" class="scr-mode-btn" onclick="SCR.setMode('browse')">Browse All 423+</button>
+      </div>
+      <input id="scr-search" class="scr-search-inp" type="text" placeholder="Search company or ticker…" oninput="SCR.onSearch(this.value)">
     </div>
+    <div id="scr-filters" class="filter-bar" style="display:none;margin-bottom:12px">
+      <label>Exchange</label>
+      <select class="scr-sel" id="scr-exch-filter" onchange="SCR.onFilter()">
+        <option value="">NSE + BSE</option>
+        <option value="NSE">NSE</option>
+        <option value="BSE">BSE</option>
+      </select>
+      <div class="filter-sep"></div>
+      <label>Sector</label>
+      <select class="scr-sel" id="scr-sector-filter" onchange="SCR.onFilter()">
+        <option value="">All Sectors</option>
+      </select>
+    </div>
+    <div id="scr-stocks-count" class="scr-status"></div>
     <div style="overflow-x:auto">
-      <table class="stbl"><thead><tr>
-        <th>Company</th><th>Sector</th>
-        <th class="tr">Price</th><th class="tr">% Chg</th>
-        <th class="tr">Mkt Cap</th><th class="tr">P/E</th>
-        <th class="tr">52W High</th><th class="tr">52W Low</th><th class="tr">Volume</th>
-      </tr></thead><tbody id="scr-body"></tbody></table>
+      <table class="stbl">
+        <thead><tr>
+          <th>Symbol</th><th>Company</th><th>Exch</th>
+          <th class="tr">Price</th><th class="tr">Chg%</th>
+          <th class="tr">Volume</th><th class="tr">Mkt Cap</th>
+        </tr></thead>
+        <tbody id="scr-stocks-body"></tbody>
+      </table>
     </div>
+    <div class="india-pagination" id="scr-pagination"></div>
   </div>
 </div>
 
@@ -3395,7 +3424,7 @@ function showSection(id,el,afterFn){
   if(el) el.classList.add('on');
   if(id==='newsdetail') document.querySelector('.nav a:nth-child(3)')?.classList.add('on');
   if(id==='markets'&&!afterFn) MKT.goOverview();
-  else if(id==='screener') renderScreener();
+  else if(id==='screener') SCR.init();
   else if(id==='alpha') renderAlpha();
   else if(id==='watchlist') renderWatchlistUI();
   else if(id==='mf') renderMF();
@@ -3601,41 +3630,126 @@ const IST = {
 };
 
 // ══════════════════════════════════════════════
-// SCR — Overview screener (mirrors IST exactly,
-// uses scr- prefix IDs so there's no conflict)
+// SCR — Stock Screener
+// mode: 'top15' (default large-caps) | 'browse' (all 423+ with filters)
 // ══════════════════════════════════════════════
+const SCR_TOP15 = [
+  {sym:'RELIANCE.NS',   shortSym:'RELIANCE',    name:'Reliance Industries',       exchange:'NSE'},
+  {sym:'TCS.NS',        shortSym:'TCS',          name:'Tata Consultancy Services', exchange:'NSE'},
+  {sym:'HDFCBANK.NS',   shortSym:'HDFCBANK',     name:'HDFC Bank',                 exchange:'NSE'},
+  {sym:'BHARTIARTL.NS', shortSym:'BHARTIARTL',   name:'Bharti Airtel',             exchange:'NSE'},
+  {sym:'ICICIBANK.NS',  shortSym:'ICICIBANK',    name:'ICICI Bank',                exchange:'NSE'},
+  {sym:'INFY.NS',       shortSym:'INFY',         name:'Infosys',                   exchange:'NSE'},
+  {sym:'SBIN.NS',       shortSym:'SBIN',         name:'State Bank of India',       exchange:'NSE'},
+  {sym:'HINDUNILVR.NS', shortSym:'HINDUNILVR',   name:'Hindustan Unilever',        exchange:'NSE'},
+  {sym:'ITC.NS',        shortSym:'ITC',          name:'ITC',                       exchange:'NSE'},
+  {sym:'KOTAKBANK.NS',  shortSym:'KOTAKBANK',    name:'Kotak Mahindra Bank',       exchange:'NSE'},
+  {sym:'LT.NS',         shortSym:'LT',           name:'Larsen & Toubro',           exchange:'NSE'},
+  {sym:'AXISBANK.NS',   shortSym:'AXISBANK',     name:'Axis Bank',                 exchange:'NSE'},
+  {sym:'BAJFINANCE.NS', shortSym:'BAJFINANCE',   name:'Bajaj Finance',             exchange:'NSE'},
+  {sym:'HCLTECH.NS',    shortSym:'HCLTECH',      name:'HCL Technologies',          exchange:'NSE'},
+  {sym:'MARUTI.NS',     shortSym:'MARUTI',       name:'Maruti Suzuki India',       exchange:'NSE'},
+];
+
 const SCR = {
+  mode: 'top15',
   page: 1, pageSize: 50, totalPages: 1, total: 0,
   search: '', exchange: '', sector: '', sectors: [],
   _searchTimer: null, _priceTimer: null, _currentSyms: [],
 
   init() {
     this.page = 1;
-    this.search = document.getElementById('scr-search').value = '';
-    this.exchange = document.getElementById('scr-exch-filter').value = '';
+    this.search = '';
+    this.exchange = '';
     this.sector = '';
-    this.load();
+    const searchEl = document.getElementById('scr-search');
+    const exchEl   = document.getElementById('scr-exch-filter');
+    if (searchEl) searchEl.value = '';
+    if (exchEl)   exchEl.value   = '';
+    // Default to top15 on first visit; preserve mode if user already switched
+    this.setMode(this.mode, /*noReload=*/false);
+  },
+
+  setMode(mode, noReload) {
+    this.mode = mode;
+    this.page = 1;
+    // Update toggle buttons
+    document.getElementById('scr-btn-top')?.classList.toggle('active', mode === 'top15');
+    document.getElementById('scr-btn-browse')?.classList.toggle('active', mode === 'browse');
+    // Show/hide filter bar
+    const filtersEl = document.getElementById('scr-filters');
+    if (filtersEl) filtersEl.style.display = mode === 'browse' ? 'flex' : 'none';
+    if (!noReload) this.load();
   },
 
   onSearch(val) {
     clearTimeout(this._searchTimer);
-    this._searchTimer = setTimeout(() => { this.search = val.trim(); this.page = 1; this.load(); }, 320);
+    this._searchTimer = setTimeout(() => {
+      this.search = val.trim();
+      this.page = 1;
+      // Auto-switch to browse when user types a query
+      if (this.search && this.mode === 'top15') {
+        this.setMode('browse'); // calls load()
+        return;
+      }
+      // Switch back to top15 when search is cleared
+      if (!this.search && this.mode === 'browse' && !this.exchange && !this.sector) {
+        this.setMode('top15'); // calls load()
+        return;
+      }
+      this.load();
+    }, 320);
   },
 
   onFilter() {
-    this.exchange = document.getElementById('scr-exch-filter').value;
-    this.sector   = document.getElementById('scr-sector-filter').value;
+    this.exchange = document.getElementById('scr-exch-filter')?.value || '';
+    this.sector   = document.getElementById('scr-sector-filter')?.value || '';
     this.page = 1;
     this.load();
   },
 
   async load() {
+    if (this.mode === 'top15' && !this.search) {
+      await this.loadTop15();
+    } else {
+      await this.loadBrowse();
+    }
+  },
+
+  // ── Top-15 mode: hardcoded large-caps, live prices ─────────────────────
+  async loadTop15() {
+    const tbody   = document.getElementById('scr-stocks-body');
+    const countEl = document.getElementById('scr-stocks-count');
+    document.getElementById('scr-pagination').innerHTML = '';
+    this._currentSyms = SCR_TOP15.map(s => s.sym);
+    countEl.textContent = 'Top 15 large-cap NSE stocks · fetching prices…';
+
+    tbody.innerHTML = SCR_TOP15.map(s => `
+      <tr style="cursor:pointer" onclick="goToStock('${escH(s.sym)}','screener')">
+        <td><b style="font-family:var(--mono);font-size:12px">${escH(s.shortSym)}</b></td>
+        <td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escH(s.name)}</td>
+        <td><span style="font-size:10px;padding:2px 5px;background:rgba(255,153,51,.15);color:var(--accent);font-weight:700">NSE</span></td>
+        <td class="tr price-loading" id="sp-${s.sym.replace(/\./g,'-')}">—</td>
+        <td class="tr price-loading" id="sc-${s.sym.replace(/\./g,'-')}">—</td>
+        <td class="tr price-loading" id="sv-${s.sym.replace(/\./g,'-')}">—</td>
+        <td class="tr price-loading" id="sm-${s.sym.replace(/\./g,'-')}">—</td>
+      </tr>`).join('');
+
+    clearTimeout(this._priceTimer);
+    this._priceTimer = setTimeout(() => this.fetchPrices('Top 15 large-cap NSE stocks'), 50);
+  },
+
+  // ── Browse mode: server-side paginated, full 423+ universe ─────────────
+  async loadBrowse() {
     const tbody   = document.getElementById('scr-stocks-body');
     const countEl = document.getElementById('scr-stocks-count');
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted);font-family:var(--mono);font-size:12px">Loading…</td></tr>`;
     document.getElementById('scr-pagination').innerHTML = '';
 
-    const params = new URLSearchParams({ page:this.page, limit:this.pageSize, search:this.search, exchange:this.exchange, sector:this.sector });
+    const params = new URLSearchParams({
+      page: this.page, limit: this.pageSize,
+      search: this.search, exchange: this.exchange, sector: this.sector,
+    });
     try {
       const res  = await fetch(`/api/markets/india/stocks?${params}`, { signal: AbortSignal.timeout(10_000) });
       const data = await res.json();
@@ -3659,16 +3773,20 @@ const SCR = {
       this.total = data.total;
       this._currentSyms = data.stocks.map(s => s.sym);
 
+      // Populate sector dropdown once
       if (data.sectors?.length && this.sectors.length === 0) {
         this.sectors = data.sectors;
         const sel = document.getElementById('scr-sector-filter');
-        const cur = sel.value;
-        sel.innerHTML = '<option value="">All Sectors</option>' +
-          data.sectors.map(s => `<option value="${escH(s)}"${s===cur?' selected':''}>${escH(s)}</option>`).join('');
+        if (sel) {
+          const cur = sel.value;
+          sel.innerHTML = '<option value="">All Sectors</option>' +
+            data.sectors.map(s => `<option value="${escH(s)}"${s===cur?' selected':''}>${escH(s)}</option>`).join('');
+        }
       }
 
-      const cur = this.exchange || 'NSE+BSE';
-      countEl.textContent = `${fmtN(data.total)} companies · ${cur} · page ${data.page} of ${data.pages}`;
+      const exchLabel = this.exchange || 'NSE+BSE';
+      const searchLabel = this.search ? ` · "${escH(this.search)}"` : '';
+      countEl.textContent = `${fmtN(data.total)} companies · ${exchLabel}${searchLabel} · page ${data.page} of ${data.pages}`;
 
       tbody.innerHTML = data.stocks.map(s => `
         <tr style="cursor:pointer" onclick="goToStock('${escH(s.sym)}','screener')">
@@ -3689,12 +3807,14 @@ const SCR = {
     }
   },
 
-  async fetchPrices() {
+  // ── Shared price fetcher ────────────────────────────────────────────────
+  async fetchPrices(statusText) {
     if (!this._currentSyms.length) return;
     try {
       const res = await fetch(`/api/markets/india/prices?syms=${encodeURIComponent(this._currentSyms.join(','))}`, { signal: AbortSignal.timeout(15_000) });
       if (!res.ok) return;
       const prices = await res.json();
+      if (statusText) document.getElementById('scr-stocks-count').textContent = statusText;
       for (const [sym, p] of Object.entries(prices)) {
         const id  = sym.replace(/\./g, '-');
         const pEl = document.getElementById(`sp-${id}`);
@@ -3703,9 +3823,9 @@ const SCR = {
         const mEl = document.getElementById(`sm-${id}`);
         if (!pEl) continue;
         const col = p.pct == null ? 'var(--muted)' : p.pct >= 0 ? 'var(--pos)' : 'var(--neg)';
-        if (pEl) pEl.innerHTML = p.price != null ? `<b>₹${fmt(p.price)}</b>` : '—';
+        pEl.innerHTML = p.price != null ? `<b>₹${fmt(p.price)}</b>` : '—';
         if (cEl) { cEl.style.color = col; cEl.style.fontWeight = '700'; cEl.textContent = p.pct != null ? `${sgn(p.pct)}${fmt(p.pct)}%` : '—'; }
-        if (vEl) vEl.textContent = p.vol != null ? fmtVol(p.vol) : '—';
+        if (vEl) vEl.textContent = p.vol    != null ? fmtVol(p.vol)    : '—';
         if (mEl) mEl.textContent = p.mktCap != null ? fmtCap(p.mktCap) : '—';
       }
     } catch {}
