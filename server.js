@@ -555,7 +555,8 @@ function categorizeNews(title) {
 const GEODATA_SOURCES = {
   // Full India boundary as per Government of Bhaarat / Survey of India:
   // includes J&K (PoK, Gilgit-Baltistan), Aksai Chin, Arunachal Pradesh in full.
-  'india-claimed': 'https://raw.githubusercontent.com/datameet/maps/master/Country/india-composite.geojson',
+  // jsDelivr CDN mirrors GitHub — far more reliable than raw.githubusercontent.com
+  'india-claimed': 'https://cdn.jsdelivr.net/gh/datameet/maps@master/Country/india-composite.geojson',
 };
 
 // Shoelace signed area — positive = CCW (GeoJSON exterior ring spec)
