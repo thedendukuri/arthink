@@ -2384,44 +2384,19 @@ const MKT={
         });
       }
 
+      // Fetch authoritative India boundary (Survey of India claimed line)
+      // via jsDelivr CDN (mirrors datameet/maps — reliable, no rate limits).
+      // If it fails, we just show the 110m topojson shape which is correct
+      // for mainland India + Arunachal Pradesh — no fake rectangles.
       if(IS_SERVED){
         try{
           const claimed=await fetch('/api/geodata?src=india-claimed',
             {signal:AbortSignal.timeout(12_000)}).then(r=>r.json());
           if(claimed&&claimed.type) drawGeoJSONAsSVG(claimed,'#FF9933','#FF9933');
         }catch(geoErr){
-          console.warn('[geodata] fetch failed, using topojson clip fallback:',geoErr.message);
-          _drawClaimedFallback();
-        }
-      } else {
-        _drawClaimedFallback();
-      }
-
-      function _drawClaimedFallback(){
-        // PoK (Pakistan-occupied Kashmir): clip Pakistan's topojson shape
-        // to the bbox of the disputed area (~73–78.2°E, 33–37.5°N)
-        const pokPts=[[73.0,37.5],[78.2,37.5],[78.2,33.0],[73.0,33.0]]
-          .map(([lo,la])=>proj([lo,la])).filter(p=>p&&isFinite(p[0]));
-        if(pokPts.length===4){
-          defs.append('clipPath').attr('id','clip-pok')
-            .append('polygon').attr('points',pokPts.map(p=>p.map(v=>v.toFixed(1)).join(',')).join(' '));
-          const pkFeat=countries.features.find(d=>+d.id===586);
-          if(pkFeat) mapG.append('path').datum(pkFeat).attr('d',path)
-            .attr('fill','#FF9933').attr('stroke','none')
-            .attr('clip-path','url(#clip-pok)').style('pointer-events','none');
-        }
-        // Aksai Chin: clip China's topojson shape to the actual disputed region
-        // (~78–80.5°E, 33.5–36°N) — the previous 78–84.5°E was far too wide
-        // and was incorrectly coloring large parts of Tibet
-        const acPts=[[78.0,36.0],[80.5,36.0],[80.5,33.5],[78.0,33.5]]
-          .map(([lo,la])=>proj([lo,la])).filter(p=>p&&isFinite(p[0]));
-        if(acPts.length===4){
-          defs.append('clipPath').attr('id','clip-ac')
-            .append('polygon').attr('points',acPts.map(p=>p.map(v=>v.toFixed(1)).join(',')).join(' '));
-          const cnFeat=countries.features.find(d=>+d.id===156);
-          if(cnFeat) mapG.append('path').datum(cnFeat).attr('d',path)
-            .attr('fill','#FF9933').attr('stroke','none')
-            .attr('clip-path','url(#clip-ac)').style('pointer-events','none');
+          console.warn('[geodata] India claimed boundary unavailable — showing 110m shape only:',geoErr.message);
+          // Intentionally no fallback: the base 110m path for id=356 is already
+          // rendered in layer 2. Showing no overlay is cleaner than rectangles.
         }
       }
 
