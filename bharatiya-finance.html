@@ -152,6 +152,12 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 .ntag{background:var(--surface2);color:var(--muted);font-size:9px;font-weight:700;padding:1px 5px;text-transform:uppercase;letter-spacing:.3px}
 .nc-h{font-family:var(--serif);font-size:13px;font-weight:700;line-height:1.38;color:var(--text);transition:color .15s}
 .nc-time{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:5px}
+.nc-tickers{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;min-height:0}
+.nc-tick{font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 6px;border-radius:2px;white-space:nowrap;cursor:pointer;transition:opacity .15s;text-decoration:none}
+.nc-tick:hover{opacity:.72}
+.nc-tick.up{background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.25)}
+.nc-tick.dn{background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.25)}
+.nc-tick.flat{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
 
 /* ── SIDEBAR — typewriter data panels ── */
 .sidebar{display:flex;flex-direction:column}
@@ -2732,6 +2738,123 @@ const _SBCAT={
   'Moneycontrol Latest':        'MARKETS',
 };
 
+// ── Company → ticker lookup (ordered: longest pattern first) ──────────────
+const _TICKER_LOOKUP=[
+  // Indian companies
+  [/hindustan unilever|hul\b/i,         {s:'HINDUNILVR.NS',d:'HUL',p:'₹'}],
+  [/bajaj finance\b/i,                  {s:'BAJFINANCE.NS',d:'BAJFIN',p:'₹'}],
+  [/bajaj finserv/i,                    {s:'BAJAJFINSV.NS',d:'BAJFINSERV',p:'₹'}],
+  [/bajaj auto/i,                       {s:'BAJAJ-AUTO.NS',d:'BAJAJ-AUTO',p:'₹'}],
+  [/bharti airtel|airtel\b/i,           {s:'BHARTIARTL.NS',d:'AIRTEL',p:'₹'}],
+  [/kotak mahindra|kotak bank/i,        {s:'KOTAKBANK.NS',d:'KOTAK',p:'₹'}],
+  [/tata consultancy|\btcs\b/i,         {s:'TCS.NS',d:'TCS',p:'₹'}],
+  [/tata motors/i,                      {s:'TATAMOTORS.NS',d:'TATAMOTORS',p:'₹'}],
+  [/tata steel/i,                       {s:'TATASTEEL.NS',d:'TATASTEEL',p:'₹'}],
+  [/tata power/i,                       {s:'TATAPOWER.NS',d:'TATAPOWER',p:'₹'}],
+  [/tata elxsi/i,                       {s:'TATAELXSI.NS',d:'TATAELXSI',p:'₹'}],
+  [/maruti suzuki|maruti\b/i,           {s:'MARUTI.NS',d:'MARUTI',p:'₹'}],
+  [/sun pharma/i,                       {s:'SUNPHARMA.NS',d:'SUNPHARMA',p:'₹'}],
+  [/dr\. ?reddy|dr reddy/i,             {s:'DRREDDY.NS',d:'DRREDDY',p:'₹'}],
+  [/larsen|l&t\b|l & t\b/i,            {s:'LT.NS',d:'L&T',p:'₹'}],
+  [/hdfc bank/i,                        {s:'HDFCBANK.NS',d:'HDFCBANK',p:'₹'}],
+  [/icici bank/i,                       {s:'ICICIBANK.NS',d:'ICICIBANK',p:'₹'}],
+  [/axis bank/i,                        {s:'AXISBANK.NS',d:'AXISBANK',p:'₹'}],
+  [/punjab national|pnb\b/i,            {s:'PNB.NS',d:'PNB',p:'₹'}],
+  [/state bank|\bsbi\b/i,               {s:'SBIN.NS',d:'SBI',p:'₹'}],
+  [/bank of baroda/i,                   {s:'BANKBARODA.NS',d:'BANKBARODA',p:'₹'}],
+  [/reliance industries|reliance\b/i,   {s:'RELIANCE.NS',d:'RELIANCE',p:'₹'}],
+  [/infosys|\binfy\b/i,                 {s:'INFY.NS',d:'INFY',p:'₹'}],
+  [/wipro\b/i,                          {s:'WIPRO.NS',d:'WIPRO',p:'₹'}],
+  [/hcl tech/i,                         {s:'HCLTECH.NS',d:'HCLTECH',p:'₹'}],
+  [/tech mahindra/i,                    {s:'TECHM.NS',d:'TECHM',p:'₹'}],
+  [/mahindra\b/i,                       {s:'M%26M.NS',d:'M&M',p:'₹'}],
+  [/adani enterprises/i,                {s:'ADANIENT.NS',d:'ADANIENT',p:'₹'}],
+  [/adani ports/i,                      {s:'ADANIPORTS.NS',d:'ADANIPORTS',p:'₹'}],
+  [/adani green/i,                      {s:'ADANIGREEN.NS',d:'ADANIGREEN',p:'₹'}],
+  [/adani power/i,                      {s:'ADANIPOWER.NS',d:'ADANIPOWER',p:'₹'}],
+  [/adani\b/i,                          {s:'ADANIENT.NS',d:'ADANIENT',p:'₹'}],
+  [/\bongc\b/i,                         {s:'ONGC.NS',d:'ONGC',p:'₹'}],
+  [/\bntpc\b/i,                         {s:'NTPC.NS',d:'NTPC',p:'₹'}],
+  [/power grid/i,                       {s:'POWERGRID.NS',d:'POWERGRID',p:'₹'}],
+  [/coal india/i,                       {s:'COALINDIA.NS',d:'COALINDIA',p:'₹'}],
+  [/ultratech|ultracemco/i,             {s:'ULTRACEMCO.NS',d:'ULTRATECH',p:'₹'}],
+  [/nestle india/i,                     {s:'NESTLEIND.NS',d:'NESTLEIND',p:'₹'}],
+  [/\bitc\b/i,                          {s:'ITC.NS',d:'ITC',p:'₹'}],
+  [/asian paints/i,                     {s:'ASIANPAINT.NS',d:'ASIANPAINT',p:'₹'}],
+  [/titan company|titan\b/i,            {s:'TITAN.NS',d:'TITAN',p:'₹'}],
+  [/zomato\b/i,                         {s:'ZOMATO.NS',d:'ZOMATO',p:'₹'}],
+  [/paytm|one97/i,                      {s:'PAYTM.NS',d:'PAYTM',p:'₹'}],
+  [/nykaa\b|fsh\b/i,                    {s:'NYKAA.NS',d:'NYKAA',p:'₹'}],
+  [/swiggy\b/i,                         {s:'SWIGGY.NS',d:'SWIGGY',p:'₹'}],
+  [/delhivery\b/i,                      {s:'DELHIVERY.NS',d:'DELHIVERY',p:'₹'}],
+  [/policybazaar|pb fintech/i,          {s:'POLICYBZR.NS',d:'POLICYBZR',p:'₹'}],
+  [/nifty 50|nifty50|\bnifty\b/i,      {s:'^NSEI',d:'NIFTY',p:''}],
+  [/\bsensex\b/i,                       {s:'^BSESN',d:'SENSEX',p:''}],
+  // US / Global
+  [/alphabet|google\b/i,               {s:'GOOGL',d:'GOOGL',p:'$'}],
+  [/microsoft\b/i,                      {s:'MSFT',d:'MSFT',p:'$'}],
+  [/nvidia\b/i,                         {s:'NVDA',d:'NVDA',p:'$'}],
+  [/amazon\b/i,                         {s:'AMZN',d:'AMZN',p:'$'}],
+  [/apple inc|apple\b/i,               {s:'AAPL',d:'AAPL',p:'$'}],
+  [/tesla\b/i,                          {s:'TSLA',d:'TSLA',p:'$'}],
+  [/meta platforms|meta\b/i,            {s:'META',d:'META',p:'$'}],
+  [/jpmorgan|jp morgan/i,               {s:'JPM',d:'JPM',p:'$'}],
+  [/goldman sachs/i,                    {s:'GS',d:'GS',p:'$'}],
+  [/morgan stanley/i,                   {s:'MS',d:'MS',p:'$'}],
+  [/\boil\b|crude oil/i,               {s:'CL=F',d:'CRUDE',p:'$'}],
+  [/gold\b/i,                           {s:'GC=F',d:'GOLD',p:'$'}],
+];
+
+/** Scan title+summary, return up to 2 ticker objects [{s,d,p}] */
+function extractTickers(title,summary){
+  const text=((title||'')+' '+(summary||'')).replace(/&amp;/g,'&').replace(/&lt;/g,'<');
+  const found=[];
+  const seen=new Set();
+  for(const [re,info] of _TICKER_LOOKUP){
+    if(found.length>=2) break;
+    if(re.test(text)&&!seen.has(info.s)){found.push(info);seen.add(info.s);}
+  }
+  return found;
+}
+
+/** After news cards are rendered, batch-fetch quotes and inject ticker chips */
+async function refreshNewsTickers(){
+  const cards=document.querySelectorAll('[data-tickers]');
+  if(!cards.length) return;
+  const symSet=new Set();
+  cards.forEach(c=>c.dataset.tickers.split(',').filter(Boolean).forEach(s=>symSet.add(s)));
+  if(!symSet.size) return;
+  try{
+    const resp=await fetch(`/api/quote?syms=${encodeURIComponent([...symSet].join(','))}`);
+    const data=await resp.json();
+    const qmap={};
+    (data?.quoteResponse?.result||[]).forEach(q=>{
+      qmap[q.symbol]={price:q.regularMarketPrice,pct:q.regularMarketChangePercent};
+    });
+    cards.forEach(c=>{
+      const syms=c.dataset.tickers.split(',').filter(Boolean);
+      const el=c.querySelector('.nc-tickers');
+      if(!el) return;
+      const chips=syms.map(sym=>{
+        const q=qmap[sym];
+        if(!q||q.price==null) return '';
+        const pct=q.pct??0;
+        const cls=pct>0.1?'up':pct<-0.1?'dn':'flat';
+        const sign=pct>=0?'▲':'▼';
+        const isINR=sym.endsWith('.NS')||sym.endsWith('.BO');
+        const isFX=sym.includes('=F');
+        const p=isINR?'₹':isFX||sym.startsWith('^')?'':'$';
+        const display=sym.replace(/\.(NS|BO)$/,'').replace(/^[\\^]/,'').replace(/%26/g,'&');
+        const priceStr=p+(q.price>=1000?fmt(q.price):q.price>=100?q.price.toFixed(1):q.price.toFixed(2));
+        const region=isINR?'india':'world';
+        return`<span class="nc-tick ${cls}" onclick="event.stopPropagation();goToStock('${sym}','${region}')" title="${display}">${display} ${priceStr} ${sign}${Math.abs(pct).toFixed(1)}%</span>`;
+      }).filter(Boolean).join('');
+      el.innerHTML=chips;
+    });
+  }catch(e){}
+}
+
+
 function _decodeHtml(s){
   if(!s) return '';
   return s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
@@ -2840,8 +2963,10 @@ async function renderNews3(){
   const cols=[[],[],[]];
   arts.slice(0,9).forEach((a,i)=>cols[i%3].push(a));
   news3El.innerHTML=cols.map(col=>
-    `<div class="ncol">${col.map(a=>`
-      <div class="ncard" onclick="window.open('${escH(a.link)}','_blank')">
+    `<div class="ncol">${col.map(a=>{
+      const tks=extractTickers(a.title,a.excerpt);
+      const tkAttr=tks.length?` data-tickers="${tks.map(t=>t.s).join(',')}"`:' ';
+      return`<div class="ncard"${tkAttr}onclick="window.open('${escH(a.link)}','_blank')">
         <div class="nc-top">
           <div class="nc-body">
             <div class="nc-meta">
@@ -2851,10 +2976,13 @@ async function renderNews3(){
             </div>
             <div class="nc-h">${escH(a.title)}</div>
             <div class="nc-time">${relTime(a.pubDate)}</div>
+            ${tks.length?'<div class="nc-tickers"></div>':''}
           </div>
           ${a.thumbnail?`<div class="nc-thumb"><img src="${escH(a.thumbnail)}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"/></div>`:''}
         </div>
-      </div>`).join('')}</div>`).join('');
+      </div>`;
+    }).join('')}</div>`).join('');
+  refreshNewsTickers();
 }
 
 function renderSbIdx(){
@@ -3087,10 +3215,13 @@ function renderNewsGrid(){
     ?`<img src="${escH(hero.thumbnail)}" alt="" loading="lazy" onerror="this.style.display='none'">`:
     `<div style="height:100%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:48px;opacity:.15">📰</div>`;
 
+  const heroTks=extractTickers(hero.title,hero.excerpt);
+  const heroTkAttr=heroTks.length?` data-tickers="${heroTks.map(t=>t.s).join(',')}"`:' ';
+
   el.innerHTML=`
     <div class="news-layout">
       <div class="news-main">
-        <div class="np-hero" onclick="window.open('${escH(hero.link)}','_blank')">
+        <div class="np-hero"${heroTkAttr}onclick="window.open('${escH(hero.link)}','_blank')">
           <div class="np-hero-img">${heroImgH}</div>
           <div class="np-meta">
             <span class="np-src">${escH(hero.source||'')}</span>
@@ -3100,11 +3231,14 @@ function renderNewsGrid(){
           </div>
           <div class="np-hero-title">${escH(hero.title)}</div>
           ${hero.excerpt?`<div class="np-hero-excerpt">${escH(hero.excerpt.slice(0,200))}</div>`:''}
+          ${heroTks.length?'<div class="nc-tickers" style="margin-top:10px"></div>':''}
         </div>
       </div>
       <div class="news-col">
-        ${colItems.map(a=>`
-          <div class="np-colart" onclick="window.open('${escH(a.link)}','_blank')">
+        ${colItems.map(a=>{
+          const tks=extractTickers(a.title,a.excerpt);
+          const tkAttr=tks.length?` data-tickers="${tks.map(t=>t.s).join(',')}"`:' ';
+          return`<div class="np-colart"${tkAttr}onclick="window.open('${escH(a.link)}','_blank')">
             <div class="np-colart-img">${a.thumbnail?`<img src="${escH(a.thumbnail)}" alt="" loading="lazy" onerror="this.style.display='none'">`:''}</div>
             <div class="np-colart-body">
               <div class="np-meta" style="margin-bottom:4px">
@@ -3113,14 +3247,18 @@ function renderNewsGrid(){
               </div>
               <div class="np-colart-title">${escH(a.title)}</div>
               <div class="np-colart-time">${relTime(a.pubDate)}</div>
+              ${tks.length?'<div class="nc-tickers"></div>':''}
             </div>
-          </div>`).join('')}
+          </div>`;
+        }).join('')}
       </div>
     </div>
     ${gridItems.length?`
     <div class="news-grid4">
-      ${gridItems.map(a=>`
-        <div class="ng4-card" onclick="window.open('${escH(a.link)}','_blank')">
+      ${gridItems.map(a=>{
+        const tks=extractTickers(a.title,a.excerpt);
+        const tkAttr=tks.length?` data-tickers="${tks.map(t=>t.s).join(',')}"`:' ';
+        return`<div class="ng4-card"${tkAttr}onclick="window.open('${escH(a.link)}','_blank')">
           ${a.thumbnail?`<div class="ng4-img"><img src="${escH(a.thumbnail)}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`:''}
           <div class="ng4-meta">
             <span class="ng4-src">${escH(a.source||'')}</span>
@@ -3130,7 +3268,9 @@ function renderNewsGrid(){
           </div>
           <div class="ng4-title">${escH(a.title)}</div>
           <div class="ng4-time">${relTime(a.pubDate)}</div>
-        </div>`).join('')}
+          ${tks.length?'<div class="nc-tickers"></div>':''}
+        </div>`;
+      }).join('')}
     </div>`:''}
     ${_newsArchives.length?`
     <div class="news-archives" style="margin-top:32px">
@@ -3145,6 +3285,7 @@ function renderNewsGrid(){
         </div>`).join('')}
       ${_newsArchives.length>6?`<div style="padding:10px 0 0;font-family:var(--mono);font-size:10px;color:var(--muted);cursor:pointer" onclick="filterNewsRegion('ARCHIVES',document.querySelector('.nrt:last-child'))">View all ${_newsArchives.length} archived articles →</div>`:''}
     </div>`:''}`;
+  refreshNewsTickers();
 }
 
 function filterNewsCat(cat,btn){
