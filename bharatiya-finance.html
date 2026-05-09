@@ -2221,10 +2221,11 @@ const MKT={
     gf.append('feTurbulence').attr('type','fractalNoise')
       .attr('baseFrequency','0.78').attr('numOctaves','4')
       .attr('seed','17').attr('result','noise');
+    // Neutral white noise — preserves each region's actual hue
     gf.append('feColorMatrix').attr('type','matrix')
-      .attr('values','0 0 0 0 1.0  0 0 0 0 0.60  0 0 0 0 0.02  0 0 0 0.62 0')
-      .attr('in','noise').attr('result','goldNoise');
-    gf.append('feComposite').attr('in','goldNoise').attr('in2','SourceGraphic')
+      .attr('values','0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.35 0')
+      .attr('in','noise').attr('result','whiteNoise');
+    gf.append('feComposite').attr('in','whiteNoise').attr('in2','SourceGraphic')
       .attr('operator','in').attr('result','masked');
     const gfm=gf.append('feMerge');
     gfm.append('feMergeNode').attr('in','SourceGraphic');
@@ -2287,22 +2288,20 @@ const MKT={
         .attr('class','cb').attr('d',path)
         .attr('fill','#0e0800').attr('stroke','none');
 
-      // ── Layer 2: city-lights grain overlay ───────────────────────
-      // Each region uses its own color (dimmed) so US=blue, Europe=purple, etc.
-      // India (#356) stays full saffron; untracked countries stay near-black.
+      // ── Layer 2: all tracked regions bright, untracked near-black ──
       mapG.selectAll('.cl').data(countries.features).join('path')
         .attr('class','cl').attr('d',path)
         .attr('fill',d=>{
           if(+d.id===356) return '#FF9933';
           const r=countryToRegion(d.id);
-          return r ? r.color : '#6b3d10';
+          return r ? r.color : '#1a1200';
         })
         .attr('opacity',d=>{
-          if(+d.id===356) return .92;
-          return countryToRegion(d.id) ? .45 : .14;
+          if(+d.id===356) return .95;
+          return countryToRegion(d.id) ? .90 : .12;
         })
         .attr('stroke','none')
-        .style('filter','url(#cityGrain)');
+        .style('filter',d=>countryToRegion(d.id)||+d.id===356 ? 'url(#cityGrain)' : 'none');
 
       // ── Country borders ───────────────────────────────────────────
       mapG.append('path').datum(borders)
