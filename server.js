@@ -191,7 +191,11 @@ async function yahooChart(sym, period, interval, from, to, isCustom) {
     period1 = new Date(Date.now() - days * 86400_000);
     period2 = new Date();
   }
-  const chart = await yahooFinance.chart(sym, { period1, period2, interval });
+  const chart = await yahooFinance.chart(
+    sym,
+    { period1, period2, interval },
+    { validateResult: false }
+  );
   return (chart?.quotes ?? [])
     .filter(b => b.close != null)
     .map(b => ({
@@ -221,13 +225,17 @@ app.get('/api/sparks', async (req, res) => {
   const results = {};
   await Promise.allSettled(syms.map(async sym => {
     try {
-      const chart = await yahooFinance.chart(sym, { period1, period2, interval: '1d' });
+      const chart = await yahooFinance.chart(
+        sym,
+        { period1, period2, interval: '1d' },
+        { validateResult: false }
+      );
       const closes = (chart?.quotes ?? [])
         .filter(b => b.close != null)
         .map(b => b.close)
         .slice(-20);
       if (closes.length >= 2) results[sym] = closes;
-    } catch {}
+    } catch (e) { console.warn('[sparks]', sym, e.message); }
   }));
 
   setCache(cacheKey, results);

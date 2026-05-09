@@ -738,11 +738,17 @@ async function loadAndRenderChart(tf){
   const {url}=buildChartUrl(SYM,tf);
   try{
     const r=await fetch(url,{signal:AbortSignal.timeout(12000)});
+    if(!r.ok){
+      const detail=await r.json().catch(()=>({}));
+      throw new Error(detail?.detail||`HTTP ${r.status}`);
+    }
     const {ohlc=[]}=await r.json();
+    if(!ohlc.length) throw new Error('No data returned');
     CHART_DATA=ohlc;
     el.className=''; el.style.height='400px';
     renderOverviewChart();
   }catch(e){
+    console.error('[chart]',e.message);
     el.className='';
     el.innerHTML=`<div class="error-state">Chart data unavailable — ${e.message}</div>`;
   }
