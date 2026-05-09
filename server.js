@@ -15,6 +15,7 @@
 import express      from 'express';
 import path         from 'path';
 import { fileURLToPath } from 'url';
+import { readFileSync }  from 'fs';
 import * as dotenv  from 'dotenv';
 import YahooFinance from 'yahoo-finance2';
 import {
@@ -552,10 +553,12 @@ function categorizeNews(title) {
 // Source: Datameet India composite (based on Survey of India official claim line).
 // Fixes GeoJSON winding order server-side so d3.geoPath renders correctly.
 
-const GEODATA_SOURCES = {
-  // Full India boundary as per Government of Bhaarat / Survey of India:
-  // includes J&K (PoK, Gilgit-Baltistan), Aksai Chin, Arunachal Pradesh in full.
-  // jsDelivr CDN mirrors GitHub — far more reliable than raw.githubusercontent.com
+// Local bundled geodata files (committed to repo — no external fetch needed)
+const GEODATA_LOCAL = {
+  'india-claimed': path.join(__dirname, 'geodata', 'india-claimed.geojson'),
+};
+// Remote fallback if local file is missing (e.g. fresh clone without geodata/)
+const GEODATA_REMOTE = {
   'india-claimed': 'https://cdn.jsdelivr.net/gh/datameet/maps@master/Country/india-composite.geojson',
 };
 
@@ -593,26 +596,39 @@ function fixWindingOrder(geojson) {
 
 app.get('/api/geodata', async (req, res) => {
   const src = req.query.src;
-  const url = GEODATA_SOURCES[src];
-  if (!url) return res.status(400).json({ error: `Unknown src '${src}'` });
+  if (!GEODATA_LOCAL[src] && !GEODATA_REMOTE[src])
+    return res.status(400).json({ error: `Unknown src '${src}'` });
 
   const cacheKey = 'geo:' + src;
-  const cached = getCache(cacheKey, 24 * 60 * 60_000); // 24-hour cache
+  const cached = getCache(cacheKey, 24 * 60 * 60_000); // 24-hour in-memory cache
   if (cached) return res.json(cached);
 
+  // ── 1. Try local bundled file (instant, no network) ──────────
+  try {
+    const raw  = JSON.parse(readFileSync(GEODATA_LOCAL[src], 'utf8'));
+    const fixed = fixWindingOrder(raw);
+    setCache(cacheKey, fixed);
+    console.log(`[geodata] served from local file: ${src}`);
+    return res.json(fixed);
+  } catch (localErr) {
+    console.warn(`[geodata] local file missing for '${src}', falling back to remote:`, localErr.message);
+  }
+
+  // ── 2. Fallback: fetch from jsDelivr CDN ─────────────────────
+  const url = GEODATA_REMOTE[src];
   try {
     const r = await fetch(url, {
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)' },
-      signal: AbortSignal.timeout(15_000),
+      signal: AbortSignal.timeout(12_000),
     });
-    if (!r.ok) throw new Error(`Upstream HTTP ${r.status} from ${url}`);
-    const raw = await r.json();
+    if (!r.ok) throw new Error(`HTTP ${r.status} from ${url}`);
+    const raw  = await r.json();
     const fixed = fixWindingOrder(raw);
     setCache(cacheKey, fixed);
-    console.log(`[geodata] fetched & cached: ${src} (${JSON.stringify(fixed).length} bytes)`);
+    console.log(`[geodata] fetched & cached from remote: ${src}`);
     res.json(fixed);
   } catch (err) {
-    console.error('[geodata]', err.message);
+    console.error('[geodata] remote fetch failed:', err.message);
     res.status(502).json({ error: err.message });
   }
 });
