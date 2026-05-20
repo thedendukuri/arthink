@@ -498,6 +498,68 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 /* ncard2 compat */
 .ncard2-tag{font-size:9px;font-weight:700;padding:2px 6px;text-transform:uppercase;background:rgba(255,153,51,.1);color:var(--accent)}
 
+/* ═══════════════════════════════════════
+   SIDEBAR v2 — Premium Market Panels
+   ═══════════════════════════════════════ */
+
+/* Module wrapper */
+.sbm{padding:16px 0;border-bottom:1px solid var(--border)}
+.sbm:last-child{border-bottom:none;padding-bottom:4px}
+
+/* Module header */
+.sbm-hdr{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:0}
+.sbm-title{font-family:var(--sans);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--text)}
+.sbm-meta{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.1px}
+
+/* ── Indices rows ── */
+.idx2{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity .15s;gap:10px}
+.idx2:last-child{border-bottom:none}
+.idx2:hover{opacity:.75}
+.idx2-bar{width:2px;align-self:stretch;min-height:34px;border-radius:1px;flex-shrink:0}
+.idx2-info{flex:1;min-width:0}
+.idx2-name{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;line-height:1.2}
+.idx2-sub{font-family:var(--mono);font-size:9px;color:var(--muted)}
+.idx2-spark{flex-shrink:0;line-height:0}
+.idx2-right{text-align:right;flex-shrink:0}
+.idx2-price{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--text);display:block;margin-bottom:4px;line-height:1.3}
+.idx2-chip{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:600;padding:2px 7px}
+.idx2-chip.pos{background:rgba(34,197,94,.1);color:var(--pos)}
+.idx2-chip.neg{background:rgba(239,68,68,.1);color:var(--neg)}
+.idx2-chip.flat{background:var(--surface2);color:var(--muted)}
+
+/* ── Market Movers segmented tabs ── */
+.mv2-tabs{display:flex;margin:10px 0;border:1px solid var(--border);overflow:hidden}
+.mv2-tab{flex:1;padding:5px 0;text-align:center;background:none;border:none;border-right:1px solid var(--border);color:var(--muted);font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.1px;cursor:pointer;transition:all .12s;font-family:var(--sans)}
+.mv2-tab:last-child{border-right:none}
+.mv2-tab:hover:not(.on){background:var(--surface2);color:var(--text)}
+.mv2-tab.on{background:var(--text);color:var(--bg);font-weight:600}
+
+/* Mover rows */
+.mv2{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity .15s;gap:8px}
+.mv2:last-child{border-bottom:none}
+.mv2:hover{opacity:.75}
+.mv2-rank{font-family:var(--mono);font-size:10px;color:var(--muted);width:14px;text-align:right;flex-shrink:0;line-height:1}
+.mv2-info{flex:1;min-width:0}
+.mv2-sym{display:block;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px;line-height:1.2}
+.mv2-name{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+.mv2-right{text-align:right;flex-shrink:0}
+.mv2-pct{font-family:var(--mono);font-size:11px;font-weight:700;display:block;margin-bottom:2px;line-height:1.2}
+.mv2-price{font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.2}
+
+/* ── Trending rows ── */
+.tr2{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity .15s;gap:10px}
+.tr2:last-child{border-bottom:none}
+.tr2:hover{opacity:.75}
+.tr2-num{font-family:var(--mono);font-size:10px;font-weight:700;width:14px;text-align:right;flex-shrink:0;color:var(--muted)}
+.tr2-num.t1{color:var(--accent)}
+.tr2-num.t23{color:var(--text2)}
+.tr2-info{flex:1;min-width:0}
+.tr2-sym{display:block;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px;line-height:1.2}
+.tr2-name{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+.tr2-right{text-align:right;flex-shrink:0}
+.tr2-pct{font-family:var(--mono);font-size:11px;font-weight:700;display:block;line-height:1.2;margin-bottom:3px}
+.tr2-sect{font-family:var(--sans);font-size:9px;color:var(--muted);background:var(--surface2);padding:1px 5px;display:inline-block;text-transform:uppercase;letter-spacing:.1px}
+
 /* Live flash */
 @keyframes flashUp{0%{background:rgba(34,197,94,.2);border-radius:2px}100%{background:transparent}}
 @keyframes flashDn{0%{background:rgba(239,68,68,.2);border-radius:2px}100%{background:transparent}}
@@ -667,20 +729,38 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
       <div class="news3" id="news3El"></div>
     </main>
     <aside class="sidebar">
-      <div class="sb"><div class="sb-title">Indices <span class="live"><span class="live-dot"></span>Live</span></div><div id="sbIdx"></div></div>
-      <div class="sb">
-        <div class="sb-title">Market Movers</div>
-        <div class="tabs">
-          <button class="tab on" onclick="mvTab(this,'gainers')">Gainers</button>
-          <button class="tab" onclick="mvTab(this,'losers')">Losers</button>
-          <button class="tab" onclick="mvTab(this,'active')">Active</button>
+
+      <!-- ── Indices ── -->
+      <div class="sbm">
+        <div class="sbm-hdr">
+          <span class="sbm-title">Indices</span>
+          <span class="live"><span class="live-dot"></span>Live</span>
+        </div>
+        <div id="sbIdx"></div>
+      </div>
+
+      <!-- ── Market Movers ── -->
+      <div class="sbm">
+        <div class="sbm-hdr">
+          <span class="sbm-title">Market Movers</span>
+        </div>
+        <div class="mv2-tabs" id="mv2TabRow">
+          <button class="mv2-tab on" onclick="mvTab2(this,'gainers')">Gainers</button>
+          <button class="mv2-tab" onclick="mvTab2(this,'losers')">Losers</button>
+          <button class="mv2-tab" onclick="mvTab2(this,'active')">Active</button>
         </div>
         <div id="sbMovers"></div>
       </div>
-      <div class="sb"><div class="sb-title">Commodities &amp; FX</div><div id="sbComm"></div></div>
-      <div class="sb"><div class="sb-title">🔥 Trending <a>All →</a></div><div id="sbTrend"></div></div>
-      <div class="sb"><div class="sb-title">IPO Tracker <a>All IPOs →</a></div><div id="sbIpo"></div></div>
-      <div class="sb"><div class="sb-title">World Markets</div><div id="sbWorld"></div></div>
+
+      <!-- ── Trending ── -->
+      <div class="sbm">
+        <div class="sbm-hdr">
+          <span class="sbm-title">Trending</span>
+          <span class="sbm-meta">by volume</span>
+        </div>
+        <div id="sbTrend"></div>
+      </div>
+
     </aside>
   </div>
 </div>
@@ -3017,10 +3097,18 @@ async function renderNews3(){
 function renderSbIdx(){
   document.getElementById('sbIdx').innerHTML=REGIONS_DEF[0].indices.map(i=>{
     const d=ID_DATA[i.sym]||{price:i.base,pct:0};
-    return`<div class="irow" onclick="location.href='/index/${encodeURIComponent(i.sym)}'" style="cursor:pointer">
-      <div class="irow-info"><div class="irow-name" style="color:${i.color}">${i.n}</div><div class="irow-price" data-sbprice="${i.sym}">${fmt(d.price)}</div></div>
-      <div class="irow-spark" data-sbspark="${i.sym}">${spark(histI[i.sym]||[],60,26,1.4)}</div>
-      <div class="irow-chg ${d.pct>=0?'pos':'neg'}" data-sbpct="${i.sym}">${sgn(d.pct)}${fmt(d.pct)}%</div>
+    const cls=d.pct>0.005?'pos':d.pct<-0.005?'neg':'flat';
+    return`<div class="idx2" onclick="MKT.goIndex('${i.sym}','india')">
+      <div class="idx2-bar" style="background:${i.color}"></div>
+      <div class="idx2-info">
+        <div class="idx2-name">${i.n}</div>
+        <div class="idx2-sub">${i.exch} · ${i.s}</div>
+      </div>
+      <div class="idx2-spark" data-sbspark="${i.sym}">${spark(histI[i.sym]||[],76,30,1.4)}</div>
+      <div class="idx2-right">
+        <span class="idx2-price" data-sbprice="${i.sym}">${fmt(d.price)}</span>
+        <span class="idx2-chip ${cls}" data-sbpct="${i.sym}">${sgn(d.pct)}${fmt(d.pct)}%</span>
+      </div>
     </div>`;
   }).join('');
 }
@@ -3031,59 +3119,54 @@ function renderSbMovers(){
   if(mvMode2==='gainers') list.sort((a,b)=>(SD[b.sym]?.pct||0)-(SD[a.sym]?.pct||0));
   else if(mvMode2==='losers') list.sort((a,b)=>(SD[a.sym]?.pct||0)-(SD[b.sym]?.pct||0));
   else list.sort((a,b)=>(SD[b.sym]?.vol||0)-(SD[a.sym]?.vol||0));
-  document.getElementById('sbMovers').innerHTML=list.slice(0,6).map(s=>{
+  document.getElementById('sbMovers').innerHTML=list.slice(0,5).map((s,i)=>{
     const d=SD[s.sym]||{price:s.base,pct:0};
-    return`<div class="mvrow" style="cursor:pointer" onclick="goToStock('${s.sym}','india')">
-      <span class="mv-sym">${s.s}</span>
-      <span class="mv-name">${s.n.split(' ').slice(0,2).join(' ')}</span>
-      <div class="mv-right"><div class="mv-price">₹${fmt(d.price)}</div><div class="mv-chg ${d.pct>=0?'pos':'neg'}">${sgn(d.pct)}${fmt(d.pct)}%</div></div>
+    const cls=d.pct>=0?'pos':'neg';
+    return`<div class="mv2" onclick="goToStock('${s.sym}','india')">
+      <span class="mv2-rank">${i+1}</span>
+      <div class="mv2-info">
+        <span class="mv2-sym">${s.s}</span>
+        <span class="mv2-name">${s.n}</span>
+      </div>
+      <div class="mv2-right">
+        <span class="mv2-pct ${cls}">${sgn(d.pct)}${fmt(d.pct)}%</span>
+        <span class="mv2-price">₹${fmt(d.price)}</span>
+      </div>
     </div>`;
   }).join('');
 }
 
 function mvTab(btn,m){
-  btn.closest('.sb').querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  btn.closest('.sb')?.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');mvMode2=m;renderSbMovers();
+}
+function mvTab2(btn,m){
+  btn.closest('.mv2-tabs').querySelectorAll('.mv2-tab').forEach(t=>t.classList.remove('on'));
   btn.classList.add('on');mvMode2=m;renderSbMovers();
 }
 
-function renderSbComm(){
-  document.getElementById('sbComm').innerHTML=COMMS.map(c=>{
-    const d=CD[c.n]||{price:c.base,pct:0};
-    return`<div class="cxrow">
-      <div class="cx-icon">${c.icon}</div>
-      <div class="cx-info"><div class="cx-name">${c.n}</div><div class="cx-unit">${c.unit}</div></div>
-      <div class="cx-right"><div class="cx-price">${fmt(d.price,c.d)}</div><div class="cx-chg ${d.pct>=0?'pos':'neg'}">${sgn(d.pct)}${fmt(d.pct)}%</div></div>
-    </div>`;
-  }).join('');
-}
+function renderSbComm(){} // removed from homepage
+function renderSbIpo(){}  // removed from homepage
+function renderSbWorld(){} // removed from homepage
 
 function renderSbTrend(){
-  const top=[...STOCKS].sort((a,b)=>(SD[b.sym]?.vol||0)-(SD[a.sym]?.vol||0)).slice(0,7);
+  const top=[...STOCKS].sort((a,b)=>(SD[b.sym]?.vol||0)-(SD[a.sym]?.vol||0)).slice(0,6);
   document.getElementById('sbTrend').innerHTML=top.map((s,i)=>{
     const d=SD[s.sym]||{pct:0};
-    return`<div class="trrow" onclick="goToStock('${s.sym}','india')">
-      <span class="tr-rank">${i+1}</span>
-      <span class="tr-sym">${s.s}</span>
-      <span class="tr-name">${s.n.split(' ').slice(0,3).join(' ')}</span>
-      <span class="tr-chg ${d.pct>=0?'pos':'neg'}">${sgn(d.pct)}${fmt(d.pct)}%</span>
+    const cls=d.pct>=0?'pos':'neg';
+    const numCls=i===0?'t1':i<=2?'t23':'';
+    return`<div class="tr2" onclick="goToStock('${s.sym}','india')">
+      <span class="tr2-num ${numCls}">${i+1}</span>
+      <div class="tr2-info">
+        <span class="tr2-sym">${s.s}</span>
+        <span class="tr2-name">${s.n}</span>
+      </div>
+      <div class="tr2-right">
+        <span class="tr2-pct ${cls}">${sgn(d.pct)}${fmt(d.pct)}%</span>
+        <span class="tr2-sect">${s.sect}</span>
+      </div>
     </div>`;
   }).join('');
-}
-
-function renderSbIpo(){
-  document.getElementById('sbIpo').innerHTML=IPOS.slice(0,4).map(i=>`
-    <div class="iporow">
-      <div class="ipo-name">${i.n}<span class="ipo-st st-${i.status}">${i.status}</span></div>
-      <div class="ipo-line"><span>Price: <b style="color:var(--text)">${i.price}</b></span><span>GMP: <b class="ipo-gmp">${i.gmp}</b></span></div>
-    </div>`).join('');
-}
-
-function renderSbWorld(){
-  document.getElementById('sbWorld').innerHTML=WORLD_LIST.map(w=>`
-    <div class="wrow">
-      <div><div class="w-region">${w.r}</div><div class="w-name">${w.n}</div></div>
-      <span class="w-chg ${w.chg>=0?'pos':'neg'}">${sgn(w.chg)}${Math.abs(w.chg).toFixed(2)}%</span>
-    </div>`).join('');
 }
 
 function renderScreener(){
@@ -4321,7 +4404,7 @@ async function fetchLive(){
   }catch(e){return false;}
 }
 
-function renderSidebar(){renderSbIdx();renderSbMovers();renderSbComm();renderSbTrend();}
+function renderSidebar(){renderSbIdx();renderSbMovers();renderSbTrend();}
 
 // ══════════════════════════════════════════════
 // AUTH SYSTEM  (powered by Supabase)
@@ -5091,8 +5174,8 @@ function updateSbIdx(){
     const ce=document.querySelector(`[data-sbpct="${i.sym}"]`);
     const se=document.querySelector(`[data-sbspark="${i.sym}"]`);
     if(pe){pe.textContent=fmt(d.price); if(dir)flashEl(pe,dir);}
-    if(ce){ce.textContent=`${sgn(d.pct)}${fmt(d.pct)}%`;ce.className=`irow-chg ${d.pct>=0?'pos':'neg'}`;}
-    if(se) se.innerHTML=spark(histI[i.sym]||[],60,26,1.4);
+    if(ce){ce.textContent=`${sgn(d.pct)}${fmt(d.pct)}%`;ce.className=`idx2-chip ${d.pct>0.005?'pos':d.pct<-0.005?'neg':'flat'}`;}
+    if(se) se.innerHTML=spark(histI[i.sym]||[],76,30,1.4);
   });
 }
 
@@ -5168,8 +5251,6 @@ function updateDetailLive(){
   // Pre-render gated sections so first navigation is instant
   renderAlpha();
   renderWatchlistUI();
-  renderSbIpo();
-  renderSbWorld();
   buildTicker();
   renderSidebar();
   setInterval(updateStatus,1000);
