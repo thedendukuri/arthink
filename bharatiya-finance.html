@@ -753,7 +753,7 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
         <div class="sb-search-wrap">
           <div class="sb-search-box">
             <span class="sb-search-icon">🔍</span>
-            <input class="sb-search-inp" id="sbSearchInp" type="text" placeholder="Quote lookup…" autocomplete="new-password" spellcheck="false" oninput="sbSearchUpdate(this.value)" onblur="setTimeout(()=>sbSearchClose(),180)" onfocus="if(this.value)sbSearchUpdate(this.value)"/>
+            <input class="sb-search-inp" id="sbSearchInp" type="text" placeholder="Quote lookup…" autocomplete="off" readonly spellcheck="false" onfocus="this.removeAttribute('readonly')" oninput="sbSearchUpdate(this.value)" onblur="setTimeout(()=>{sbSearchClose();this.setAttribute('readonly','')},180)"/>
           </div>
           <div class="sb-search-drop" id="sbSearchDrop"></div>
         </div>
@@ -3198,7 +3198,21 @@ function renderSbTrend(){
   }).join('');
 }
 
+/* ── Sidebar search — suppress autofill highlight ── */
+.sb-search-inp:-webkit-autofill,.sb-search-inp:-webkit-autofill:hover,.sb-search-inp:-webkit-autofill:focus{-webkit-box-shadow:0 0 0 1000px var(--surface2) inset!important;-webkit-text-fill-color:var(--text)!important;caret-color:var(--text)}
+
 /* ── Sidebar Quote Search ── */
+// Clear any browser-autofilled value immediately and after a short delay
+(function(){
+  function clearSbSearch(){
+    const el=document.getElementById('sbSearchInp');
+    if(el&&el.value&&!el.matches(':focus')){el.value='';}
+  }
+  document.addEventListener('DOMContentLoaded',clearSbSearch);
+  setTimeout(clearSbSearch,300);
+  setTimeout(clearSbSearch,800);
+})();
+
 function sbSearchUpdate(q){
   const drop=document.getElementById('sbSearchDrop');
   if(!q||q.length<1){drop.classList.remove('open');drop.innerHTML='';return;}
