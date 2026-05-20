@@ -37,7 +37,46 @@ function getCache(key, ttlMs) {
   const hit = cache.get(key);
   return hit && Date.now() - hit.ts < ttlMs ? hit.data : null;
 }
+// getStale: returns cached data regardless of TTL (for fallback when upstream fails)
+function getStale(key) {
+  const hit = cache.get(key);
+  return hit ? hit.data : null;
+}
 function setCache(key, data) { cache.set(key, { data, ts: Date.now() }); }
+
+// ── Deduplicated logger — suppress identical messages within a window ─────────
+const _logSeen = new Map();
+function logOnce(level, tag, msg, windowMs = 5 * 60_000) {
+  const key = tag + ':' + msg;
+  const last = _logSeen.get(key) || 0;
+  if (Date.now() - last < windowMs) return;
+  _logSeen.set(key, Date.now());
+  if (level === 'warn')  console.warn(tag, msg);
+  else if (level === 'error') console.error(tag, msg);
+  else console.log(tag, msg);
+}
+
+// ── Yahoo Finance circuit-breaker ────────────────────────────
+// After 3 consecutive failures, back off for 10 min, then 20 min, etc.
+const _yCircuit = { failures: 0, openUntil: 0, backoffMs: 10 * 60_000 };
+function yahooIsOpen() {
+  if (Date.now() < _yCircuit.openUntil) return false; // still in backoff
+  return true;
+}
+function yahooOnSuccess() {
+  _yCircuit.failures = 0;
+  _yCircuit.backoffMs = 10 * 60_000; // reset backoff
+}
+function yahooOnFailure(tag) {
+  _yCircuit.failures++;
+  if (_yCircuit.failures >= 3) {
+    _yCircuit.openUntil = Date.now() + _yCircuit.backoffMs;
+    logOnce('warn', tag, `circuit open — backing off ${Math.round(_yCircuit.backoffMs/60000)}min after ${_yCircuit.failures} failures`);
+    _yCircuit.backoffMs = Math.min(_yCircuit.backoffMs * 2, 60 * 60_000); // cap at 1h
+  } else {
+    logOnce('warn', tag, 'fetch failed');
+  }
+}
 
 // ── Status on boot ───────────────────────────────────────────
 const _schwabStatus = schwabStatus();
@@ -65,7 +104,8 @@ app.get('/api/quote', async (req, res) => {
   const syms = req.query.syms || '';
   if (!syms) return res.status(400).json({ error: 'syms param required' });
 
-  const cached = getCache('q:' + syms, 15_000); // 15-second cache
+  const cacheKey = 'q:' + syms;
+  const cached = getCache(cacheKey, 15_000); // 15-second cache
   if (cached) return res.json(cached);
 
   const symbols = syms.split(',').map(s => s.trim()).filter(Boolean);
@@ -73,10 +113,13 @@ app.get('/api/quote', async (req, res) => {
   try {
     const results = await fetchQuotes(symbols);
     const payload = { quoteResponse: { result: results, error: null } };
-    setCache('q:' + syms, payload);
+    setCache(cacheKey, payload);
     res.json(payload);
   } catch (err) {
     console.error('[quote]', err.message);
+    // Serve stale data rather than a hard error — keeps the UI alive
+    const stale = getStale(cacheKey);
+    if (stale) return res.json({ ...stale, _stale: true });
     res.status(502).json({ error: 'upstream_failed', detail: err.message });
   }
 });
@@ -115,14 +158,18 @@ async function fetchQuotes(symbols) {
   // Yahoo results
   if (yahooResults.status === 'fulfilled') {
     results.push(...yahooResults.value);
+    yahooOnSuccess();
   } else {
-    console.warn('[yahoo quote fail]', yahooResults.reason?.message);
+    yahooOnFailure('[yahoo quote fail]');
   }
 
   return results;
 }
 
 async function yahooQuotes(symbols) {
+  if (!yahooIsOpen()) {
+    throw new Error('Yahoo circuit open — in backoff');
+  }
   const raw = await yahooFinance.quote(symbols, {
     fields: [
       'regularMarketPrice','regularMarketChange','regularMarketChangePercent',
@@ -177,6 +224,12 @@ app.get('/api/chart', async (req, res) => {
 
     // Fall back to Yahoo if Schwab not available or failed
     if (!ohlc) {
+      if (!yahooIsOpen()) {
+        // Circuit open — serve stale chart data if we have it
+        const stale = getStale(key);
+        if (stale) return res.json({ ...stale, _stale: true });
+        return res.status(503).json({ error: 'yahoo_unavailable', ohlc: [] });
+      }
       ohlc = await yahooChart(sym, period, interval, req.query.from, req.query.to, isCustom);
     }
 
@@ -193,7 +246,10 @@ app.get('/api/chart', async (req, res) => {
     setCache(key, payload);
     res.json(payload);
   } catch (err) {
-    console.error('[chart]', err.message);
+    yahooOnFailure('[chart]');
+    logOnce('error', '[chart]', err.message);
+    const stale = getStale(key);
+    if (stale) return res.json({ ...stale, _stale: true });
     res.status(502).json({ error: 'upstream_failed', detail: err.message });
   }
 });
@@ -281,7 +337,7 @@ app.get('/api/sparks', async (req, res) => {
         .map(b => b.close)
         .slice(-20);
       if (closes.length >= 2) results[sym] = closes;
-    } catch (e) { console.warn('[sparks]', sym, e.message); }
+    } catch (e) { logOnce('warn', '[sparks]', sym + ' ' + e.message); }
   }));
 
   setCache(cacheKey, results);
@@ -474,17 +530,17 @@ async function fetchGeneralNews() {
 
   // Google News
   for (const r of googleSettled) {
-    if (r.status !== 'fulfilled') { console.warn('[rss google]', r.reason?.message); continue; }
+    if (r.status !== 'fulfilled') { logOnce('warn', '[rss google]', r.reason?.message); continue; }
     ingest(r.value);
   }
   // India direct
   for (const r of indiaSettled) {
-    if (r.status !== 'fulfilled') { console.warn('[rss india]', r.reason?.message); continue; }
+    if (r.status !== 'fulfilled') { logOnce('warn', '[rss india]', r.reason?.message); continue; }
     ingest(r.value, 'india');
   }
   // World direct
   for (const r of worldSettled) {
-    if (r.status !== 'fulfilled') { console.warn('[rss world]', r.reason?.message); continue; }
+    if (r.status !== 'fulfilled') { logOnce('warn', '[rss world]', r.reason?.message); continue; }
     ingest(r.value, 'world');
   }
 
