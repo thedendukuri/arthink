@@ -139,6 +139,9 @@ process.on('unhandledRejection', (reason) => {
   console.error('[unhandledRejection]', reason instanceof Error ? reason.message : reason);
 });
 
+const INTRADAY_INTERVALS = new Set(['1m','5m','15m','30m','60m','4h']);
+const dateAddServer = days => new Date(Date.now() + days * 86400_000).toISOString().split('T')[0];
+
 // ── GET /api/chart?sym=AAPL&period=1d&interval=5m ───────────
 // Uses Schwab for US symbols (real-time intraday), Yahoo for others.
 // Also supports: ?period=custom&from=YYYY-MM-DD&to=YYYY-MM-DD
@@ -148,7 +151,9 @@ app.get('/api/chart', async (req, res) => {
 
   const isCustom = period === 'custom' && req.query.from && req.query.to;
   const key = `c:${sym}:${period}:${interval}:${req.query.from||''}:${req.query.to||''}`;
-  const ttl = (period === '1d' || interval.includes('m')) ? 60_000 : 5 * 60_000;
+  const ttl = interval === '1m' ? 30_000
+            : (interval.includes('m') || interval === '4h' || interval === '60m') ? 60_000
+            : 5 * 60_000;
   const cached = getCache(key, ttl);
   if (cached) return res.json(cached);
 
@@ -175,11 +180,13 @@ app.get('/api/chart', async (req, res) => {
       ohlc = await yahooChart(sym, period, interval, req.query.from, req.query.to, isCustom);
     }
 
-    // 1D intraday returns 0 bars when the market is closed (weekends/holidays).
-    // Auto-fall back to 5D (15m bars) so the chart always shows something.
-    if (!ohlc.length && period === '1d' && !isCustom) {
-      console.log(`[chart] ${sym} 1d empty (market closed?) — falling back to 5d`);
-      ohlc = await yahooChart(sym, '5d', '15m', null, null, false);
+    // Intraday returns 0 bars when the market is closed (weekends/holidays).
+    // Fall back to a longer window using the same interval so the chart always shows something.
+    if (!ohlc.length && INTRADAY_INTERVALS.has(interval)) {
+      const fallbackFrom = dateAddServer(-5); // last 5 calendar days
+      const fallbackInterval = ['1m','5m'].includes(interval) ? '15m' : interval;
+      console.log(`[chart] ${sym} ${interval} empty (market closed?) — falling back 5d/${fallbackInterval}`);
+      ohlc = await yahooChart(sym, 'custom', fallbackInterval, fallbackFrom, new Date().toISOString().split('T')[0], true);
     }
 
     const payload = { ohlc, meta: { symbol: sym, source: useSchwab && ohlc?.length ? 'schwab' : 'yahoo' } };
@@ -191,7 +198,31 @@ app.get('/api/chart', async (req, res) => {
   }
 });
 
+// Aggregate 1h bars → 4h OHLCV buckets (Yahoo has no native 4h interval)
+function aggregateTo4h(bars) {
+  const buckets = new Map();
+  for (const bar of bars) {
+    const d = new Date(bar.date);
+    const h4 = Math.floor(d.getUTCHours() / 4) * 4;
+    d.setUTCHours(h4, 0, 0, 0);
+    const key = d.toISOString();
+    if (!buckets.has(key)) {
+      buckets.set(key, { date: key, open: bar.open, high: bar.high, low: bar.low, close: bar.close, vol: bar.vol });
+    } else {
+      const b = buckets.get(key);
+      b.high  = Math.max(b.high, bar.high);
+      b.low   = Math.min(b.low,  bar.low);
+      b.close = bar.close;
+      b.vol  += bar.vol;
+    }
+  }
+  return [...buckets.values()].sort((a, b) => new Date(a.date) - new Date(b.date));
+}
+
 async function yahooChart(sym, period, interval, from, to, isCustom) {
+  // Yahoo has no 4h interval — fetch 1h and aggregate on the way out
+  const fetchInterval = interval === '4h' ? '60m' : interval;
+
   let period1, period2;
   if (isCustom) {
     period1 = new Date(from);
@@ -205,10 +236,10 @@ async function yahooChart(sym, period, interval, from, to, isCustom) {
   }
   const chart = await yahooFinance.chart(
     sym,
-    { period1, period2, interval },
+    { period1, period2, interval: fetchInterval },
     { validateResult: false }
   );
-  return (chart?.quotes ?? [])
+  let bars = (chart?.quotes ?? [])
     .filter(b => b.close != null)
     .map(b => ({
       date : new Date(b.date).toISOString(),
@@ -218,6 +249,9 @@ async function yahooChart(sym, period, interval, from, to, isCustom) {
       close: b.close,
       vol  : b.volume || 0,
     }));
+
+  if (interval === '4h') bars = aggregateTo4h(bars);
+  return bars;
 }
 
 // ── GET /api/sparks?syms=^NSEI,^NSEBANK,TCS.NS  ──────────────────────────────

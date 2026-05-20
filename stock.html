@@ -321,14 +321,16 @@ button{cursor:pointer;font-family:inherit}
         <div class="chart-section">
           <div class="chart-controls">
             <div class="tf-btns">
-              <button class="tf-btn" data-tf="1D">1D</button>
-              <button class="tf-btn" data-tf="5D">5D</button>
-              <button class="tf-btn active" data-tf="1M">1M</button>
-              <button class="tf-btn" data-tf="6M">6M</button>
-              <button class="tf-btn" data-tf="YTD">YTD</button>
-              <button class="tf-btn" data-tf="1Y">1Y</button>
-              <button class="tf-btn" data-tf="5Y">5Y</button>
-              <button class="tf-btn" data-tf="MAX">MAX</button>
+              <button class="tf-btn" data-tf="1m">1m</button>
+              <button class="tf-btn" data-tf="5m">5m</button>
+              <button class="tf-btn" data-tf="15m">15m</button>
+              <button class="tf-btn" data-tf="30m">30m</button>
+              <button class="tf-btn" data-tf="1h">1h</button>
+              <button class="tf-btn" data-tf="4h">4h</button>
+              <div style="width:1px;background:var(--border);margin:0 4px;align-self:stretch"></div>
+              <button class="tf-btn active" data-tf="1D">1D</button>
+              <button class="tf-btn" data-tf="1W">1W</button>
+              <button class="tf-btn" data-tf="1M">1M</button>
             </div>
             <div class="chart-type-row">
               <button class="ct-btn active" data-ct="area" onclick="switchChartType('area')">Area</button>
@@ -453,11 +455,16 @@ button{cursor:pointer;font-family:inherit}
     <div id="tech-content" style="display:none">
       <div class="tech-controls">
         <div class="tf-btns">
-          <button class="tf-btn" data-ttf="1D" onclick="switchTechTF('1D')">1D</button>
-          <button class="tf-btn" data-ttf="5D" onclick="switchTechTF('5D')">5D</button>
-          <button class="tf-btn active" data-ttf="1M" onclick="switchTechTF('1M')">1M</button>
-          <button class="tf-btn" data-ttf="3M" onclick="switchTechTF('3M')">3M</button>
-          <button class="tf-btn" data-ttf="1Y" onclick="switchTechTF('1Y')">1Y</button>
+          <button class="tf-btn" data-ttf="1m"  onclick="switchTechTF('1m')">1m</button>
+          <button class="tf-btn" data-ttf="5m"  onclick="switchTechTF('5m')">5m</button>
+          <button class="tf-btn" data-ttf="15m" onclick="switchTechTF('15m')">15m</button>
+          <button class="tf-btn" data-ttf="30m" onclick="switchTechTF('30m')">30m</button>
+          <button class="tf-btn" data-ttf="1h"  onclick="switchTechTF('1h')">1h</button>
+          <button class="tf-btn" data-ttf="4h"  onclick="switchTechTF('4h')">4h</button>
+          <div style="width:1px;background:var(--border);margin:0 4px;align-self:stretch"></div>
+          <button class="tf-btn active" data-ttf="1D" onclick="switchTechTF('1D')">1D</button>
+          <button class="tf-btn" data-ttf="1W"  onclick="switchTechTF('1W')">1W</button>
+          <button class="tf-btn" data-ttf="1M"  onclick="switchTechTF('1M')">1M</button>
         </div>
         <button class="ind-toggle on" data-ind="bb" onclick="toggleIndicator('bb')" title="Bollinger Bands"><span class="ind-dot" style="background:#c084fc"></span>BB</button>
         <button class="ind-toggle on" data-ind="sma20" onclick="toggleIndicator('sma20')" title="SMA 20"><span class="ind-dot" style="background:#3b82f6"></span>SMA 20</button>
@@ -525,11 +532,11 @@ let USER         = null;
 let SUMMARY      = null;
 let FIN_DATA     = null;
 let CHART_DATA   = [];    // current OHLC array
-let CURRENT_TF   = '1M';
+let CURRENT_TF   = '1D';
 let CURRENT_CT   = 'area';
 let CURRENT_STYPE= 'income';
 let CURRENT_PER  = 'annual';
-let TECH_TF      = '1M';
+let TECH_TF      = '1D';
 let OV_CHART     = null;
 let TECH_CHART   = null;
 let TECH_RSI_CHART = null;
@@ -610,7 +617,7 @@ async function init(){
   // Load summary + chart in parallel
   await Promise.all([
     loadSummary(),
-    loadAndRenderChart('1M'),
+    loadAndRenderChart('1D'),
   ]);
 }
 
@@ -754,23 +761,27 @@ async function loadAndRenderChart(tf){
   }
 }
 
+const INTRADAY_TFS = new Set(['1m','5m','15m','30m','1h','4h']);
+
 function buildChartUrl(sym,tf){
-  const now=new Date(),today=now.toISOString().split('T')[0],yyyy=now.getFullYear();
+  const now=new Date(),today=now.toISOString().split('T')[0];
   const map={
-    '1D': {period:'1d',     interval:'5m' },
-    '5D': {period:'5d',     interval:'15m'},
-    '1M': {period:'1mo',    interval:'1d' },
-    '3M': {period:'custom', interval:'1d', from:dateAdd(-92), to:today},
-    '6M': {period:'custom', interval:'1d', from:dateAdd(-180),to:today},
-    'YTD':{period:'custom', interval:'1d', from:`${yyyy}-01-01`,to:today},
-    '1Y': {period:'1y',     interval:'1d' },
-    '5Y': {period:'custom', interval:'1wk',from:dateAdd(-365*5),to:today},
-    'MAX':{period:'custom', interval:'1mo',from:'2000-01-01',to:today},
+    // ── Intraday intervals ─────────────────────────────────────
+    '1m': {period:'custom', interval:'1m',  from:dateAdd(-1),     to:today},
+    '5m': {period:'custom', interval:'5m',  from:dateAdd(-5),     to:today},
+    '15m':{period:'custom', interval:'15m', from:dateAdd(-10),    to:today},
+    '30m':{period:'custom', interval:'30m', from:dateAdd(-30),    to:today},
+    '1h': {period:'custom', interval:'60m', from:dateAdd(-60),    to:today},
+    '4h': {period:'custom', interval:'4h',  from:dateAdd(-90),    to:today},
+    // ── Daily / Weekly / Monthly ───────────────────────────────
+    '1D': {period:'1y',     interval:'1d'                                 },
+    '1W': {period:'custom', interval:'1wk', from:dateAdd(-365*5), to:today},
+    '1M': {period:'custom', interval:'1mo', from:dateAdd(-365*10),to:today},
   };
-  const p=map[tf]||map['1M'];
+  const p=map[tf]||map['1D'];
   let url=`/api/chart?sym=${encodeURIComponent(sym)}&period=${p.period}&interval=${p.interval}`;
   if(p.from) url+=`&from=${p.from}&to=${p.to}`;
-  return {url,isIntraday:['1D','5D'].includes(tf)};
+  return {url, isIntraday: INTRADAY_TFS.has(tf)};
 }
 
 function renderOverviewChart(){
@@ -779,7 +790,7 @@ function renderOverviewChart(){
   if(OV_CHART){ try{OV_CHART.remove();}catch{} }
 
   const isDark=getIsDark();
-  const isIntraday=['1D','5D'].includes(CURRENT_TF);
+  const isIntraday=INTRADAY_TFS.has(CURRENT_TF);
   const cur=SUMMARY?.quote?.currency==='INR'?'₹':'$';
 
   OV_CHART=LightweightCharts.createChart(el,{
@@ -1115,7 +1126,7 @@ async function switchTechTF(tf){
 function renderTechChart(){
   if(!CHART_DATA.length) return;
   const isDark=getIsDark();
-  const isIntraday=['1D','5D'].includes(TECH_TF);
+  const isIntraday=INTRADAY_TFS.has(TECH_TF);
   const toTime=d=>isIntraday?Math.floor(new Date(d.date).getTime()/1000):d.date.split('T')[0];
 
   const chartOpts={
