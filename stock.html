@@ -45,14 +45,14 @@ button{cursor:pointer;font-family:inherit}
 .pos{color:var(--pos)}.neg{color:var(--neg)}
 
 /* ══ Header ══ */
-.hdr{background:var(--hdr);border-bottom:3px solid #138808;height:52px;display:flex;align-items:center;padding:0 24px;gap:0;position:sticky;top:0;z-index:500}
+.hdr{background:var(--hdr);border-bottom:3px solid #138808;height:58px;display:flex;align-items:center;padding:0 24px;gap:0;position:sticky;top:0;z-index:500}
 .logo{display:flex;align-items:center;gap:10px;padding-right:20px;border-right:1px solid rgba(0,0,0,.18);flex-shrink:0;cursor:pointer}
 .logo-flag{width:24px;height:24px;border-radius:3px;overflow:hidden;display:flex;flex-direction:column;flex-shrink:0}
 .lf1{flex:1;background:#FF9933}.lf2{flex:1;background:#fff;display:flex;align-items:center;justify-content:center;font-size:6px;font-weight:900;color:#000080}.lf3{flex:1;background:#138808}
 .logo-name{font-family:var(--serif);font-size:18px;font-weight:700;color:#3d1a00;white-space:nowrap;font-style:italic}
 .logo-name em{color:#138808;font-style:italic}.logo-dot{color:#138808}
 .hdr-nav{display:flex;flex:1;padding-left:10px;overflow:hidden}
-.hdr-nav a{color:rgba(255,255,255,.72);font-size:11px;font-weight:500;letter-spacing:.2px;text-transform:uppercase;padding:0 12px;height:52px;display:flex;align-items:center;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;transition:color .15s}
+.hdr-nav a{color:rgba(255,255,255,.92);font-size:13px;font-weight:500;letter-spacing:.01px;padding:0 14px;height:58px;display:flex;align-items:center;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;transition:color .15s}
 .hdr-nav a:hover{color:#fff}
 .hdr-right{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0}
 .theme-btn{background:none;border:1px solid rgba(0,0,0,.2);width:30px;height:30px;display:flex;align-items:center;justify-content:center;color:rgba(0,0,0,.55);font-size:13px}
@@ -60,7 +60,7 @@ button{cursor:pointer;font-family:inherit}
 .signin-btn{background:#1a0a00;color:#FF9933;border:none;padding:5px 14px;font-size:11px;font-weight:600;letter-spacing:.2px;text-transform:uppercase;white-space:nowrap}
 
 /* ══ Symbol Bar ══ */
-.sym-bar{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:55px;z-index:400}
+.sym-bar{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:61px;z-index:400}
 .sym-bar-inner{max-width:1400px;margin:0 auto;padding:14px 24px;display:flex;align-items:flex-start;gap:28px;flex-wrap:wrap}
 .breadcrumb{font-family:var(--mono);font-size:10px;color:var(--muted);display:flex;align-items:center;gap:5px;margin-bottom:6px;letter-spacing:.3px}
 .breadcrumb a{cursor:pointer}.breadcrumb a:hover{color:var(--accent)}
@@ -213,6 +213,28 @@ button{cursor:pointer;font-family:inherit}
 #tech-macd-chart{height:140px;background:var(--surface);border:1px solid var(--border);border-top:none}
 .tech-pane-label{font-family:var(--mono);font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.15px;color:var(--muted);padding:4px 12px;background:var(--surface2);border:1px solid var(--border);border-top:none;border-bottom:none}
 
+/* ══ Chart Expand Button ══ */
+.chart-expand-btn{display:flex;align-items:center;gap:5px;background:none;border:1px solid var(--border);color:var(--muted);padding:4px 10px;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.1px;font-family:var(--sans);margin-left:4px;transition:all .15s}
+.chart-expand-btn:hover{border-color:var(--accent);color:var(--accent)}
+/* ══ Chart Expand Overlay ══ */
+.chart-overlay{position:fixed;inset:0;background:var(--bg);z-index:9000;display:none;flex-direction:column}
+.chart-overlay.open{display:flex}
+.chart-overlay-hdr{display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border);gap:10px;flex-shrink:0;background:var(--surface)}
+.chart-overlay-title{font-family:var(--mono);font-size:13px;font-weight:700;flex:1}
+.chart-overlay-tf{display:flex;gap:2px;align-items:center}
+.chart-overlay-tf-btn{padding:5px 12px;background:none;border:none;color:var(--muted);font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.1px;transition:all .15s;cursor:pointer}
+.chart-overlay-tf-btn:hover{color:var(--text);background:var(--surface2)}
+.chart-overlay-tf-btn.active{background:var(--accent);color:#000}
+.chart-overlay-type{display:flex;gap:2px;margin-left:8px;background:var(--surface2);border:1px solid var(--border);overflow:hidden}
+.chart-overlay-ct-btn{padding:5px 12px;background:none;border:none;color:var(--muted);font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.1px;transition:all .15s;cursor:pointer}
+.chart-overlay-ct-btn:hover{color:var(--text)}
+.chart-overlay-ct-btn.active{background:var(--surface3);color:var(--text)}
+.chart-overlay-close{background:none;border:1px solid var(--border);color:var(--muted);width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;transition:all .15s;margin-left:8px}
+.chart-overlay-close:hover{border-color:var(--neg);color:var(--neg)}
+.chart-overlay-body{flex:1;min-height:0;padding:0}
+#overlay-chart-el{width:100%;height:100%}
+.chart-overlay-legend{padding:8px 16px;font-family:var(--mono);font-size:11px;color:var(--muted);min-height:28px;border-top:1px solid var(--border);flex-shrink:0}
+
 /* ══ Loading / Error states ══ */
 .loading-shimmer{height:400px;background:linear-gradient(90deg,var(--surface2) 25%,var(--surface3) 50%,var(--surface2) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
@@ -337,6 +359,10 @@ button{cursor:pointer;font-family:inherit}
               <button class="ct-btn" data-ct="candle" onclick="switchChartType('candle')">Candle</button>
               <button class="ct-btn" data-ct="bar" onclick="switchChartType('bar')">Bar</button>
             </div>
+            <button class="chart-expand-btn" onclick="openChartOverlay()" title="Expand chart">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 4V1h3M8 1h3v3M11 8v3H8M4 11H1V8"/></svg>
+              Expand
+            </button>
           </div>
           <div id="overview-chart-el" class="loading-shimmer"></div>
           <div id="chart-legend" class="chart-legend">Hover chart for details</div>
@@ -1453,6 +1479,143 @@ function updateThemeBtn(){
 // BOOT
 // ══════════════════════════════════════════════════════
 init();
+
+// ══════════════════════════════════════════════════════
+// CHART EXPAND OVERLAY
+// ══════════════════════════════════════════════════════
+let OVERLAY_CHART=null;
+let OVERLAY_SERIES=null;
+let OVERLAY_CT_MODE='area';
+
+function openChartOverlay(){
+  const titleEl=document.getElementById('overlay-sym-title');
+  if(titleEl){
+    const tkr=document.getElementById('sym-tkr')?.textContent||SYM||'';
+    const co=document.getElementById('sym-co')?.textContent||'';
+    titleEl.textContent=tkr+(co?` — ${co}`:'');
+  }
+  // Sync active TF button
+  const activeTF=document.querySelector('.tf-btn.active')?.dataset?.tf||CURRENT_TF;
+  document.querySelectorAll('.chart-overlay-tf-btn').forEach(b=>{
+    b.classList.toggle('active',b.textContent.trim()===activeTF||b.dataset?.otf===activeTF);
+  });
+  OVERLAY_CT_MODE=CURRENT_CT;
+  document.querySelectorAll('.chart-overlay-ct-btn').forEach(b=>{
+    b.classList.toggle('active',b.dataset?.oct===CURRENT_CT);
+  });
+  document.getElementById('chart-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+  renderOverlayChart();
+}
+function closeChartOverlay(){
+  document.getElementById('chart-overlay').classList.remove('open');
+  document.body.style.overflow='';
+  if(OVERLAY_CHART){try{OVERLAY_CHART.remove();}catch{}OVERLAY_CHART=null;OVERLAY_SERIES=null;}
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeChartOverlay();});
+
+function renderOverlayChart(){
+  const el=document.getElementById('overlay-chart-el');
+  if(!el) return;
+  if(OVERLAY_CHART){try{OVERLAY_CHART.remove();}catch{}OVERLAY_CHART=null;OVERLAY_SERIES=null;}
+  if(!CHART_DATA.length){
+    document.getElementById('overlay-legend').textContent='No data. Select a timeframe.'; return;
+  }
+  const isDark=getIsDark();
+  const isIntraday=INTRADAY_TFS.has(CURRENT_TF);
+  const toTime=d=>isIntraday?Math.floor(new Date(d.date).getTime()/1000):d.date.split('T')[0];
+  const isUp=CHART_DATA.length>1?CHART_DATA[CHART_DATA.length-1].close>=CHART_DATA[0].close:true;
+  const mainColor=isUp?'#22c55e':'#ef4444';
+
+  OVERLAY_CHART=LightweightCharts.createChart(el,{
+    width:el.clientWidth,height:el.clientHeight,
+    layout:{background:{color:'transparent'},textColor:isDark?'#9a9aaa':'#45454f',fontSize:11,fontFamily:"'IBM Plex Mono','Courier New',monospace"},
+    grid:{vertLines:{color:isDark?'#1a1a1e':'#ebebea'},horzLines:{color:isDark?'#1a1a1e':'#ebebea'}},
+    crosshair:{mode:LightweightCharts.CrosshairMode.Normal},
+    rightPriceScale:{borderColor:isDark?'#222227':'#e4e4e0',scaleMargins:{top:.06,bottom:.06}},
+    timeScale:{borderColor:isDark?'#222227':'#e4e4e0',timeVisible:true,secondsVisible:false},
+    handleScroll:{mouseWheel:true,pressedMouseMove:true},
+    handleScale:{axisPressedMouseMove:true,mouseWheel:true,pinch:true},
+    attributionLogo:false,
+  });
+
+  const cur=SUMMARY?.quote?.currency==='INR'?'₹':'$';
+
+  if(OVERLAY_CT_MODE==='area'){
+    OVERLAY_SERIES=OVERLAY_CHART.addAreaSeries({
+      lineColor:mainColor,
+      topColor:isUp?'rgba(34,197,94,.18)':'rgba(239,68,68,.18)',
+      bottomColor:'rgba(0,0,0,0)',lineWidth:2,
+      priceFormat:{type:'price',precision:2,minMove:.01},
+    });
+    OVERLAY_SERIES.setData(CHART_DATA.map(d=>({time:toTime(d),value:d.close})));
+  } else if(OVERLAY_CT_MODE==='candle'){
+    OVERLAY_SERIES=OVERLAY_CHART.addCandlestickSeries({upColor:'#22c55e',downColor:'#ef4444',borderUpColor:'#22c55e',borderDownColor:'#ef4444',wickUpColor:'#22c55e',wickDownColor:'#ef4444'});
+    OVERLAY_SERIES.setData(CHART_DATA.map(d=>({time:toTime(d),open:d.open,high:d.high,low:d.low,close:d.close})));
+  } else {
+    OVERLAY_SERIES=OVERLAY_CHART.addBarSeries({upColor:'#22c55e',downColor:'#ef4444',thinBars:false});
+    OVERLAY_SERIES.setData(CHART_DATA.map(d=>({time:toTime(d),open:d.open,high:d.high,low:d.low,close:d.close})));
+  }
+  OVERLAY_CHART.timeScale().fitContent();
+
+  const leg=document.getElementById('overlay-legend');
+  OVERLAY_CHART.subscribeCrosshairMove(p=>{
+    if(!p.time||!p.seriesData.size){leg.textContent='Hover chart for details';return;}
+    const d=p.seriesData.get(OVERLAY_SERIES);
+    if(!d) return;
+    const ds=isIntraday?new Date(p.time*1000).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):p.time;
+    if(OVERLAY_CT_MODE==='area') leg.innerHTML=`<b>${ds}</b>  ${cur}${fmtP(d.value)}`;
+    else{
+      const chg=d.close-d.open,pct=((chg/d.open)*100).toFixed(2);
+      leg.innerHTML=`<b>${ds}</b>  O:${cur}${fmtP(d.open)}  H:${cur}${fmtP(d.high)}  L:${cur}${fmtP(d.low)}  C:${cur}${fmtP(d.close)}  <span class="${chg>=0?'pos':'neg'}">${chg>=0?'+':''}${pct}%</span>`;
+    }
+  });
+  new ResizeObserver(()=>{ if(OVERLAY_CHART) OVERLAY_CHART.applyOptions({width:el.clientWidth,height:el.clientHeight}); }).observe(el);
+}
+
+function overlaySetTF(tf,btn){
+  btn.closest('.chart-overlay-tf').querySelectorAll('.chart-overlay-tf-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  // Sync main TF buttons and load data
+  document.querySelectorAll('.tf-btn[data-tf]').forEach(b=>b.classList.toggle('active',b.dataset.tf===tf));
+  loadAndRenderChart(tf).then(()=>renderOverlayChart());
+}
+function overlaySetCT(ct,btn){
+  OVERLAY_CT_MODE=ct;CURRENT_CT=ct;
+  btn.closest('.chart-overlay-type').querySelectorAll('.chart-overlay-ct-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.ct-btn[data-ct]').forEach(b=>b.classList.toggle('active',b.dataset.ct===ct));
+  renderOverlayChart();
+}
 </script>
+
+<!-- ═══ Chart Expand Overlay ═══ -->
+<div class="chart-overlay" id="chart-overlay">
+  <div class="chart-overlay-hdr">
+    <span class="chart-overlay-title" id="overlay-sym-title">Chart</span>
+    <div class="chart-overlay-tf">
+      <button class="chart-overlay-tf-btn" data-otf="1m" onclick="overlaySetTF('1m',this)">1m</button>
+      <button class="chart-overlay-tf-btn" data-otf="5m" onclick="overlaySetTF('5m',this)">5m</button>
+      <button class="chart-overlay-tf-btn" data-otf="15m" onclick="overlaySetTF('15m',this)">15m</button>
+      <button class="chart-overlay-tf-btn" data-otf="1h" onclick="overlaySetTF('1h',this)">1h</button>
+      <button class="chart-overlay-tf-btn" data-otf="4h" onclick="overlaySetTF('4h',this)">4h</button>
+      <div style="width:1px;background:var(--border);align-self:stretch;margin:6px 2px"></div>
+      <button class="chart-overlay-tf-btn active" data-otf="1D" onclick="overlaySetTF('1D',this)">1D</button>
+      <button class="chart-overlay-tf-btn" data-otf="1W" onclick="overlaySetTF('1W',this)">1W</button>
+      <button class="chart-overlay-tf-btn" data-otf="1M" onclick="overlaySetTF('1M',this)">1M</button>
+    </div>
+    <div class="chart-overlay-type">
+      <button class="chart-overlay-ct-btn active" data-oct="area" onclick="overlaySetCT('area',this)">Area</button>
+      <button class="chart-overlay-ct-btn" data-oct="candle" onclick="overlaySetCT('candle',this)">Candle</button>
+      <button class="chart-overlay-ct-btn" data-oct="bar" onclick="overlaySetCT('bar',this)">Bar</button>
+    </div>
+    <button class="chart-overlay-close" onclick="closeChartOverlay()" title="Close (Esc)">✕</button>
+  </div>
+  <div class="chart-overlay-body">
+    <div id="overlay-chart-el"></div>
+  </div>
+  <div class="chart-overlay-legend" id="overlay-legend">Hover chart for details</div>
+</div>
+
 </body>
 </html>
