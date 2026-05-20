@@ -505,6 +505,7 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 .sb-search-icon{color:var(--muted);font-size:12px;flex-shrink:0;line-height:1}
 .sb-search-inp{background:none;border:none;outline:none;color:var(--text);font-size:12px;font-family:var(--sans);width:100%;letter-spacing:.01px}
 .sb-search-inp::placeholder{color:var(--muted)}
+.sb-search-inp::-webkit-search-decoration,.sb-search-inp::-webkit-search-cancel-button,.sb-search-inp::-webkit-search-results-button,.sb-search-inp::-webkit-search-results-decoration{display:none}
 .sb-search-drop{position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border2);border-top:none;z-index:500;box-shadow:0 12px 32px rgba(0,0,0,.5);display:none;max-height:240px;overflow-y:auto}
 .sb-search-drop.open{display:block}
 .sb-sd-row{display:flex;align-items:center;padding:8px 10px;gap:8px;cursor:pointer;transition:background .1s}
@@ -752,7 +753,7 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
         <div class="sb-search-wrap">
           <div class="sb-search-box">
             <span class="sb-search-icon">🔍</span>
-            <input class="sb-search-inp" id="sbSearchInp" type="text" placeholder="Quote lookup…" autocomplete="off" oninput="sbSearchUpdate(this.value)" onblur="setTimeout(()=>sbSearchClose(),180)" onfocus="sbSearchUpdate(this.value)"/>
+            <input class="sb-search-inp" id="sbSearchInp" type="search" name="quote-lookup" placeholder="Quote lookup…" autocomplete="off" spellcheck="false" oninput="sbSearchUpdate(this.value)" onblur="setTimeout(()=>sbSearchClose(),180)" onfocus="sbSearchUpdate(this.value)"/>
           </div>
           <div class="sb-search-drop" id="sbSearchDrop"></div>
         </div>
