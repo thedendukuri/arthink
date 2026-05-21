@@ -2,15 +2,15 @@
 // ārthink. — server.js
 //
 // Data sources (priority order):
-//   1. Schwab Developer API (real-time, US stocks/indices)
-//      → requires schwab_tokens.json from python schwab_refresh.py
-//   2. yahoo-finance2 (fallback for Indian / international symbols
-//      and any US symbol that Schwab fails on)
+//   1. NSE India Direct  — all Indian stocks + indices (live, free)
+//   2. Schwab Developer API — US stocks/indices (real-time)
+//   3. yahoo-finance2   — everything else (global indices, fallback)
 //
-// Schwab gives you:
-//   • True real-time quotes (no 15-min delay)
-//   • Proper intraday minute bars (1m / 5m / 15m / 30m)
-//   • Price history up to years back at daily/weekly resolution
+// NSE Direct replaces Yahoo Finance for the entire India market.
+// Yahoo is now only used for:
+//   • Non-Indian global indices (^GSPC, ^FTSE, ^N225, etc.)
+//   • ^BSESN (Sensex — BSE index, not on NSE)
+//   • Intraday bars for Indian stocks (NSE public API lacks 1m/5m)
 // ══════════════════════════════════════════════════════════════
 import express      from 'express';
 import path         from 'path';
@@ -24,6 +24,13 @@ import {
   schwabPriceHistory,
   schwabStatus,
 } from './schwab.js';
+import {
+  isNseSupported,
+  nseQuotes,
+  nseHistory,
+  nseSparks,
+  nseInit,
+} from './nse.js';
 
 dotenv.config();
 const yahooFinance = new YahooFinance();
@@ -83,6 +90,9 @@ const _schwabStatus = schwabStatus();
 console.log(`[schwab] ${_schwabStatus.ready ? '✓ ready' : '✗ unavailable'} — ${_schwabStatus.reason}`);
 let schwabAvailable = _schwabStatus.ready;
 
+// Warm up NSE session immediately on boot
+nseInit();
+
 // ── HTTPS redirect (production only) ────────────────────────
 app.use((req, res, next) => {
   const host = req.headers.host || '';
@@ -125,39 +135,56 @@ app.get('/api/quote', async (req, res) => {
 });
 
 async function fetchQuotes(symbols) {
-  // When Schwab is available: route US symbols to Schwab, rest to Yahoo.
-  // When Schwab is unavailable: fall back ALL symbols to Yahoo so nothing vanishes.
-  const schwabSyms = schwabAvailable ? symbols.filter(isSchwabSupported) : [];
-  const yahooSyms  = schwabAvailable
-    ? symbols.filter(s => !isSchwabSupported(s))
-    : symbols; // full fallback — every symbol goes to Yahoo
+  // Route by data source:
+  //   NSE Direct  — Indian stocks (.NS/.BO) and NSE indices
+  //   Schwab      — US symbols (when available)
+  //   Yahoo       — everything else (global indices, ^BSESN, fallback)
+  const nseSyms    = symbols.filter(isNseSupported);
+  const remaining  = symbols.filter(s => !isNseSupported(s));
+  const schwabSyms = schwabAvailable ? remaining.filter(isSchwabSupported) : [];
+  const yahooSyms  = remaining.filter(s => !isSchwabSupported(s) || !schwabAvailable);
 
-  const [schwabResults, yahooResults] = await Promise.allSettled([
-    schwabSyms.length ? schwabQuotes(schwabSyms) : Promise.resolve([]),
-    yahooSyms.length  ? yahooQuotes(yahooSyms)   : Promise.resolve([]),
+  const [nseSettled, schwabSettled, yahooSettled] = await Promise.allSettled([
+    nseSyms.length    ? nseQuotes(nseSyms)       : Promise.resolve([]),
+    schwabSyms.length ? schwabQuotes(schwabSyms)  : Promise.resolve([]),
+    yahooSyms.length  ? yahooQuotes(yahooSyms)    : Promise.resolve([]),
   ]);
 
   let results = [];
 
-  // Schwab results — if Schwab call fails, fetch those symbols from Yahoo too
-  if (schwabResults.status === 'fulfilled') {
-    results.push(...schwabResults.value);
-    // Also catch any symbols Schwab returned with no price (filtered out in schwabQuotes)
+  // ── NSE results ──
+  if (nseSettled.status === 'fulfilled') {
+    results.push(...nseSettled.value);
+    // Any NSE symbol that came back empty → Yahoo fallback
+    const gotSyms = new Set(results.map(q => q.symbol));
+    const missing = nseSyms.filter(s => !gotSyms.has(s));
+    if (missing.length) {
+      try { results.push(...await yahooQuotes(missing)); } catch {}
+    }
+  } else {
+    logOnce('error', '[nse quote fail]', nseSettled.reason?.message);
+    // Full NSE fallback → Yahoo
+    try { results.push(...await yahooQuotes(nseSyms)); } catch {}
+  }
+
+  // ── Schwab results ──
+  if (schwabSettled.status === 'fulfilled') {
+    results.push(...schwabSettled.value);
     const gotSyms = new Set(results.map(q => q.symbol));
     const missing = schwabSyms.filter(s => !gotSyms.has(s));
     if (missing.length) {
       try { results.push(...await yahooQuotes(missing)); } catch {}
     }
   } else {
-    console.warn('[schwab quote fail]', schwabResults.reason?.message);
+    logOnce('warn', '[schwab quote fail]', schwabSettled.reason?.message);
     if (schwabSyms.length) {
       try { results.push(...await yahooQuotes(schwabSyms)); } catch {}
     }
   }
 
-  // Yahoo results
-  if (yahooResults.status === 'fulfilled') {
-    results.push(...yahooResults.value);
+  // ── Yahoo results (global indices + fallback) ──
+  if (yahooSettled.status === 'fulfilled') {
+    results.push(...yahooSettled.value);
     yahooOnSuccess();
   } else {
     yahooOnFailure('[yahoo quote fail]');
@@ -206,9 +233,27 @@ app.get('/api/chart', async (req, res) => {
 
   try {
     let ohlc;
-    const useSchwab = schwabAvailable && isSchwabSupported(sym);
+    const isIntraday  = INTRADAY_INTERVALS.has(interval);
+    const useNse      = isNseSupported(sym) && !isIntraday; // NSE has no intraday bars
+    const useSchwab   = schwabAvailable && isSchwabSupported(sym);
 
-    if (useSchwab) {
+    // ── NSE Direct for Indian daily/weekly/monthly ──
+    if (useNse) {
+      try {
+        ohlc = await nseHistory(sym, {
+          period  : isCustom ? 'custom' : period,
+          interval,
+          from    : req.query.from,
+          to      : req.query.to,
+        });
+      } catch (nseErr) {
+        logOnce('warn', `[nse chart fail ${sym}]`, nseErr.message + ' — falling back to Yahoo');
+        ohlc = null;
+      }
+    }
+
+    // ── Schwab for US intraday ──
+    if (!ohlc && useSchwab) {
       try {
         ohlc = await schwabPriceHistory(sym, {
           period   : isCustom ? 'custom' : period,
@@ -217,15 +262,14 @@ app.get('/api/chart', async (req, res) => {
           to       : req.query.to,
         });
       } catch (schwabErr) {
-        console.warn(`[schwab chart fail ${sym}]`, schwabErr.message, '— falling back to Yahoo');
+        logOnce('warn', `[schwab chart fail ${sym}]`, schwabErr.message + ' — falling back to Yahoo');
         ohlc = null;
       }
     }
 
-    // Fall back to Yahoo if Schwab not available or failed
+    // ── Yahoo fallback (global indices, intraday Indian, anything else) ──
     if (!ohlc) {
       if (!yahooIsOpen()) {
-        // Circuit open — serve stale chart data if we have it
         const stale = getStale(key);
         if (stale) return res.json({ ...stale, _stale: true });
         return res.status(503).json({ error: 'yahoo_unavailable', ohlc: [] });
@@ -327,16 +371,23 @@ app.get('/api/sparks', async (req, res) => {
   const results = {};
   await Promise.allSettled(syms.map(async sym => {
     try {
-      const chart = await yahooFinance.chart(
-        sym,
-        { period1, period2, interval: '1d' },
-        { validateResult: false }
-      );
-      const closes = (chart?.quotes ?? [])
-        .filter(b => b.close != null)
-        .map(b => b.close)
-        .slice(-20);
-      if (closes.length >= 2) results[sym] = closes;
+      if (isNseSupported(sym)) {
+        // Use NSE Direct for Indian symbols
+        const closes = await nseSparks(sym, 20);
+        if (closes.length >= 2) results[sym] = closes;
+      } else {
+        // Yahoo for everything else
+        const chart = await yahooFinance.chart(
+          sym,
+          { period1, period2, interval: '1d' },
+          { validateResult: false }
+        );
+        const closes = (chart?.quotes ?? [])
+          .filter(b => b.close != null)
+          .map(b => b.close)
+          .slice(-20);
+        if (closes.length >= 2) results[sym] = closes;
+      }
     } catch (e) { logOnce('warn', '[sparks]', sym + ' ' + e.message); }
   }));
 
