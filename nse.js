@@ -45,7 +45,14 @@ export function toNseTicker(sym) {
   return sym.replace(/\.(NS|BO)$/, '').toUpperCase();
 }
 
-// ── Session state ─────────────────────────────────────────────
+// ── Cloudflare Worker proxy ───────────────────────────────────
+// When NSE_PROXY_URL is set, all nseGet() calls are routed through
+// a CF Worker that handles the session cookie dance from CF's edge IPs.
+// Set NSE_PROXY_URL and NSE_PROXY_TOKEN as Railway environment variables.
+const PROXY_URL   = process.env.NSE_PROXY_URL   || null;
+const PROXY_TOKEN = process.env.NSE_PROXY_TOKEN  || null;
+
+// ── Session state (used only when NOT using proxy) ────────────
 const SESSION_TTL   = 25 * 60 * 1000; // 25 minutes
 const NSE_BASE      = 'https://www.nseindia.com';
 
@@ -140,6 +147,25 @@ function startSessionRefresh() {
 
 // ── Core fetch wrapper ────────────────────────────────────────
 async function nseGet(path, retried = false) {
+  // ── Route through CF Worker proxy if configured ──
+  if (PROXY_URL) {
+    // The Worker is deployed at https://your-worker.workers.dev
+    // It expects requests at the same path as NSE: /api/allIndices etc.
+    // Query string is preserved (needed for historical endpoints).
+    const workerUrl = PROXY_URL.replace(/\/$/, '') + path;
+    const headers   = { 'User-Agent': 'prvaaha-server/1.0' };
+    if (PROXY_TOKEN) headers['x-proxy-token'] = PROXY_TOKEN;
+
+    const res = await fetch(workerUrl, {
+      headers,
+      signal: AbortSignal.timeout(15_000), // longer — Worker does 2 fetches
+    });
+
+    if (!res.ok) throw new Error(`NSE proxy ${res.status} for ${path}`);
+    return res.json();
+  }
+
+  // ── Direct NSE (works from residential/dev IPs, not Railway DCs) ──
   const cookies = await getSession();
   const url     = NSE_BASE + path;
 
@@ -370,8 +396,14 @@ export async function nseSparks(sym, n = 20) {
 }
 
 // ── Boot ─────────────────────────────────────────────────────
-// Call once at server startup — warms up the session immediately
+// Call once at server startup — warms up the session immediately.
+// When a CF Worker proxy is configured, session management is
+// handled by the Worker — nothing to do here.
 export async function nseInit() {
+  if (PROXY_URL) {
+    console.log('[nse] proxy mode — session managed by CF Worker at', PROXY_URL);
+    return;
+  }
   try {
     await initSession();
     startSessionRefresh();

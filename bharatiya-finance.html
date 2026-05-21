@@ -7,7 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230d1f10'/%3E%3Cpath d='M2,22 L6,16 L10,20 L14,9 C16,4 18,14 21,10 C24,6 27,13 30,8' fill='none' stroke='%23FF9933' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;500;600;700;800&family=Spectral:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson@3/dist/topojson.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -19,7 +19,7 @@
   --hdr:#FF9933;--map-ocean:#060d1e;--map-grid:#0e1f3e;
   --serif:'Spectral',Georgia,'Times New Roman',serif;
   --mono:'IBM Plex Mono','Courier New',monospace;
-  --sans:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
+  --sans:'Urbanist',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
   transition:background .2s,color .2s;
 }
 [data-theme="light"]{
@@ -1398,10 +1398,11 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 // ══════════════════════════════════════════════
 // SUPABASE CLIENT
 // ══════════════════════════════════════════════
-const _sb = window.supabase.createClient(
+// Guard: if Supabase CDN fails to load, _sb is null and all _sb calls are no-ops
+const _sb = window.supabase?.createClient(
   'https://hepkrvmhcbptoibzdwvg.supabase.co',
   'sb_publishable_Z8bb16ZVksxuZtl9FHC20Q_qQiUaeJZ'
-);
+) ?? null;
 
 // ══════════════════════════════════════════════
 // DATA
@@ -3015,12 +3016,17 @@ function _mapSbArticle(r){
 
 // Fetch up to `limit` articles from Supabase, newest first
 async function fetchSupabaseNews(limit=200){
+  if(!_sb) return [];
   try{
-    const{data,error}=await _sb
-      .from('articles')
-      .select('id,canonical_url,title,summary,source_name,published_at,created_at,region,image_url')
-      .order('created_at',{ascending:false})
-      .limit(limit);
+    // Race with 8s timeout — Supabase should never hang the news render
+    const result=await Promise.race([
+      _sb.from('articles')
+        .select('id,canonical_url,title,summary,source_name,published_at,created_at,region,image_url')
+        .order('created_at',{ascending:false})
+        .limit(limit),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('sb timeout')),8000)),
+    ]);
+    const{data,error}=result;
     if(error||!data?.length) return[];
     return data.map(_mapSbArticle);
   }catch(e){return[];}
@@ -4487,20 +4493,31 @@ const AUTH={
   user:null,
 
   async init(){
-    // Restore session — Supabase handles token refresh automatically
-    const {data:{session}}=await _sb.auth.getSession();
-    if(session?.user){
-      this.user=this._map(session.user);
-      this.updateUI();
+    if(!_sb) return; // Supabase CDN failed to load — skip auth entirely
+    // Restore session — race with 5s timeout so a slow Supabase never freezes the page
+    try{
+      const sessionResult = await Promise.race([
+        _sb.auth.getSession(),
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error('auth timeout')),5000)),
+      ]);
+      const session=sessionResult?.data?.session;
+      if(session?.user){
+        this.user=this._map(session.user);
+        this.updateUI();
+      }
+    }catch(e){
+      console.warn('[auth] init failed or timed out:',e.message);
     }
     // Keep UI in sync whenever auth state changes (tab focus, token refresh, sign-out)
-    _sb.auth.onAuthStateChange((event,session)=>{
-      // TOKEN_REFRESHED is a background housekeeping event — skip it so the
-      // open dropdown isn't nuked mid-interaction by a silent token refresh
-      if(event==='TOKEN_REFRESHED') return;
-      this.user=session?.user ? this._map(session.user) : null;
-      this.updateUI();
-    });
+    try{
+      _sb.auth.onAuthStateChange((event,session)=>{
+        // TOKEN_REFRESHED is a background housekeeping event — skip it so the
+        // open dropdown isn't nuked mid-interaction by a silent token refresh
+        if(event==='TOKEN_REFRESHED') return;
+        this.user=session?.user ? this._map(session.user) : null;
+        this.updateUI();
+      });
+    }catch(e){}
   },
 
   _map(u){
@@ -5316,8 +5333,8 @@ function updateDetailLive(){
   // Set correct theme button icon on load
   updateThemeBtn(document.documentElement.getAttribute('data-theme')||'light');
 
-  // Auth — restore signed-in session
-  await AUTH.init();
+  // Auth — restore signed-in session (best-effort — must never block page render)
+  try{ await AUTH.init(); }catch(e){ console.warn('[auth]',e.message); }
 
   initData();
   renderHero();
