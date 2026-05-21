@@ -64,22 +64,22 @@ function logOnce(level, tag, msg, windowMs = 5 * 60_000) {
 }
 
 // ── Yahoo Finance circuit-breaker ────────────────────────────
-// After 3 consecutive failures, back off for 10 min, then 20 min, etc.
-const _yCircuit = { failures: 0, openUntil: 0, backoffMs: 10 * 60_000 };
+// After 3 consecutive failures, back off for 2 min, then 4 min, etc. (cap 10 min).
+const _yCircuit = { failures: 0, openUntil: 0, backoffMs: 2 * 60_000 };
 function yahooIsOpen() {
   if (Date.now() < _yCircuit.openUntil) return false; // still in backoff
   return true;
 }
 function yahooOnSuccess() {
   _yCircuit.failures = 0;
-  _yCircuit.backoffMs = 10 * 60_000; // reset backoff
+  _yCircuit.backoffMs = 2 * 60_000; // reset backoff
 }
 function yahooOnFailure(tag) {
   _yCircuit.failures++;
   if (_yCircuit.failures >= 3) {
     _yCircuit.openUntil = Date.now() + _yCircuit.backoffMs;
     logOnce('warn', tag, `circuit open — backing off ${Math.round(_yCircuit.backoffMs/60000)}min after ${_yCircuit.failures} failures`);
-    _yCircuit.backoffMs = Math.min(_yCircuit.backoffMs * 2, 60 * 60_000); // cap at 1h
+    _yCircuit.backoffMs = Math.min(_yCircuit.backoffMs * 2, 10 * 60_000); // cap at 10 min
   } else {
     logOnce('warn', tag, 'fetch failed');
   }
@@ -155,16 +155,59 @@ async function fetchQuotes(symbols) {
   // ── NSE results ──
   if (nseSettled.status === 'fulfilled') {
     results.push(...nseSettled.value);
-    // Any NSE symbol that came back empty → Yahoo fallback
+    // Any NSE symbol that came back empty → Stooq → Yahoo fallback
     const gotSyms = new Set(results.map(q => q.symbol));
     const missing = nseSyms.filter(s => !gotSyms.has(s));
     if (missing.length) {
-      try { results.push(...await yahooQuotes(missing)); } catch {}
+      try {
+        const stooqFill = await stooqQuotes(missing);
+        results.push(...stooqFill);
+        const stillMissing = missing.filter(s => !stooqFill.some(q => q.symbol === s));
+        if (stillMissing.length) {
+          try { results.push(...await yahooQuotes(stillMissing)); } catch {}
+        }
+      } catch {
+        try { results.push(...await yahooQuotes(missing)); } catch {}
+      }
     }
   } else {
-    logOnce('error', '[nse quote fail]', nseSettled.reason?.message);
-    // Full NSE fallback → Yahoo
-    try { results.push(...await yahooQuotes(nseSyms)); } catch {}
+    logOnce('warn', '[nse quote fail]', nseSettled.reason?.message);
+    // NSE blocked → try Stooq (works from any IP), then Yahoo as last resort
+    const equitySyms = nseSyms.filter(s => s.endsWith('.NS') || s.endsWith('.BO'));
+    const indexSyms  = nseSyms.filter(s => !s.endsWith('.NS') && !s.endsWith('.BO'));
+
+    // Equities via Stooq
+    if (equitySyms.length) {
+      try {
+        const stooqData = await stooqQuotes(equitySyms);
+        results.push(...stooqData);
+        console.log(`[stooq] ✓ ${stooqData.length}/${equitySyms.length} equity quotes`);
+        // Any still missing → Yahoo last resort
+        const gotEquity = new Set(stooqData.map(q => q.symbol));
+        const missingEquity = equitySyms.filter(s => !gotEquity.has(s));
+        if (missingEquity.length) {
+          try { results.push(...await yahooQuotes(missingEquity)); } catch {}
+        }
+      } catch (e) {
+        logOnce('warn', '[stooq equity fail]', e.message);
+        try { results.push(...await yahooQuotes(equitySyms)); } catch {}
+      }
+    }
+
+    // Indices via Stooq (mapped: ^NSEI→^NF etc.) → Yahoo fallback
+    if (indexSyms.length) {
+      try {
+        const stooqIdx = await stooqQuotes(indexSyms);
+        results.push(...stooqIdx);
+        const gotIdx = new Set(stooqIdx.map(q => q.symbol));
+        const missingIdx = indexSyms.filter(s => !gotIdx.has(s));
+        if (missingIdx.length) {
+          try { results.push(...await yahooQuotes(missingIdx)); } catch {}
+        }
+      } catch {
+        try { results.push(...await yahooQuotes(indexSyms)); } catch {}
+      }
+    }
   }
 
   // ── Schwab results ──
@@ -206,6 +249,75 @@ async function yahooQuotes(symbols) {
     ],
   }, { validateResult: false });
   return Array.isArray(raw) ? raw : [raw];
+}
+
+// ── Stooq CSV quotes ─────────────────────────────────────────
+// Free, no auth, works from any IP. ~15-min delayed.
+// Used as the primary fallback when NSE Direct is inaccessible from Railway.
+// Stooq CSV: https://stooq.com/q/l/?s=SYM1,SYM2&f=sd2t2ohlcvp&h&e=csv
+//   Fields:  Symbol, Date, Time, Open, High, Low, Close, Volume, PrevClose
+//   "N/D" in the Close column means no data available for that symbol.
+const STOOQ_IDX_MAP = {
+  // Yahoo index symbol → Stooq index symbol
+  '^NSEI'    : '^NF',   // Nifty 50
+  '^NSEBANK' : '^NB',   // Nifty Bank
+  '^BSESN'   : '^BSE',  // BSE Sensex
+};
+
+async function stooqQuotes(symbols) {
+  if (!symbols.length) return [];
+
+  // Build Yahoo→Stooq symbol map
+  const stooqToYahoo = new Map();
+  const stooqSyms = symbols.map(s => {
+    const mapped = STOOQ_IDX_MAP[s] ?? s; // index map or passthrough (.NS/.BO)
+    stooqToYahoo.set(mapped.toUpperCase(), s);
+    return mapped;
+  });
+
+  const url = `https://stooq.com/q/l/?s=${encodeURIComponent(stooqSyms.join(','))}&f=sd2t2ohlcvp&h&e=csv`;
+
+  const res = await fetch(url, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; finance-app/1.0)' },
+    signal : AbortSignal.timeout(10_000),
+  });
+  if (!res.ok) throw new Error(`Stooq HTTP ${res.status}`);
+
+  const text  = await res.text();
+  const lines = text.trim().split('\n');
+  const results = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const parts = lines[i].split(',');
+    if (parts.length < 7) continue;
+    const [rawSym, , , open, high, low, close, vol, prevClose] = parts;
+    if (!rawSym || close === 'N/D' || !close) continue;
+
+    // Resolve back to Yahoo-format symbol
+    const yahoSym = stooqToYahoo.get(rawSym.trim().toUpperCase()) ?? rawSym.trim();
+    const c  = parseFloat(close)     || 0;
+    const pc = parseFloat(prevClose) || 0;
+    const chg = pc ? +(c - pc).toFixed(2) : 0;
+    const pct = pc ? +((chg / pc) * 100).toFixed(2) : 0;
+
+    results.push({
+      symbol                     : yahoSym,
+      regularMarketPrice         : c,
+      regularMarketChange        : chg,
+      regularMarketChangePercent : pct,
+      regularMarketOpen          : parseFloat(open) || 0,
+      regularMarketDayHigh       : parseFloat(high) || 0,
+      regularMarketDayLow        : parseFloat(low)  || 0,
+      regularMarketPreviousClose : pc || null,
+      regularMarketVolume        : parseInt(vol)    || 0,
+      fiftyTwoWeekHigh           : null,
+      fiftyTwoWeekLow            : null,
+      marketCap                  : null,
+      _source                    : 'stooq',
+    });
+  }
+
+  return results;
 }
 
 // Global safety net — log unhandled rejections instead of crashing the process
