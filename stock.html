@@ -261,6 +261,31 @@ button{cursor:pointer;font-family:inherit}
 .am-err{color:var(--neg);font-size:12px;margin-bottom:10px;display:none}
 .am-switch{margin-top:12px;text-align:center;font-size:11px;color:var(--muted)}
 .am-switch span{color:var(--accent);cursor:pointer;font-weight:600}
+
+/* ══════════════════════════════════════════════════════════════
+   PREMIUM DESIGN LAYER — glow, depth, polish
+   ══════════════════════════════════════════════════════════════ */
+:root{
+  --glow-card:0 0 0 1px rgba(255,153,51,.07),0 4px 24px rgba(0,0,0,.55),0 1px 0 rgba(255,255,255,.035) inset;
+  --glow-card-hover:0 0 0 1px rgba(255,153,51,.22),0 8px 48px rgba(0,0,0,.65),0 0 28px rgba(255,153,51,.07),0 1px 0 rgba(255,255,255,.055) inset;
+  --glow-focus:0 0 0 2px rgba(255,153,51,.38);
+  --glow-header:0 2px 20px rgba(255,153,51,.28),0 1px 0 rgba(255,255,255,.13) inset,0 -1px 0 rgba(0,0,0,.15) inset;
+}
+[data-theme="light"]{
+  --glow-card:0 0 0 1px rgba(0,0,0,.06),0 2px 16px rgba(0,0,0,.08),0 1px 0 rgba(255,255,255,.9) inset;
+  --glow-card-hover:0 0 0 1px rgba(197,86,10,.18),0 6px 28px rgba(0,0,0,.14),0 1px 0 rgba(255,255,255,.9) inset;
+  --glow-focus:0 0 0 2px rgba(197,86,10,.3);
+  --glow-header:0 2px 16px rgba(197,86,10,.25),0 1px 0 rgba(255,255,255,.15) inset;
+}
+body::after{content:'';position:fixed;top:-15vh;left:50%;transform:translateX(-50%);width:80vw;height:55vh;background:radial-gradient(ellipse at center,rgba(255,153,51,.028) 0%,transparent 68%);pointer-events:none;z-index:0}
+[data-theme="light"] body::after{display:none}
+@media(prefers-color-scheme:light){:root:not([data-theme="dark"]) body::after{display:none}}
+.hdr{background:linear-gradient(135deg,#c86800 0%,#e07818 35%,#FF9933 70%,#ffaa44 100%);box-shadow:var(--glow-header)}
+.am-box{box-shadow:0 32px 80px rgba(0,0,0,.7),0 0 0 1px rgba(255,153,51,.1),0 0 40px rgba(255,153,51,.04)}
+.am-input:focus{border-color:var(--accent);box-shadow:var(--glow-focus);outline:none}
+.am-btn{box-shadow:0 0 0 1px rgba(255,153,51,.3),0 4px 16px rgba(255,153,51,.2);transition:box-shadow .15s,opacity .15s}
+.am-btn:hover{opacity:.9;box-shadow:0 0 0 1px rgba(255,153,51,.45),0 6px 24px rgba(255,153,51,.3)}
+.am-tab.on{border-bottom-color:var(--accent);text-shadow:0 0 10px rgba(255,153,51,.35)}
 </style>
 </head>
 <body>

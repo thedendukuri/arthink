@@ -693,6 +693,133 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 .prof-danger-title{font-size:10px;font-weight:800;color:var(--neg);text-transform:uppercase;letter-spacing:.2px;margin-bottom:8px}
 .prof-session-row{background:var(--surface2);border:1px solid var(--border);padding:12px 16px;max-width:440px;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between}
 .sb-search-inp:-webkit-autofill,.sb-search-inp:-webkit-autofill:hover,.sb-search-inp:-webkit-autofill:focus{-webkit-box-shadow:0 0 0 1000px var(--surface2) inset!important;-webkit-text-fill-color:var(--text)!important;caret-color:var(--text)}
+
+/* ══════════════════════════════════════════════════════════════
+   PREMIUM DESIGN LAYER — glow, depth, polish
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── CSS glow variables ── */
+:root{
+  --glow-card:0 0 0 1px rgba(255,153,51,.07),0 4px 24px rgba(0,0,0,.55),0 1px 0 rgba(255,255,255,.035) inset;
+  --glow-card-hover:0 0 0 1px rgba(255,153,51,.22),0 8px 48px rgba(0,0,0,.65),0 0 28px rgba(255,153,51,.07),0 1px 0 rgba(255,255,255,.055) inset;
+  --glow-focus:0 0 0 2px rgba(255,153,51,.38);
+  --glow-header:0 2px 20px rgba(255,153,51,.28),0 1px 0 rgba(255,255,255,.13) inset,0 -1px 0 rgba(0,0,0,.15) inset;
+}
+[data-theme="light"]{
+  --glow-card:0 0 0 1px rgba(0,0,0,.06),0 2px 16px rgba(0,0,0,.08),0 1px 0 rgba(255,255,255,.9) inset;
+  --glow-card-hover:0 0 0 1px rgba(197,86,10,.18),0 6px 28px rgba(0,0,0,.14),0 1px 0 rgba(255,255,255,.9) inset;
+  --glow-focus:0 0 0 2px rgba(197,86,10,.3);
+  --glow-header:0 2px 16px rgba(197,86,10,.25),0 1px 0 rgba(255,255,255,.15) inset;
+}
+
+/* ── Ambient page background glow (dark only) ── */
+body::after{content:'';position:fixed;top:-15vh;left:50%;transform:translateX(-50%);width:80vw;height:55vh;background:radial-gradient(ellipse at center,rgba(255,153,51,.028) 0%,transparent 68%);pointer-events:none;z-index:0}
+[data-theme="light"] body::after{display:none}
+@media(prefers-color-scheme:light){:root:not([data-theme="dark"]) body::after{display:none}}
+
+/* ── Header — gradient depth + glow ── */
+.hdr{background:linear-gradient(135deg,#c86800 0%,#e07818 35%,#FF9933 70%,#ffaa44 100%);box-shadow:var(--glow-header)}
+
+/* ── Status bar — gradient ── */
+.statusbar{background:linear-gradient(to right,#e07818,#FF9933 50%,#e07818);box-shadow:0 1px 0 rgba(0,0,0,.25) inset,0 1px 0 rgba(0,0,0,.18)}
+
+/* ── Ticker bar — adapt to theme, lose hard-coded white ── */
+.tbar{background:var(--surface);border-bottom:1px solid var(--border)}
+.tbar::before{background:linear-gradient(to right,var(--surface) 40%,transparent)}
+.tbar::after{background:linear-gradient(to left,var(--surface) 40%,transparent)}
+.tick{border-right-color:var(--border);transition:background .1s}
+.tick:hover{background:rgba(255,153,51,.05)}
+.t-sym{color:var(--text)}
+.t-price{color:var(--text2)}
+
+/* ── Sidebar — ambient card glow ── */
+.sidebar{box-shadow:var(--glow-card);border-color:rgba(255,153,51,.1)}
+[data-theme="light"] .sidebar{border-color:rgba(0,0,0,.1)}
+
+/* ── Hero card glow + hover lift ── */
+.hero{box-shadow:var(--glow-card);border-color:rgba(255,153,51,.1);transition:border-color .22s,box-shadow .22s,transform .18s}
+.hero:hover{box-shadow:var(--glow-card-hover);border-color:rgba(255,153,51,.28);transform:translateY(-2px)}
+[data-theme="light"] .hero,.hero{border-color:rgba(255,153,51,.1)}
+
+/* ── Region & index cards — hover lift + glow ── */
+.region-card,.idx-card,.chart-card{transition:border-color .2s,box-shadow .2s,transform .18s}
+.region-card:hover,.idx-card:hover,.chart-card:hover{border-color:rgba(255,153,51,.22);box-shadow:0 0 0 1px rgba(255,153,51,.13),0 8px 36px rgba(0,0,0,.55),0 0 24px rgba(255,153,51,.055);transform:translateY(-2px)}
+[data-theme="light"] .region-card:hover,[data-theme="light"] .idx-card:hover,[data-theme="light"] .chart-card:hover{border-color:rgba(197,86,10,.22);box-shadow:0 0 0 1px rgba(197,86,10,.1),0 6px 24px rgba(0,0,0,.12);transform:translateY(-2px)}
+
+/* ── News cards — hover title glow ── */
+.ncard:hover .nc-h{color:var(--accent)}
+.np-hero:hover .np-hero-title{color:var(--accent);text-shadow:0 0 24px rgba(255,153,51,.18)}
+.np-colart:hover .np-colart-title{color:var(--accent)}
+
+/* ── Section labels — glowing accent bar ── */
+.label{border-bottom:none;padding-bottom:11px;position:relative}
+.label::after{content:'';position:absolute;bottom:0;left:0;width:28px;height:2px;background:linear-gradient(to right,#FF9933,rgba(255,153,51,0));box-shadow:0 0 8px rgba(255,153,51,.55);border-radius:1px}
+[data-theme="light"] .label::after{background:linear-gradient(to right,#c5560a,rgba(197,86,10,0));box-shadow:0 0 6px rgba(197,86,10,.35)}
+
+/* ── Active tab underline glow ── */
+.tab.on{border-bottom-color:var(--accent);text-shadow:0 0 10px rgba(255,153,51,.35)}
+.nrt.on{border-bottom-color:var(--accent);text-shadow:0 0 10px rgba(255,153,51,.35)}
+.ncs-btn.on{border-bottom-color:var(--accent);text-shadow:0 0 10px rgba(255,153,51,.35)}
+
+/* ── Source pills active glow ── */
+.ns-pill.on{box-shadow:0 0 10px rgba(255,153,51,.2)}
+
+/* ── Active pagination glow ── */
+.india-pagination button.active{box-shadow:0 0 12px rgba(255,153,51,.35)}
+
+/* ── Screener active mode btn glow ── */
+.scr-mode-btn.active{box-shadow:0 0 10px rgba(255,153,51,.3)}
+
+/* ── Period button active glow ── */
+.p-btn.on{box-shadow:0 0 10px rgba(255,153,51,.35)}
+
+/* ── Input focus glow ── */
+.india-tbl-controls input:focus,.india-pg-jump:focus,.scr-search-inp:focus,.scr-sel:focus{box-shadow:var(--glow-focus);outline:none}
+
+/* ── Search dropdown — colored glow ── */
+.search-drop{box-shadow:0 16px 56px rgba(0,0,0,.82),0 0 0 1px rgba(255,153,51,.12),0 0 40px rgba(255,153,51,.04)}
+[data-theme="light"] .search-drop{box-shadow:0 8px 32px rgba(0,0,0,.15),0 0 0 1px rgba(0,0,0,.08)}
+
+/* ── Sign In button glow ── */
+.signin{background:linear-gradient(135deg,#1a0800,#281200);box-shadow:0 0 0 1px rgba(255,153,51,.22),0 2px 8px rgba(0,0,0,.35);transition:box-shadow .15s,background .15s}
+.signin:hover{box-shadow:0 0 0 1px rgba(255,153,51,.45),0 4px 18px rgba(255,153,51,.22);background:linear-gradient(135deg,#281200,#381800)}
+
+/* ── Nav active link glow ── */
+.nav a.on{text-shadow:0 0 12px rgba(255,255,255,.25)}
+#nav-alpha{text-shadow:0 0 14px rgba(255,255,255,.45)}
+
+/* ── Live dot enhanced pulse ring ── */
+.live-dot{box-shadow:0 0 5px var(--pos),0 0 10px rgba(34,197,94,.35)}
+
+/* ── Map container glow ── */
+.map-wrap{box-shadow:0 0 60px rgba(0,100,200,.1) inset,0 0 0 1px rgba(30,58,95,.55)}
+
+/* ── Breadcrumb hover glow ── */
+.mkt-crumb span:hover{text-shadow:0 0 8px rgba(255,153,51,.35)}
+
+/* ── Back button hover glow ── */
+.back-btn:hover{color:var(--accent);text-shadow:0 0 8px rgba(255,153,51,.3)}
+
+/* ── Table row hover — very subtle accent tint ── */
+.stbl tr:hover td{background:rgba(255,153,51,.025)}
+[data-theme="light"] .stbl tr:hover td{background:rgba(197,86,10,.04)}
+
+/* ── Stats row card ── */
+.stats-row{box-shadow:var(--glow-card);border-color:rgba(255,153,51,.09)}
+
+/* ── Chart card borders ── */
+.chart-svg-wrap{border-color:rgba(255,153,51,.09)}
+
+/* ── IPO status badges — glow ── */
+.st-open{box-shadow:0 0 8px rgba(34,197,94,.2)}
+.st-upcoming{box-shadow:0 0 8px rgba(255,153,51,.18)}
+
+/* ── Ticker change badge micro-glow ── */
+.nc-tick.up{box-shadow:0 0 6px rgba(34,197,94,.15)}
+.nc-tick.dn{box-shadow:0 0 6px rgba(239,68,68,.15)}
+
+/* ── Logo name subtle glow ── */
+.logo-name{filter:drop-shadow(0 0 8px rgba(0,0,0,.25))}
 </style>
 </head>
 <body>
