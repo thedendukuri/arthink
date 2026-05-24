@@ -128,16 +128,16 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 .hero-img{position:relative;height:300px;overflow:hidden}
 .hero-img img{width:100%;height:100%;object-fit:cover;transition:transform .5s}
 .hero:hover .hero-img img{transform:scale(1.03)}
-.hero-img::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.95) 0%,rgba(0,0,0,.0) 50%)}
+.hero-img::after{display:none}
 .hero-img-fb{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:80px;opacity:.06}
-.hero-cap{position:absolute;bottom:0;left:0;right:0;padding:20px 22px;z-index:1}
+.hero-cap{display:none}
 .hero-meta{display:flex;align-items:center;gap:8px;margin-bottom:10px}
 .tag{background:var(--accent);color:#000;font-size:9px;font-weight:700;padding:3px 8px;text-transform:uppercase;letter-spacing:.25px}
-.hero-src{font-family:var(--sans);font-size:9px;font-weight:500;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.2px}
-.hero-time{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);margin-left:auto}
-.hero-h{font-family:var(--sans);font-size:22px;font-weight:700;line-height:1.25;color:#fff;letter-spacing:-.2px}
-.hero-body{padding:14px 20px 18px;border-top:1px solid var(--border)}
-.hero-excerpt{font-family:var(--sans);font-size:13px;color:var(--text);line-height:1.7}
+.hero-src{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.hero-time{font-family:var(--mono);font-size:9px;color:var(--muted);margin-left:auto}
+.hero-h{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:800;line-height:1.2;color:var(--text);letter-spacing:-.3px;margin-bottom:10px}
+.hero-body{padding:16px 20px 20px;border-top:2px solid var(--text)}
+.hero-excerpt{font-family:var(--sans);font-size:13px;color:var(--text2);line-height:1.7}
 
 /* ── HOME NEWS 3-COL — newspaper grid ── */
 .news3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-top:2px solid var(--text)}
@@ -3198,17 +3198,17 @@ async function renderHero(){
   heroEl.innerHTML=`
     <div class="hero-img" onclick="window.open('${escH(n.link)}','_blank')" style="cursor:pointer">
       ${n.thumbnail?`<img src="${escH(n.thumbnail)}" alt="" loading="lazy" onerror="this.style.display='none'"/>`:''}
-      <div class="hero-cap">
-        <div class="hero-meta">
-          <span class="tag">${n.category||'MARKETS'}</span>
-          <span class="hero-src">${escH(n.source||'')}</span>
-          ${n.region==='world'?'<span style="font-size:9px;color:rgba(255,255,255,.5);font-weight:700;text-transform:uppercase;letter-spacing:.5px">🌐 World</span>':''}
-          <span class="hero-time">${relTime(n.pubDate)}</span>
-        </div>
-        <div class="hero-h">${escH(n.title)}</div>
-      </div>
     </div>
-    ${n.excerpt?`<div class="hero-body" onclick="window.open('${escH(n.link)}','_blank')" style="cursor:pointer"><p class="hero-excerpt">${escH(n.excerpt.slice(0,200))}</p></div>`:''}`;
+    <div class="hero-body" onclick="window.open('${escH(n.link)}','_blank')" style="cursor:pointer">
+      <div class="hero-meta">
+        <span class="tag">${n.category||'MARKETS'}</span>
+        <span class="hero-src">${escH(n.source||'')}</span>
+        ${n.region==='world'?'<span style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;font-family:var(--mono)">🌐 World</span>':''}
+        <span class="hero-time">${relTime(n.pubDate)}</span>
+      </div>
+      <div class="hero-h">${escH(n.title)}</div>
+      ${n.excerpt?`<p class="hero-excerpt">${escH(n.excerpt.slice(0,200))}</p>`:''}
+    </div>`;
 }
 
 async function renderNews3(){
