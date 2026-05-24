@@ -364,6 +364,69 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--border2)}
 
+
+/* ══ PRVAAHA HOME — exact layout from prvaaha-codebase ══ */
+.ps-home-outer{position:relative}
+.ps-grid-overlay{position:absolute;inset:0;pointer-events:none;opacity:.6;background-image:linear-gradient(to right,rgba(201,168,76,.12) 1px,transparent 1px),linear-gradient(to bottom,rgba(201,168,76,.12) 1px,transparent 1px);background-size:56px 56px;background-position:-1px -1px;z-index:0}
+.ps-home-inner{position:relative;max-width:1440px;margin:0 auto;display:grid;grid-template-columns:1fr 300px;gap:24px;padding:32px 24px;z-index:1}
+@media(max-width:900px){.ps-home-inner{grid-template-columns:1fr}}
+.ps-main{min-width:0}
+.ps-sidebar-col{display:flex;flex-direction:column;gap:16px}
+
+/* Top Stories header */
+.ps-ts-hdr{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:16px}
+.ps-ts-title{font-family:var(--sans);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--gold)}
+.ps-ts-link{font-size:11px;font-weight:700;color:var(--text2);cursor:pointer;transition:color .15s;text-decoration:none}
+.ps-ts-link:hover{color:var(--gold);text-decoration:underline}
+
+/* Hero article */
+.ps-hero{margin-bottom:48px}
+.ps-hero-art{display:flex;flex-direction:column;gap:24px;cursor:pointer}
+@media(min-width:900px){.ps-hero-art{flex-direction:row;align-items:flex-start}}
+.ps-hero-text{flex:1;order:2}
+@media(min-width:900px){.ps-hero-text{order:1}}
+.ps-hero-img-wrap{width:100%;height:192px;overflow:hidden;border:1px solid var(--border);background:var(--surface);flex-shrink:0;order:1}
+@media(min-width:900px){.ps-hero-img-wrap{width:288px;order:2}}
+.ps-hero-img-wrap img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .4s}
+.ps-hero-art:hover .ps-hero-img-wrap img{transform:scale(1.03)}
+.ps-hero-img-fb{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--surface) 0%,rgba(201,168,76,.15) 100%);background-image:linear-gradient(to right,rgba(201,168,76,.1) 1px,transparent 1px),linear-gradient(to bottom,rgba(201,168,76,.1) 1px,transparent 1px);background-size:14px 14px}
+.ps-hero-meta{display:flex;align-items:center;gap:12px;margin-bottom:12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+.ps-hero-cat{background:var(--gold);color:var(--bg);padding:2px 6px;font-size:11px;font-weight:700}
+.ps-hero-src{color:var(--gold)}
+.ps-hero-time{color:rgba(245,240,224,.4);font-style:italic;text-transform:lowercase;font-weight:400}
+.ps-hero-h{font-family:var(--serif);font-size:36px;line-height:1.15;color:var(--text);margin-bottom:16px;transition:color .15s;letter-spacing:-.01em}
+.ps-hero-art:hover .ps-hero-h{color:var(--gold)}
+.ps-hero-excerpt{font-size:13px;color:rgba(245,240,224,.7);line-height:1.7;margin-bottom:24px;max-width:560px}
+.ps-hero-footer{display:flex;flex-wrap:wrap;align-items:center;gap:16px;border-top:1px solid var(--border);padding-top:16px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--gold)}
+.ps-hero-footer a{font-size:12px;color:rgba(245,240,224,.8);text-transform:none;letter-spacing:0;font-weight:500;transition:color .15s}
+.ps-hero-footer a:hover{color:var(--text)}
+
+/* 2-col news grid */
+.ps-newsgrid{display:grid;grid-template-columns:1fr 1fr;gap:32px;border-top:1px solid var(--border);padding-top:32px}
+@media(max-width:600px){.ps-newsgrid{grid-template-columns:1fr}}
+.ps-ng-card{cursor:pointer}
+.ps-ng-card:hover .ps-ng-h{color:var(--gold)}
+.ps-ng-tag{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--gold);margin-bottom:8px}
+.ps-ng-h{font-family:var(--serif);font-size:20px;line-height:1.3;color:var(--text);margin-bottom:8px;transition:color .15s}
+.ps-ng-meta{font-size:11px;color:rgba(245,240,224,.4)}
+
+/* Sidebar panels */
+.ps-panel{border:1px solid var(--border);background:var(--surface);padding:12px}
+.ps-panel-lbl{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--gold);margin-bottom:8px}
+.ps-panel-hdr{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:0}
+.ps-panel-hdr+div{padding-top:0}
+.ps-panel-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--text);font-family:var(--sans)}
+.ps-live-badge{display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:10px;font-weight:700;text-transform:uppercase;color:var(--gold)}
+.ps-live-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:blink 2s ease-in-out infinite}
+.ps-search-box{display:flex;align-items:center;border:1px solid var(--border);background:var(--bg);padding:0 8px;height:32px;gap:6px;transition:border-color .15s}
+.ps-search-box:focus-within{border-color:var(--gold)}
+.ps-search-icon{color:rgba(201,168,76,.5);font-size:13px;flex-shrink:0}
+.ps-mv-tabs{display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--border)}
+.ps-mv-tab{padding:8px 0;text-align:center;background:none;border:none;border-right:1px solid var(--border);color:var(--gold);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;font-family:var(--sans);transition:all .12s}
+.ps-mv-tab:last-child{border-right:none}
+.ps-mv-tab:hover:not(.on){color:var(--text);background:rgba(201,168,76,.06)}
+.ps-mv-tab.on{background:var(--surface2);color:var(--text);font-weight:700}
+
 /* IPO / screener */
 .scr-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 
@@ -896,58 +959,71 @@ body::after{display:none!important}
 
 <!-- ══ HOME ══ -->
 <div id="sec-home" class="section active">
-  <div class="page">
-    <main class="main-col">
-      <div class="label">Top Stories <a onclick="showSection('news',document.querySelector('.nav a:nth-child(3)'))" style="cursor:pointer">See all →</a></div>
-      <div class="hero" id="heroEl"></div>
-      <div class="label" style="margin-top:20px">Latest News <a onclick="showSection('news',document.querySelector('.nav a:nth-child(3)'))" style="cursor:pointer">More →</a></div>
-      <div class="news3" id="news3El"></div>
-    </main>
-    <aside class="sidebar">
+  <div class="ps-home-outer">
+    <div class="ps-grid-overlay"></div>
+    <div class="ps-home-inner">
 
-      <!-- ── Quote Search ── -->
-      <div class="sb-search">
-        <div class="sb-search-wrap">
-          <div class="sb-search-box">
-            <span class="sb-search-icon">🔍</span>
-            <input class="sb-search-inp" id="sbSearchInp" type="text" placeholder="Quote lookup…" autocomplete="off" readonly spellcheck="false" onfocus="this.removeAttribute('readonly')" oninput="sbSearchUpdate(this.value)" onblur="setTimeout(()=>{sbSearchClose();this.setAttribute('readonly','')},180)"/>
+      <!-- ── Main: Terminal Focus / Top Stories ── -->
+      <div class="ps-main">
+        <div class="ps-ts-hdr">
+          <h2 class="ps-ts-title">Terminal Focus / Top Stories</h2>
+          <a class="ps-ts-link" onclick="showSection('news',document.querySelector('.nav a:nth-child(3)'))">View Full Feed →</a>
+        </div>
+        <div class="ps-hero" id="heroEl"></div>
+        <div class="ps-newsgrid" id="news3El"></div>
+      </div>
+
+      <!-- ── Sidebar ── -->
+      <aside class="ps-sidebar-col">
+
+        <!-- Quote Lookup -->
+        <div class="ps-panel">
+          <label class="ps-panel-lbl">Quote Lookup</label>
+          <div class="sb-search-wrap">
+            <div class="ps-search-box">
+              <input class="sb-search-inp" id="sbSearchInp" type="text" placeholder="Enter Symbol" autocomplete="off" readonly spellcheck="false"
+                onfocus="this.removeAttribute('readonly')"
+                oninput="sbSearchUpdate(this.value)"
+                onblur="setTimeout(()=>{sbSearchClose();this.setAttribute('readonly','')},180)"/>
+              <span class="ps-search-icon">🔍</span>
+            </div>
+            <div class="sb-search-drop" id="sbSearchDrop"></div>
           </div>
-          <div class="sb-search-drop" id="sbSearchDrop"></div>
         </div>
-      </div>
 
-      <!-- ── Indices ── -->
-      <div class="sbm">
-        <div class="sbm-hdr">
-          <span class="sbm-title">Indices</span>
-          <span class="live"><span class="live-dot"></span>Live</span>
+        <!-- Indices -->
+        <div class="ps-panel">
+          <div class="ps-panel-hdr">
+            <h3 class="ps-panel-title">Indices</h3>
+            <div class="ps-live-badge">
+              <span class="ps-live-dot"></span>
+              <span>Live</span>
+            </div>
+          </div>
+          <div id="sbIdx"></div>
         </div>
-        <div id="sbIdx"></div>
-      </div>
 
-      <!-- ── Market Movers ── -->
-      <div class="sbm">
-        <div class="sbm-hdr">
-          <span class="sbm-title">Market Movers</span>
+        <!-- Market Movers -->
+        <div class="ps-panel">
+          <div class="ps-mv-tabs" id="mv2TabRow">
+            <button class="ps-mv-tab on" onclick="mvTab2(this,'gainers')">Gainers</button>
+            <button class="ps-mv-tab" onclick="mvTab2(this,'losers')">Losers</button>
+            <button class="ps-mv-tab" onclick="mvTab2(this,'active')">Active</button>
+          </div>
+          <div id="sbMovers"></div>
         </div>
-        <div class="mv2-tabs" id="mv2TabRow">
-          <button class="mv2-tab on" onclick="mvTab2(this,'gainers')">Gainers</button>
-          <button class="mv2-tab" onclick="mvTab2(this,'losers')">Losers</button>
-          <button class="mv2-tab" onclick="mvTab2(this,'active')">Active</button>
-        </div>
-        <div id="sbMovers"></div>
-      </div>
 
-      <!-- ── Trending ── -->
-      <div class="sbm">
-        <div class="sbm-hdr">
-          <span class="sbm-title">Trending</span>
-          <span class="sbm-meta">by volume</span>
+        <!-- Trending -->
+        <div class="ps-panel">
+          <div class="ps-panel-hdr" style="margin-bottom:0">
+            <h3 class="ps-panel-title">Trending</h3>
+            <span style="font-family:var(--mono);font-size:9px;color:var(--muted)">by volume</span>
+          </div>
+          <div id="sbTrend"></div>
         </div>
-        <div id="sbTrend"></div>
-      </div>
 
-    </aside>
+      </aside>
+    </div>
   </div>
 </div>
 
@@ -3237,30 +3313,32 @@ const MANUAL_NEWS = [
 
 async function renderHero(){
   const heroEl=document.getElementById('heroEl');
-  // Skeleton while loading
-  heroEl.innerHTML=`<div class="skel" style="height:280px"></div>`;
+  heroEl.innerHTML=`<div class="skel" style="height:220px;border-radius:0"></div>`;
   const live=await fetchHomeNews();
   const arts=live.length?live:NEWS.map((n,i)=>({
     title:n.h, link:'#', source:n.src, category:n.tag, region:'india',
     pubDate:new Date(Date.now()-i*15*60000).toISOString(),
-    thumbnail:`https://picsum.photos/seed/${n.seed}/900/360`,
+    thumbnail:`https://picsum.photos/seed/${n.seed}/900/400`,
     excerpt:n.x||'',
   }));
   const n=arts[0];
+  const imgHtml=n.thumbnail
+    ?`<img src="${escH(n.thumbnail)}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<div class=&quot;ps-hero-img-fb&quot;></div>'"/>`
+    :`<div class="ps-hero-img-fb"></div>`;
   heroEl.innerHTML=`
-    <div class="hero-img" onclick="window.open('${escH(n.link)}','_blank')" style="cursor:pointer">
-      ${n.thumbnail?`<img src="${escH(n.thumbnail)}" alt="" loading="lazy" onerror="this.style.display='none'"/>`:''}
-    </div>
-    <div class="hero-body" onclick="window.open('${escH(n.link)}','_blank')" style="cursor:pointer">
-      <div class="hero-meta">
-        <span class="tag">${n.category||'MARKETS'}</span>
-        <span class="hero-src">${escH(n.source||'')}</span>
-        ${n.region==='world'?'<span style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;font-family:var(--mono)">🌐 World</span>':''}
-        <span class="hero-time">${relTime(n.pubDate)}</span>
+    <article class="ps-hero-art" onclick="window.open('${escH(n.link)}','_blank')">
+      <div class="ps-hero-text">
+        <div class="ps-hero-meta">
+          <span class="ps-hero-cat">${n.category||'MARKETS'}</span>
+          <span class="ps-hero-src">${escH(n.source||'')}</span>
+          <span class="ps-hero-time">${relTime(n.pubDate)}</span>
+        </div>
+        <h1 class="ps-hero-h">${escH(n.title)}</h1>
+        ${n.excerpt?`<p class="ps-hero-excerpt">${escH(n.excerpt.slice(0,220))}</p>`:''}
+        <div class="ps-hero-footer"><span>Related:</span></div>
       </div>
-      <div class="hero-h">${escH(n.title)}</div>
-      ${n.excerpt?`<p class="hero-excerpt">${escH(n.excerpt.slice(0,200))}</p>`:''}
-    </div>`;
+      <div class="ps-hero-img-wrap">${imgHtml}</div>
+    </article>`;
 }
 
 async function renderNews3(){
@@ -3269,31 +3347,13 @@ async function renderNews3(){
   const arts=live.length?live.slice(1):NEWS.slice(1).map((n,i)=>({
     title:n.h, link:'#', source:n.src, category:n.tag, region:'india',
     pubDate:new Date(Date.now()-(i+1)*15*60000).toISOString(),
-    thumbnail:`https://picsum.photos/seed/${n.seed}/160/110`,
   }));
-  const cols=[[],[],[]];
-  arts.slice(0,9).forEach((a,i)=>cols[i%3].push(a));
-  news3El.innerHTML=cols.map(col=>
-    `<div class="ncol">${col.map(a=>{
-      const tks=extractTickers(a.title,a.excerpt);
-      const tkAttr=tks.length?` data-tickers="${tks.map(t=>t.s).join(',')}"`:' ';
-      return`<div class="ncard"${tkAttr}onclick="window.open('${escH(a.link)}','_blank')">
-        <div class="nc-top">
-          <div class="nc-body">
-            <div class="nc-meta">
-              <span class="nc-src">${escH(a.source||'')}</span>
-              <span class="ntag">${a.category||'MARKETS'}</span>
-              ${a.region==='world'?'<span class="ntag" style="background:rgba(192,132,252,.1);color:var(--link)">🌐</span>':''}
-            </div>
-            <div class="nc-h">${escH(a.title)}</div>
-            <div class="nc-time">${relTime(a.pubDate)}</div>
-            ${tks.length?'<div class="nc-tickers"></div>':''}
-          </div>
-          ${a.thumbnail?`<div class="nc-thumb"><img src="${escH(a.thumbnail)}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"/></div>`:''}
-        </div>
-      </div>`;
-    }).join('')}</div>`).join('');
-  refreshNewsTickers();
+  news3El.innerHTML=arts.slice(0,6).map(a=>`
+    <article class="ps-ng-card" onclick="window.open('${escH(a.link)}','_blank')">
+      <span class="ps-ng-tag">${a.category||'MARKETS'}</span>
+      <h3 class="ps-ng-h">${escH(a.title)}</h3>
+      <span class="ps-ng-meta">${relTime(a.pubDate)} · ${escH(a.source||'')}</span>
+    </article>`).join('');
 }
 
 function renderSbIdx(){
