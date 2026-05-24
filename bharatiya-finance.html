@@ -3169,9 +3169,19 @@ async function fetchHomeNews(){
 }
 
 // ── Manually pinned articles (prepended above live Supabase feed) ──
-// Leave empty now that Supabase articles are live.
-// To pin a story: add an object with {id,title,link,source,category,region,pubDate,excerpt,thumbnail}
-const MANUAL_NEWS = [];
+const MANUAL_NEWS = [
+  {
+    id:'pinned-rubio-modi-1',
+    title:"Rubio Calls India 'Incredibly Important Partner', Extends Trump's Invite To PM Modi For White House Visit",
+    link:'https://www.ndtvprofit.com/world/rubio-calls-india-incredibly-important-partner-extends-trumps-invite-to-pm-modi-for-white-house-visit-11538489',
+    source:'NDTV Profit',
+    category:'POLICY',
+    region:'india',
+    pubDate:new Date().toISOString(),
+    excerpt:"US Secretary of State Marco Rubio called India an 'incredibly important partner' and extended President Trump's personal invitation to Prime Minister Modi for a White House visit.",
+    thumbnail:'https://images.ndtvprofit.com/story/rubio-modi-white-house.jpg',
+  },
+];
 
 async function renderHero(){
   const heroEl=document.getElementById('heroEl');
