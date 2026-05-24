@@ -7,33 +7,38 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230d1f10'/%3E%3Cpath d='M2,22 L6,16 L10,20 L14,9 C16,4 18,14 21,10 C24,6 27,13 30,8' fill='none' stroke='%23FF9933' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;500;600;700;800&family=Spectral:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Notable&display=swap" rel="stylesheet"/>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson@3/dist/topojson.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 :root{
-  --bg:#0b0b0d;--surface:#111114;--surface2:#18181c;--border:#222227;--border2:#2e2e35;--dim:#1a1a1e;
-  --text:#ededf0;--text2:#9a9aaa;--muted:#60606e;
-  --pos:#22c55e;--neg:#ef4444;--accent:#FF9933;--link:#c084fc;
+  --bg:#000;--surface:#050505;--surface2:#111;--border:rgba(255,255,255,.7);--border2:rgba(255,255,255,.92);--dim:#0f0f0f;
+  --text:#fff;--text2:#aaa;--muted:#606060;
+  --pos:#22c55e;--neg:#ef4444;--accent:#FF9933;--link:#c4943a;
   --hdr:#FF9933;--map-ocean:#060d1e;--map-grid:#0e1f3e;
-  --serif:'Spectral',Georgia,'Times New Roman',serif;
-  --mono:'IBM Plex Mono','Courier New',monospace;
-  --sans:'Urbanist',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
+  --serif:'Lora',Georgia,'Times New Roman',serif;
+  --mono:'Space Mono','Courier New',monospace;
+  --sans:'Space Grotesk',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
+  /* Neobrutalist hard-offset shadows — no blur */
+  --sh-xs:2px 2px 0 0;--sh:4px 4px 0 0;--sh-lg:6px 6px 0 0;--sh-xl:8px 8px 0 0;
+  --sh-color:rgba(255,255,255,.55);
   transition:background .2s,color .2s;
 }
 [data-theme="light"]{
-  --bg:#fafaf8;--surface:#ffffff;--surface2:#f2f2ef;--border:#e4e4e0;--border2:#ccccc7;--dim:#ebebea;
-  --text:#0e0e10;--text2:#45454f;--muted:#72727e;
-  --pos:#166534;--neg:#991b1b;--accent:#c5560a;--link:#7e22ce;
+  --bg:#fff;--surface:#fff;--surface2:#f5f5f5;--border:rgba(0,0,0,.78);--border2:#000;--dim:#efefef;
+  --text:#000;--text2:#333;--muted:#666;
+  --pos:#166534;--neg:#991b1b;--accent:#c5560a;--link:#c4943a;
   --hdr:#FF9933;--map-ocean:#a8c8e8;--map-grid:#6ea8d0;
+  --sh-color:rgba(0,0,0,.65);
 }
 @media(prefers-color-scheme:light){
   :root:not([data-theme="dark"]){
-    --bg:#fafaf8;--surface:#ffffff;--surface2:#f2f2ef;--border:#e4e4e0;--border2:#ccccc7;--dim:#ebebea;
-    --text:#0e0e10;--text2:#45454f;--muted:#72727e;
-    --pos:#166534;--neg:#991b1b;--accent:#c5560a;--link:#7e22ce;
+    --bg:#fff;--surface:#fff;--surface2:#f5f5f5;--border:rgba(0,0,0,.78);--border2:#000;--dim:#efefef;
+    --text:#000;--text2:#333;--muted:#666;
+    --pos:#166534;--neg:#991b1b;--accent:#c5560a;--link:#c4943a;
     --hdr:#FF9933;--map-ocean:#a8c8e8;--map-grid:#6ea8d0;
+    --sh-color:rgba(0,0,0,.65);
   }
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -695,131 +700,103 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 .sb-search-inp:-webkit-autofill,.sb-search-inp:-webkit-autofill:hover,.sb-search-inp:-webkit-autofill:focus{-webkit-box-shadow:0 0 0 1000px var(--surface2) inset!important;-webkit-text-fill-color:var(--text)!important;caret-color:var(--text)}
 
 /* ══════════════════════════════════════════════════════════════
-   PREMIUM DESIGN LAYER — glow, depth, polish
+   PORTFOLIO STYLE SYSTEM — Neobrutalist · Space Grotesk · Hard shadows
+   Mirror of dattas-portfolio-site-1.vercel.app
    ══════════════════════════════════════════════════════════════ */
 
-/* ── CSS glow variables ── */
-:root{
-  --glow-card:0 0 0 1px rgba(255,153,51,.07),0 4px 24px rgba(0,0,0,.55),0 1px 0 rgba(255,255,255,.035) inset;
-  --glow-card-hover:0 0 0 1px rgba(255,153,51,.22),0 8px 48px rgba(0,0,0,.65),0 0 28px rgba(255,153,51,.07),0 1px 0 rgba(255,255,255,.055) inset;
-  --glow-focus:0 0 0 2px rgba(255,153,51,.38);
-  --glow-header:0 2px 20px rgba(255,153,51,.28),0 1px 0 rgba(255,255,255,.13) inset,0 -1px 0 rgba(0,0,0,.15) inset;
-}
-[data-theme="light"]{
-  --glow-card:0 0 0 1px rgba(0,0,0,.06),0 2px 16px rgba(0,0,0,.08),0 1px 0 rgba(255,255,255,.9) inset;
-  --glow-card-hover:0 0 0 1px rgba(197,86,10,.18),0 6px 28px rgba(0,0,0,.14),0 1px 0 rgba(255,255,255,.9) inset;
-  --glow-focus:0 0 0 2px rgba(197,86,10,.3);
-  --glow-header:0 2px 16px rgba(197,86,10,.25),0 1px 0 rgba(255,255,255,.15) inset;
-}
-
-/* ── Ambient page background glow (dark only) ── */
-body::after{content:'';position:fixed;top:-15vh;left:50%;transform:translateX(-50%);width:80vw;height:55vh;background:radial-gradient(ellipse at center,rgba(255,153,51,.028) 0%,transparent 68%);pointer-events:none;z-index:0}
-[data-theme="light"] body::after{display:none}
-@media(prefers-color-scheme:light){:root:not([data-theme="dark"]) body::after{display:none}}
-
-/* ── Header — gradient depth + glow ── */
-.hdr{background:linear-gradient(135deg,#c86800 0%,#e07818 35%,#FF9933 70%,#ffaa44 100%);box-shadow:var(--glow-header)}
-
-/* ── Status bar — gradient ── */
-.statusbar{background:linear-gradient(to right,#e07818,#FF9933 50%,#e07818);box-shadow:0 1px 0 rgba(0,0,0,.25) inset,0 1px 0 rgba(0,0,0,.18)}
-
-/* ── Ticker bar — adapt to theme, lose hard-coded white ── */
+/* ── Ticker bar — theme-aware (no hardcoded white) ── */
 .tbar{background:var(--surface);border-bottom:1px solid var(--border)}
 .tbar::before{background:linear-gradient(to right,var(--surface) 40%,transparent)}
 .tbar::after{background:linear-gradient(to left,var(--surface) 40%,transparent)}
 .tick{border-right-color:var(--border);transition:background .1s}
-.tick:hover{background:rgba(255,153,51,.05)}
-.t-sym{color:var(--text)}
-.t-price{color:var(--text2)}
+.tick:hover{background:rgba(255,153,51,.06)}
+.t-sym{color:var(--text)}.t-price{color:var(--text2)}
 
-/* ── Sidebar — ambient card glow ── */
-.sidebar{box-shadow:var(--glow-card);border-color:rgba(255,153,51,.1)}
-[data-theme="light"] .sidebar{border-color:rgba(0,0,0,.1)}
+/* ── Header — flat saffron, no gradient, hard bottom border ── */
+.hdr{background:#FF9933;box-shadow:none;border-bottom:2px solid rgba(0,0,0,.3)}
 
-/* ── Hero card glow + hover lift ── */
-.hero{box-shadow:var(--glow-card);border-color:rgba(255,153,51,.1);transition:border-color .22s,box-shadow .22s,transform .18s}
-.hero:hover{box-shadow:var(--glow-card-hover);border-color:rgba(255,153,51,.28);transform:translateY(-2px)}
-[data-theme="light"] .hero,.hero{border-color:rgba(255,153,51,.1)}
+/* ── Status bar — flat ── */
+.statusbar{background:#FF9933;box-shadow:none;border-bottom:1px solid rgba(0,0,0,.22)}
 
-/* ── Region & index cards — hover lift + glow ── */
-.region-card,.idx-card,.chart-card{transition:border-color .2s,box-shadow .2s,transform .18s}
-.region-card:hover,.idx-card:hover,.chart-card:hover{border-color:rgba(255,153,51,.22);box-shadow:0 0 0 1px rgba(255,153,51,.13),0 8px 36px rgba(0,0,0,.55),0 0 24px rgba(255,153,51,.055);transform:translateY(-2px)}
-[data-theme="light"] .region-card:hover,[data-theme="light"] .idx-card:hover,[data-theme="light"] .chart-card:hover{border-color:rgba(197,86,10,.22);box-shadow:0 0 0 1px rgba(197,86,10,.1),0 6px 24px rgba(0,0,0,.12);transform:translateY(-2px)}
+/* ── Logo — Notable display font ── */
+.logo-name{font-family:'Notable',sans-serif;font-weight:400;font-style:normal;filter:none;letter-spacing:.5px}
 
-/* ── News cards — hover title glow ── */
+/* ── Sidebar — hard shadow ── */
+.sidebar{box-shadow:var(--sh-lg) var(--sh-color);border:1px solid var(--border)}
+
+/* ── Hero card — hard shadow + hover offset ── */
+.hero{box-shadow:var(--sh-lg) var(--sh-color);border:1px solid var(--border);transition:box-shadow .12s,transform .12s}
+.hero:hover{box-shadow:var(--sh-xl) var(--sh-color);transform:translate(-2px,-2px)}
+
+/* ── Region, index, chart cards — hard shadow + hover offset ── */
+.region-card,.idx-card,.chart-card{border:1px solid var(--border);transition:box-shadow .12s,transform .12s}
+.region-card:hover,.idx-card:hover,.chart-card:hover{box-shadow:var(--sh) var(--sh-color);transform:translate(-2px,-2px)}
+
+/* ── News modal ── */
+.news-modal{box-shadow:var(--sh-xl) var(--sh-color);border:1px solid var(--border)}
+
+/* ── Search dropdown ── */
+.search-drop{box-shadow:var(--sh-xl) var(--sh-color);border:1px solid var(--border)}
+
+/* ── Map tooltip ── */
+.map-tooltip{box-shadow:var(--sh) var(--sh-color);border:1px solid var(--border)}
+
+/* ── Stats row ── */
+.stats-row{box-shadow:var(--sh-xs) var(--sh-color);border:1px solid var(--border)}
+
+/* ── Chart SVG ── */
+.chart-svg-wrap{border:1px solid var(--border)}
+
+/* ── Section labels — bold 2px border, Space Grotesk caps ── */
+.label{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:11px;letter-spacing:.25px;text-transform:uppercase;border-bottom:2px solid var(--text);padding-bottom:9px;position:relative}
+.label::after{display:none}
+
+/* ── Active tabs — underline only, no glow ── */
+.tab.on{color:var(--text);border-bottom-color:var(--accent);text-shadow:none}
+.nrt.on{color:var(--text);border-bottom-color:var(--accent);text-shadow:none}
+.ncs-btn.on{color:var(--accent);border-bottom-color:var(--accent);text-shadow:none}
+
+/* ── Source pills active — hard shadow offset ── */
+.ns-pill.on{box-shadow:var(--sh-xs) var(--sh-color);transform:translate(-1px,-1px)}
+
+/* ── Pagination active — hard shadow offset ── */
+.india-pagination button.active{box-shadow:var(--sh-xs) var(--sh-color);transform:translate(-1px,-1px)}
+
+/* ── Screener mode btn active ── */
+.scr-mode-btn.active{box-shadow:var(--sh-xs) var(--sh-color);transform:translate(-1px,-1px)}
+
+/* ── Period button active ── */
+.p-btn.on{box-shadow:var(--sh-xs) var(--sh-color);transform:translate(-1px,-1px)}
+
+/* ── Input focus — hard border ── */
+.india-tbl-controls input:focus,.india-pg-jump:focus,.scr-search-inp:focus,.scr-sel:focus{box-shadow:none;outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent)}
+
+/* ── Sign In button — neobrutalist hard shadow ── */
+.signin{background:#000;color:#FF9933;box-shadow:var(--sh-xs) rgba(0,0,0,.8);transition:box-shadow .1s,transform .1s}
+.signin:hover{box-shadow:3px 3px 0 0 rgba(0,0,0,.8);transform:translate(-1px,-1px)}
+[data-theme="light"] .signin{background:#000;color:#FF9933}
+
+/* ── Nav active ── */
+.nav a.on{text-shadow:none}
+#nav-alpha{text-shadow:none}
+
+/* ── News title hover ── */
+.np-hero:hover .np-hero-title{color:var(--accent)}
 .ncard:hover .nc-h{color:var(--accent)}
-.np-hero:hover .np-hero-title{color:var(--accent);text-shadow:0 0 24px rgba(255,153,51,.18)}
-.np-colart:hover .np-colart-title{color:var(--accent)}
 
-/* ── Section labels — glowing accent bar ── */
-.label{border-bottom:none;padding-bottom:11px;position:relative}
-.label::after{content:'';position:absolute;bottom:0;left:0;width:28px;height:2px;background:linear-gradient(to right,#FF9933,rgba(255,153,51,0));box-shadow:0 0 8px rgba(255,153,51,.55);border-radius:1px}
-[data-theme="light"] .label::after{background:linear-gradient(to right,#c5560a,rgba(197,86,10,0));box-shadow:0 0 6px rgba(197,86,10,.35)}
+/* ── Table row hover — subtle tint ── */
+.stbl tr:hover td{background:rgba(255,153,51,.04)}
+[data-theme="light"] .stbl tr:hover td{background:rgba(0,0,0,.03)}
 
-/* ── Active tab underline glow ── */
-.tab.on{border-bottom-color:var(--accent);text-shadow:0 0 10px rgba(255,153,51,.35)}
-.nrt.on{border-bottom-color:var(--accent);text-shadow:0 0 10px rgba(255,153,51,.35)}
-.ncs-btn.on{border-bottom-color:var(--accent);text-shadow:0 0 10px rgba(255,153,51,.35)}
+/* ── Map container — hard border ── */
+.map-wrap{box-shadow:none;border:1px solid var(--border2)}
 
-/* ── Source pills active glow ── */
-.ns-pill.on{box-shadow:0 0 10px rgba(255,153,51,.2)}
+/* ── Headlines — Space Grotesk bold ── */
+.np-hero-title,.hero-h{font-family:'Space Grotesk',sans-serif;font-weight:800;letter-spacing:-.3px}
+.idx-card-name,.idx-detail-name{font-family:'Space Grotesk',sans-serif;font-weight:700}
 
-/* ── Active pagination glow ── */
-.india-pagination button.active{box-shadow:0 0 12px rgba(255,153,51,.35)}
-
-/* ── Screener active mode btn glow ── */
-.scr-mode-btn.active{box-shadow:0 0 10px rgba(255,153,51,.3)}
-
-/* ── Period button active glow ── */
-.p-btn.on{box-shadow:0 0 10px rgba(255,153,51,.35)}
-
-/* ── Input focus glow ── */
-.india-tbl-controls input:focus,.india-pg-jump:focus,.scr-search-inp:focus,.scr-sel:focus{box-shadow:var(--glow-focus);outline:none}
-
-/* ── Search dropdown — colored glow ── */
-.search-drop{box-shadow:0 16px 56px rgba(0,0,0,.82),0 0 0 1px rgba(255,153,51,.12),0 0 40px rgba(255,153,51,.04)}
-[data-theme="light"] .search-drop{box-shadow:0 8px 32px rgba(0,0,0,.15),0 0 0 1px rgba(0,0,0,.08)}
-
-/* ── Sign In button glow ── */
-.signin{background:linear-gradient(135deg,#1a0800,#281200);box-shadow:0 0 0 1px rgba(255,153,51,.22),0 2px 8px rgba(0,0,0,.35);transition:box-shadow .15s,background .15s}
-.signin:hover{box-shadow:0 0 0 1px rgba(255,153,51,.45),0 4px 18px rgba(255,153,51,.22);background:linear-gradient(135deg,#281200,#381800)}
-
-/* ── Nav active link glow ── */
-.nav a.on{text-shadow:0 0 12px rgba(255,255,255,.25)}
-#nav-alpha{text-shadow:0 0 14px rgba(255,255,255,.45)}
-
-/* ── Live dot enhanced pulse ring ── */
-.live-dot{box-shadow:0 0 5px var(--pos),0 0 10px rgba(34,197,94,.35)}
-
-/* ── Map container glow ── */
-.map-wrap{box-shadow:0 0 60px rgba(0,100,200,.1) inset,0 0 0 1px rgba(30,58,95,.55)}
-
-/* ── Breadcrumb hover glow ── */
-.mkt-crumb span:hover{text-shadow:0 0 8px rgba(255,153,51,.35)}
-
-/* ── Back button hover glow ── */
-.back-btn:hover{color:var(--accent);text-shadow:0 0 8px rgba(255,153,51,.3)}
-
-/* ── Table row hover — very subtle accent tint ── */
-.stbl tr:hover td{background:rgba(255,153,51,.025)}
-[data-theme="light"] .stbl tr:hover td{background:rgba(197,86,10,.04)}
-
-/* ── Stats row card ── */
-.stats-row{box-shadow:var(--glow-card);border-color:rgba(255,153,51,.09)}
-
-/* ── Chart card borders ── */
-.chart-svg-wrap{border-color:rgba(255,153,51,.09)}
-
-/* ── IPO status badges — glow ── */
-.st-open{box-shadow:0 0 8px rgba(34,197,94,.2)}
-.st-upcoming{box-shadow:0 0 8px rgba(255,153,51,.18)}
-
-/* ── Ticker change badge micro-glow ── */
-.nc-tick.up{box-shadow:0 0 6px rgba(34,197,94,.15)}
-.nc-tick.dn{box-shadow:0 0 6px rgba(239,68,68,.15)}
-
-/* ── Logo name subtle glow ── */
-.logo-name{filter:drop-shadow(0 0 8px rgba(0,0,0,.25))}
+/* ── No ambient glow ── */
+body::after{display:none!important}
 </style>
 </head>
 <body>

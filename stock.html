@@ -7,35 +7,37 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230d1f10'/%3E%3Cpath d='M2,22 L6,16 L10,20 L14,9 C16,4 18,14 21,10 C24,6 27,13 30,8' fill='none' stroke='%23FF9933' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;500;600;700;800&family=Spectral:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Notable&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 <style>
 /* ══ Design tokens — mirror main site ══ */
 :root{
-  --bg:#0b0b0d;--surface:#111114;--surface2:#18181c;--surface3:#1a1a1e;
-  --border:#222227;--border2:#2e2e35;
-  --text:#ededf0;--text2:#9a9aaa;--muted:#60606e;
-  --pos:#22c55e;--neg:#ef4444;--accent:#FF9933;--link:#c084fc;
+  --bg:#000;--surface:#050505;--surface2:#111;--surface3:#0f0f0f;
+  --border:rgba(255,255,255,.7);--border2:rgba(255,255,255,.92);
+  --text:#fff;--text2:#aaa;--muted:#606060;
+  --pos:#22c55e;--neg:#ef4444;--accent:#FF9933;--link:#c4943a;
   --hdr:#FF9933;
-  --serif:'Spectral',Georgia,serif;
-  --mono:'IBM Plex Mono','Courier New',monospace;
-  --sans:'Urbanist',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
+  --serif:'Lora',Georgia,serif;
+  --mono:'Space Mono','Courier New',monospace;
+  --sans:'Space Grotesk',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
+  --sh-xs:2px 2px 0 0;--sh:4px 4px 0 0;--sh-lg:6px 6px 0 0;--sh-xl:8px 8px 0 0;
+  --sh-color:rgba(255,255,255,.55);
 }
 [data-theme="light"]{
-  --bg:#fafaf8;--surface:#ffffff;--surface2:#f2f2ef;--surface3:#ebebea;
-  --border:#e4e4e0;--border2:#ccccc7;
-  --text:#0e0e10;--text2:#45454f;--muted:#72727e;
-  --pos:#166534;--neg:#991b1b;--accent:#c5560a;--link:#7e22ce;
-  --hdr:#FF9933;
+  --bg:#fff;--surface:#fff;--surface2:#f5f5f5;--surface3:#efefef;
+  --border:rgba(0,0,0,.78);--border2:#000;
+  --text:#000;--text2:#333;--muted:#666;
+  --pos:#166534;--neg:#991b1b;--accent:#c5560a;--link:#c4943a;
+  --hdr:#FF9933;--sh-color:rgba(0,0,0,.65);
 }
 @media(prefers-color-scheme:light){
   :root:not([data-theme="dark"]){
-    --bg:#fafaf8;--surface:#ffffff;--surface2:#f2f2ef;--surface3:#ebebea;
-    --border:#e4e4e0;--border2:#ccccc7;
-    --text:#0e0e10;--text2:#45454f;--muted:#72727e;
-    --pos:#166534;--neg:#991b1b;--accent:#c5560a;--link:#7e22ce;
-    --hdr:#FF9933;
+    --bg:#fff;--surface:#fff;--surface2:#f5f5f5;--surface3:#efefef;
+    --border:rgba(0,0,0,.78);--border2:#000;
+    --text:#000;--text2:#333;--muted:#666;
+    --pos:#166534;--neg:#991b1b;--accent:#c5560a;--link:#c4943a;
+    --hdr:#FF9933;--sh-color:rgba(0,0,0,.65);
   }
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -263,29 +265,15 @@ button{cursor:pointer;font-family:inherit}
 .am-switch span{color:var(--accent);cursor:pointer;font-weight:600}
 
 /* ══════════════════════════════════════════════════════════════
-   PREMIUM DESIGN LAYER — glow, depth, polish
+   PORTFOLIO STYLE SYSTEM — Neobrutalist · Space Grotesk · Hard shadows
    ══════════════════════════════════════════════════════════════ */
-:root{
-  --glow-card:0 0 0 1px rgba(255,153,51,.07),0 4px 24px rgba(0,0,0,.55),0 1px 0 rgba(255,255,255,.035) inset;
-  --glow-card-hover:0 0 0 1px rgba(255,153,51,.22),0 8px 48px rgba(0,0,0,.65),0 0 28px rgba(255,153,51,.07),0 1px 0 rgba(255,255,255,.055) inset;
-  --glow-focus:0 0 0 2px rgba(255,153,51,.38);
-  --glow-header:0 2px 20px rgba(255,153,51,.28),0 1px 0 rgba(255,255,255,.13) inset,0 -1px 0 rgba(0,0,0,.15) inset;
-}
-[data-theme="light"]{
-  --glow-card:0 0 0 1px rgba(0,0,0,.06),0 2px 16px rgba(0,0,0,.08),0 1px 0 rgba(255,255,255,.9) inset;
-  --glow-card-hover:0 0 0 1px rgba(197,86,10,.18),0 6px 28px rgba(0,0,0,.14),0 1px 0 rgba(255,255,255,.9) inset;
-  --glow-focus:0 0 0 2px rgba(197,86,10,.3);
-  --glow-header:0 2px 16px rgba(197,86,10,.25),0 1px 0 rgba(255,255,255,.15) inset;
-}
-body::after{content:'';position:fixed;top:-15vh;left:50%;transform:translateX(-50%);width:80vw;height:55vh;background:radial-gradient(ellipse at center,rgba(255,153,51,.028) 0%,transparent 68%);pointer-events:none;z-index:0}
-[data-theme="light"] body::after{display:none}
-@media(prefers-color-scheme:light){:root:not([data-theme="dark"]) body::after{display:none}}
-.hdr{background:linear-gradient(135deg,#c86800 0%,#e07818 35%,#FF9933 70%,#ffaa44 100%);box-shadow:var(--glow-header)}
-.am-box{box-shadow:0 32px 80px rgba(0,0,0,.7),0 0 0 1px rgba(255,153,51,.1),0 0 40px rgba(255,153,51,.04)}
-.am-input:focus{border-color:var(--accent);box-shadow:var(--glow-focus);outline:none}
-.am-btn{box-shadow:0 0 0 1px rgba(255,153,51,.3),0 4px 16px rgba(255,153,51,.2);transition:box-shadow .15s,opacity .15s}
-.am-btn:hover{opacity:.9;box-shadow:0 0 0 1px rgba(255,153,51,.45),0 6px 24px rgba(255,153,51,.3)}
-.am-tab.on{border-bottom-color:var(--accent);text-shadow:0 0 10px rgba(255,153,51,.35)}
+.hdr{background:#FF9933;box-shadow:none;border-bottom:2px solid rgba(0,0,0,.3)}
+.am-box{box-shadow:var(--sh-xl) var(--sh-color);border:1px solid var(--border)}
+.am-input:focus{border-color:var(--accent);outline:2px solid var(--accent);outline-offset:0;box-shadow:none}
+.am-btn{background:var(--accent);box-shadow:var(--sh-xs) rgba(0,0,0,.5);transition:box-shadow .1s,transform .1s}
+.am-btn:hover{opacity:1;box-shadow:3px 3px 0 0 rgba(0,0,0,.6);transform:translate(-1px,-1px)}
+.am-tab.on{border-bottom-color:var(--accent);text-shadow:none}
+.logo-name{font-family:'Notable',sans-serif;font-weight:400;font-style:normal}
 </style>
 </head>
 <body>
