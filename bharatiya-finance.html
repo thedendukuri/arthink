@@ -7,38 +7,39 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230d1f10'/%3E%3Cpath d='M2,22 L6,16 L10,20 L14,9 C16,4 18,14 21,10 C24,6 27,13 30,8' fill='none' stroke='%23FF9933' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Notable&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson@3/dist/topojson.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 :root{
-  --bg:#000;--surface:#050505;--surface2:#111;--border:rgba(255,255,255,.7);--border2:rgba(255,255,255,.92);--dim:#0f0f0f;
-  --text:#fff;--text2:#fff;--muted:#bbb;
-  --pos:#22c55e;--neg:#ef4444;--accent:#FF9933;--link:#c4943a;
-  --hdr:#1a5c2a;--map-ocean:#060d1e;--map-grid:#0e1f3e;
-  --serif:'Lora',Georgia,'Times New Roman',serif;
+  --bg:#0d0d0d;--surface:#1a1a1a;--surface2:rgba(26,26,26,.92);
+  --border:rgba(201,168,76,.22);--border2:rgba(201,168,76,.5);--dim:#111;
+  --text:#f5f0e0;--text2:rgba(245,240,224,.7);--muted:rgba(245,240,224,.5);
+  --pos:#6ee7a0;--neg:#f08a8a;--accent:#c9a84c;--link:#c9a84c;
+  --hdr:#0d0d0d;--map-ocean:#060d1e;--map-grid:#0e1f3e;
+  --gold:#c9a84c;--paper:#f0d78c;--live:#c9a84c;
+  --serif:'Instrument Serif',ui-serif,Georgia,serif;
   --mono:'Space Mono','Courier New',monospace;
-  --sans:'Space Grotesk',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
-  /* Neobrutalist hard-offset shadows — no blur */
-  --sh-xs:2px 2px 0 0;--sh:4px 4px 0 0;--sh-lg:6px 6px 0 0;--sh-xl:8px 8px 0 0;
-  --sh-color:rgba(255,255,255,.55);
+  --sans:'Work Sans',system-ui,-apple-system,sans-serif;
   transition:background .2s,color .2s;
 }
 [data-theme="light"]{
-  --bg:#fff;--surface:#fff;--surface2:#f5f5f5;--border:rgba(0,0,0,.78);--border2:#000;--dim:#efefef;
-  --text:#000;--text2:#000;--muted:#444;
-  --pos:#166534;--neg:#991b1b;--accent:#c5560a;--link:#c4943a;
-  --hdr:#1a5c2a;--map-ocean:#a8c8e8;--map-grid:#6ea8d0;
-  --sh-color:rgba(0,0,0,.65);
+  --bg:#fafaf5;--surface:#fff;--surface2:#f5f0e0;
+  --border:rgba(100,80,30,.2);--border2:rgba(100,80,30,.5);--dim:#efefea;
+  --text:#0d0d0d;--text2:rgba(13,13,13,.65);--muted:rgba(13,13,13,.4);
+  --pos:#166534;--neg:#991b1b;--accent:#b8943c;--link:#b8943c;
+  --hdr:#fafaf5;--map-ocean:#a8c8e8;--map-grid:#6ea8d0;
+  --gold:#b8943c;--paper:#c9a84c;--live:#b8943c;
 }
 @media(prefers-color-scheme:light){
   :root:not([data-theme="dark"]){
-    --bg:#fff;--surface:#fff;--surface2:#f5f5f5;--border:rgba(0,0,0,.78);--border2:#000;--dim:#efefef;
-    --text:#000;--text2:#000;--muted:#444;
-    --pos:#166534;--neg:#991b1b;--accent:#c5560a;--link:#c4943a;
-    --hdr:#1a5c2a;--map-ocean:#a8c8e8;--map-grid:#6ea8d0;
-    --sh-color:rgba(0,0,0,.65);
+    --bg:#fafaf5;--surface:#fff;--surface2:#f5f0e0;
+    --border:rgba(100,80,30,.2);--border2:rgba(100,80,30,.5);--dim:#efefea;
+    --text:#0d0d0d;--text2:rgba(13,13,13,.65);--muted:rgba(13,13,13,.4);
+    --pos:#166534;--neg:#991b1b;--accent:#b8943c;--link:#b8943c;
+    --hdr:#fafaf5;--map-ocean:#a8c8e8;--map-grid:#6ea8d0;
+    --gold:#b8943c;--paper:#c9a84c;--live:#b8943c;
   }
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -700,100 +701,151 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 .sb-search-inp:-webkit-autofill,.sb-search-inp:-webkit-autofill:hover,.sb-search-inp:-webkit-autofill:focus{-webkit-box-shadow:0 0 0 1000px var(--surface2) inset!important;-webkit-text-fill-color:var(--text)!important;caret-color:var(--text)}
 
 /* ══════════════════════════════════════════════════════════════
-   PORTFOLIO STYLE SYSTEM — Neobrutalist · Space Grotesk · Hard shadows
-   Mirror of dattas-portfolio-site-1.vercel.app
+   NOIR & GOLD TERMINAL — Instrument Serif · Work Sans · Gold palette
+   Migrated from prvaaha-codebase React design system
    ══════════════════════════════════════════════════════════════ */
 
-/* ── Ticker bar — theme-aware (no hardcoded white) ── */
+/* ── Grid overlay — hairline gold-tinted lines behind content ── */
+.grid-overlay{
+  background-image:
+    linear-gradient(to right,rgba(201,168,76,.07) 1px,transparent 1px),
+    linear-gradient(to bottom,rgba(201,168,76,.07) 1px,transparent 1px);
+  background-size:56px 56px;background-position:-1px -1px;
+  pointer-events:none;
+}
+
+.page::before,.mkt-wrap::before,.news-page::before{content:'';position:absolute;inset:0;
+  background-image:linear-gradient(to right,rgba(201,168,76,.05) 1px,transparent 1px),linear-gradient(to bottom,rgba(201,168,76,.05) 1px,transparent 1px);
+  background-size:56px 56px;pointer-events:none;z-index:0}
+.page,.mkt-wrap,.news-page{position:relative}
+.page>*,.mkt-wrap>*,.news-page>*{position:relative;z-index:1}
+
+/* ── Header — dark, gold bottom border ── */
+.hdr{background:var(--hdr);border-bottom:1px solid var(--border);box-shadow:none}
+
+/* ── Logo — gold square + uppercase "PRVAAHA" ── */
+.logo-flag{display:none}
+.logo::before{content:'';display:inline-block;width:20px;height:20px;background:var(--gold);flex-shrink:0;margin-right:8px}
+.logo-name{font-family:'Work Sans',sans-serif;font-weight:700;font-style:normal;font-size:18px;letter-spacing:.08em;text-transform:uppercase;color:var(--text);filter:none}
+.logo-name em,.logo-dot{color:var(--text);font-style:normal}
+
+/* ── Nav links — uppercase, tracking-wider, muted ── */
+.nav a{color:var(--text2);font-family:'Work Sans',sans-serif;font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase}
+.nav a:hover{color:var(--text)}
+.nav a.on{color:var(--text);border-bottom-color:var(--gold);text-shadow:none}
+#nav-alpha{color:var(--gold)!important;text-shadow:none}
+
+/* ── Search box ── */
+.searchbox{background:var(--surface);border:1px solid var(--border)}
+.searchbox input{color:var(--text)}
+.searchbox input::placeholder{color:var(--muted)}
+.searchbox input:focus{border-color:var(--gold)}
+
+/* ── Sign In button ── */
+.signin{background:var(--text);color:var(--bg);border:none;box-shadow:none;font-family:'Work Sans',sans-serif;font-weight:700;letter-spacing:.08em;text-transform:uppercase;transition:opacity .15s}
+.signin:hover{opacity:.85;box-shadow:none;transform:none}
+
+/* ── Status strip — thin, gold text ── */
+.statusbar{background:var(--bg);border-bottom:1px solid var(--border);color:var(--gold);font-family:'Work Sans',sans-serif;font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;box-shadow:none}
+.mkt-open{color:var(--pos)}.mkt-closed{color:var(--neg)}
+
+/* ── Ticker — dark surface, gold borders ── */
 .tbar{background:var(--surface);border-bottom:1px solid var(--border)}
 .tbar::before{background:linear-gradient(to right,var(--surface) 40%,transparent)}
 .tbar::after{background:linear-gradient(to left,var(--surface) 40%,transparent)}
 .tick{border-right-color:var(--border);transition:background .1s}
-.tick:hover{background:rgba(255,153,51,.06)}
-.t-sym{color:var(--text)}.t-price{color:var(--text2)}
+.tick:hover{background:rgba(201,168,76,.06)}
+.t-sym{color:rgba(245,240,224,.55);font-size:10px;font-weight:700;letter-spacing:.06em}
+.t-price{color:var(--text);font-size:11px;font-weight:600}
 
-/* ── Header — flat saffron, no gradient, hard bottom border ── */
-
-
-/* ── Status bar — flat ── */
-
-
-/* ── Logo — Notable display font ── */
-.logo-name{font-family:'Notable',sans-serif;font-weight:400;font-style:normal;filter:none;letter-spacing:.5px}
-
-/* ── Sidebar — hard shadow ── */
-.sidebar{box-shadow:var(--sh-lg) var(--sh-color);border:1px solid var(--border)}
-
-/* ── Hero card — hard shadow + hover offset ── */
-.hero{box-shadow:var(--sh-lg) var(--sh-color);border:1px solid var(--border);transition:box-shadow .12s,transform .12s}
-.hero:hover{box-shadow:var(--sh-xl) var(--sh-color);transform:translate(-2px,-2px)}
-
-/* ── Region, index, chart cards — hard shadow + hover offset ── */
-.region-card,.idx-card,.chart-card{border:1px solid var(--border);transition:box-shadow .12s,transform .12s}
-.region-card:hover,.idx-card:hover,.chart-card:hover{box-shadow:var(--sh) var(--sh-color);transform:translate(-2px,-2px)}
-
-/* ── News modal ── */
-.news-modal{box-shadow:var(--sh-xl) var(--sh-color);border:1px solid var(--border)}
-
-/* ── Search dropdown ── */
-.search-drop{box-shadow:var(--sh-xl) var(--sh-color);border:1px solid var(--border)}
-
-/* ── Map tooltip ── */
-.map-tooltip{box-shadow:var(--sh) var(--sh-color);border:1px solid var(--border)}
-
-/* ── Stats row ── */
-.stats-row{box-shadow:var(--sh-xs) var(--sh-color);border:1px solid var(--border)}
-
-/* ── Chart SVG ── */
-.chart-svg-wrap{border:1px solid var(--border)}
-
-/* ── Section labels — bold 2px border, Space Grotesk caps ── */
-.label{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:11px;letter-spacing:.25px;text-transform:uppercase;border-bottom:2px solid var(--text);padding-bottom:9px;position:relative}
+/* ── Section labels — small, gold, uppercase ── */
+.label{font-family:'Work Sans',sans-serif;font-weight:700;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);border-bottom:1px solid var(--border);padding-bottom:9px;position:relative}
 .label::after{display:none}
+.label a{color:var(--text2);font-size:10px}
+.label a:hover{color:var(--gold)}
 
-/* ── Active tabs — underline only, no glow ── */
-.tab.on{color:var(--text);border-bottom-color:var(--accent);text-shadow:none}
-.nrt.on{color:var(--text);border-bottom-color:var(--accent);text-shadow:none}
-.ncs-btn.on{color:var(--accent);border-bottom-color:var(--accent);text-shadow:none}
+/* ── Hero card — no hard shadow, gold border ── */
+.hero{box-shadow:none;border:1px solid var(--border);transition:border-color .2s}
+.hero:hover{box-shadow:none;border-color:var(--gold);transform:none}
 
-/* ── Source pills active — hard shadow offset ── */
-.ns-pill.on{box-shadow:var(--sh-xs) var(--sh-color);transform:translate(-1px,-1px)}
+/* ── Hero headline — Instrument Serif, large ── */
+.hero-h{font-family:'Instrument Serif',ui-serif,Georgia,serif;font-size:32px;font-weight:400;font-style:normal;line-height:1.2;color:var(--text);letter-spacing:-.01em}
+.hero:hover .hero-h{color:var(--gold)}
 
-/* ── Pagination active — hard shadow offset ── */
-.india-pagination button.active{box-shadow:var(--sh-xs) var(--sh-color);transform:translate(-1px,-1px)}
+/* ── Hero meta — category badge ── */
+.tag{background:var(--gold);color:var(--bg);font-size:9px;font-weight:700;padding:2px 8px;text-transform:uppercase;letter-spacing:.2px;border-radius:0}
+.hero-src{color:var(--gold);font-size:10px;font-weight:700;letter-spacing:.06em}
+.hero-time{color:var(--muted)}
+.hero-excerpt{color:var(--text2);line-height:1.7}
+
+/* ── News card headlines — Instrument Serif ── */
+.nc-h,.np-hero-title{font-family:'Instrument Serif',ui-serif,Georgia,serif;font-size:18px;font-weight:400;line-height:1.35}
+.np-hero-title{font-size:36px}
+.np-src{color:var(--gold)}
+.np-time{color:var(--muted)}
+
+/* ── News 3-col ── */
+.news3{border-top:2px solid var(--gold)}
+
+/* ── Source pills ── */
+.ns-pill.on{box-shadow:none;border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.07);transform:none}
+
+/* ── Region & index cards ── */
+.region-card,.idx-card,.chart-card{border:1px solid var(--border);box-shadow:none;transition:border-color .2s}
+.region-card:hover,.idx-card:hover,.chart-card:hover{border-color:var(--gold);box-shadow:none;transform:none}
+
+/* ── Sidebar ── */
+.sidebar{box-shadow:none;border:1px solid var(--border)}
+.sb-title{color:var(--gold)}
+.sb-title a{color:var(--text2)}
+
+/* ── Tabs — gold underline ── */
+.tab.on,.nrt.on,.ncs-btn.on{border-bottom-color:var(--gold);color:var(--text);text-shadow:none}
+
+/* ── Pagination active ── */
+.india-pagination button.active{background:var(--gold);color:var(--bg);border-color:var(--gold);box-shadow:none;transform:none}
 
 /* ── Screener mode btn active ── */
-.scr-mode-btn.active{box-shadow:var(--sh-xs) var(--sh-color);transform:translate(-1px,-1px)}
+.scr-mode-btn.active{background:var(--gold);color:var(--bg);border-color:var(--gold);box-shadow:none;transform:none}
 
 /* ── Period button active ── */
-.p-btn.on{box-shadow:var(--sh-xs) var(--sh-color);transform:translate(-1px,-1px)}
+.p-btn.on{background:var(--gold);color:var(--bg);box-shadow:none;transform:none}
 
-/* ── Input focus — hard border ── */
-.india-tbl-controls input:focus,.india-pg-jump:focus,.scr-search-inp:focus,.scr-sel:focus{box-shadow:none;outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent)}
+/* ── Input focus — gold border ── */
+.india-tbl-controls input:focus,.india-pg-jump:focus,.scr-search-inp:focus,.scr-sel:focus{outline:none;border-color:var(--gold);box-shadow:none}
 
-/* ── Sign In button — neobrutalist hard shadow ── */
-.signin{background:#000;color:#FF9933;box-shadow:var(--sh-xs) rgba(0,0,0,.8);transition:box-shadow .1s,transform .1s}
-.signin:hover{box-shadow:3px 3px 0 0 rgba(0,0,0,.8);transform:translate(-1px,-1px)}
-[data-theme="light"] .signin{background:#000;color:#FF9933}
+/* ── Search dropdown ── */
+.search-drop{background:var(--surface);border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.8)}
+.sd-row:hover{background:rgba(201,168,76,.06)}
 
-/* ── Nav active ── */
-.nav a.on{text-shadow:none}
-#nav-alpha{text-shadow:none}
+/* ── Table row hover ── */
+.stbl tr:hover td{background:rgba(201,168,76,.04)}
 
-/* ── News title hover ── */
-.np-hero:hover .np-hero-title{color:var(--accent)}
-.ncard:hover .nc-h{color:var(--accent)}
+/* ── Map ── */
+.map-wrap{box-shadow:none;border:1px solid var(--border)}
 
-/* ── Table row hover — subtle tint ── */
-.stbl tr:hover td{background:rgba(255,153,51,.04)}
-[data-theme="light"] .stbl tr:hover td{background:rgba(0,0,0,.03)}
+/* ── Live dot — gold pulse ── */
+.live{color:var(--gold)}
+.live-dot{background:var(--gold);box-shadow:none}
+@keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.85)}}
 
-/* ── Map container — hard border ── */
-.map-wrap{box-shadow:none;border:1px solid var(--border2)}
+/* ── Stats row ── */
+.stats-row{box-shadow:none;border:1px solid var(--border)}
+.chart-svg-wrap{border:1px solid var(--border)}
 
-/* ── Headlines — Space Grotesk bold ── */
-.np-hero-title,.hero-h{font-family:'Space Grotesk',sans-serif;font-weight:800;letter-spacing:-.3px}
-.idx-card-name,.idx-detail-name{font-family:'Space Grotesk',sans-serif;font-weight:700}
+/* ── Ticker change badges ── */
+.nc-tick.up{background:rgba(110,231,160,.1);color:var(--pos);border-color:rgba(110,231,160,.25)}
+.nc-tick.dn{background:rgba(240,138,138,.1);color:var(--neg);border-color:rgba(240,138,138,.25)}
+
+/* ── Breadcrumb ── */
+.mkt-crumb span:hover{color:var(--gold)}
+
+/* ── Back button ── */
+.back-btn:hover{color:var(--gold)}
+
+/* ── News page tabs ── */
+.nrt.on{color:var(--gold)}
+.ncs-btn.on{color:var(--gold)}
 
 /* ── No ambient glow ── */
 body::after{display:none!important}
