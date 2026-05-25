@@ -405,12 +405,12 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 .ps-hero-meta{display:flex;align-items:center;gap:12px;margin-bottom:12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
 .ps-hero-cat{background:var(--gold);color:var(--bg);padding:2px 6px;font-size:11px;font-weight:700}
 .ps-hero-src{color:var(--gold)}
-.ps-hero-time{color:rgba(245,240,224,.4);font-style:italic;text-transform:lowercase;font-weight:400}
+.ps-hero-time{color:var(--muted);font-style:italic;text-transform:lowercase;font-weight:400}
 .ps-hero-h{font-family:var(--serif);font-size:36px;line-height:1.15;color:var(--text);margin-bottom:16px;transition:color .15s;letter-spacing:-.01em}
 .ps-hero-art:hover .ps-hero-h{color:var(--gold)}
-.ps-hero-excerpt{font-size:13px;color:rgba(245,240,224,.7);line-height:1.7;margin-bottom:24px;max-width:560px}
+.ps-hero-excerpt{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:24px;max-width:560px}
 .ps-hero-footer{display:flex;flex-wrap:wrap;align-items:center;gap:16px;border-top:1px solid var(--border);padding-top:16px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--gold)}
-.ps-hero-footer a{font-size:12px;color:rgba(245,240,224,.8);text-transform:none;letter-spacing:0;font-weight:500;transition:color .15s}
+.ps-hero-footer a{font-size:12px;color:var(--text2);text-transform:none;letter-spacing:0;font-weight:500;transition:color .15s}
 .ps-hero-footer a:hover{color:var(--text)}
 
 /* 2-col news grid */
@@ -420,7 +420,7 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 .ps-ng-card:hover .ps-ng-h{color:var(--gold)}
 .ps-ng-tag{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--gold);margin-bottom:8px}
 .ps-ng-h{font-family:var(--serif);font-size:20px;line-height:1.3;color:var(--text);margin-bottom:8px;transition:color .15s}
-.ps-ng-meta{font-size:11px;color:rgba(245,240,224,.4)}
+.ps-ng-meta{font-size:11px;color:var(--muted)}
 
 /* Sidebar panels */
 .ps-panel{border:1px solid var(--border);background:var(--surface);padding:12px}
@@ -801,13 +801,13 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 /* ── Logo — gold square + uppercase "PRVAAHA" ── */
 .logo-flag{display:none}
 .logo::before{content:'';display:inline-block;width:20px;height:20px;background:var(--gold);flex-shrink:0;margin-right:8px}
-.logo-name{font-family:'Pathway Gothic One',sans-serif;font-weight:700;font-style:normal;font-size:18px;letter-spacing:.08em;text-transform:uppercase;color:var(--text);filter:none}
-.logo-name em,.logo-dot{color:var(--text);font-style:normal}
+.logo-name{font-family:'Pathway Gothic One',sans-serif;font-weight:700;font-style:normal;font-size:18px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);filter:none}
+.logo-name em,.logo-dot{color:var(--gold);font-style:normal}
 
 /* ── Nav links — uppercase, tracking-wider, muted ── */
-.nav a{color:var(--text2);font-family:'Pathway Gothic One',sans-serif;font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase}
-.nav a:hover{color:var(--text)}
-.nav a.on{color:var(--text);border-bottom-color:var(--gold);text-shadow:none}
+.nav a{color:var(--gold);font-family:'Pathway Gothic One',sans-serif;font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;opacity:.75}
+.nav a:hover{color:var(--gold);opacity:1}
+.nav a.on{color:var(--gold);opacity:1;border-bottom-color:var(--gold);text-shadow:none}
 #nav-alpha{color:var(--gold)!important;text-shadow:none}
 
 /* ── Search box ── */
@@ -830,7 +830,7 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 .tbar::after{background:linear-gradient(to left,var(--surface) 40%,transparent)}
 .tick{border-right-color:var(--border);transition:background .1s}
 .tick:hover{background:rgba(201,168,76,.06)}
-.t-sym{color:rgba(245,240,224,.55);font-size:10px;font-weight:700;letter-spacing:.06em}
+.t-sym{color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.06em}
 .t-price{color:var(--text);font-size:11px;font-weight:600}
 
 /* ── Section labels — small, gold, uppercase ── */
