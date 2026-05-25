@@ -217,6 +217,16 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 .live-dot{width:6px;height:6px;border-radius:50%;background:var(--pos);animation:blink 1.5s ease-in-out infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
 
+
+/* ── FOOTER ── */
+.site-footer{background:var(--surface);border-top:1px solid var(--border);padding:20px 24px;margin-top:40px}
+.site-footer-inner{max-width:1440px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.footer-brand{font-family:var(--serif);font-size:16px;font-style:italic;color:var(--text);opacity:.7}
+.footer-links{display:flex;gap:20px;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.3px}
+.footer-links a{color:var(--muted);transition:color .15s;cursor:pointer}
+.footer-links a:hover{color:var(--accent)}
+.footer-copy{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.2px}
+
 /* ── TABLES ── */
 .stbl{width:100%;border-collapse:collapse}
 .stbl th{text-align:left;color:var(--muted);font-size:10px;font-weight:500;padding:8px 10px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.2px;cursor:pointer;white-space:nowrap;user-select:none}
@@ -402,8 +412,8 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 .ps-hero-footer a:hover{color:var(--text)}
 
 /* 2-col news grid */
-.ps-newsgrid{display:grid;grid-template-columns:1fr 1fr;gap:32px;border-top:1px solid var(--border);padding-top:32px}
-@media(max-width:600px){.ps-newsgrid{grid-template-columns:1fr}}
+.ps-newsgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px 28px;border-top:1px solid var(--border);padding-top:32px}
+@media(max-width:800px){.ps-newsgrid{grid-template-columns:1fr 1fr}}@media(max-width:500px){.ps-newsgrid{grid-template-columns:1fr}}
 .ps-ng-card{cursor:pointer}
 .ps-ng-card:hover .ps-ng-h{color:var(--gold)}
 .ps-ng-tag{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--gold);margin-bottom:8px}
@@ -3252,9 +3262,14 @@ async function fetchSupabaseNews(limit=200){
   if(!_sb) return [];
   try{
     // Race with 8s timeout — Supabase should never hang the news render
+    const FINANCE_SOURCES=['Economic Times Stocks','Economic Times Economy','Economic Times Industry',
+      'Economic Times Wealth','Economic Times Markets','Economic Times Top Stories',
+      'The Hindu Business','Google News India Business','Google News India Economy',
+      'Moneycontrol Latest','NDTV Profit'];
     const result=await Promise.race([
       _sb.from('articles')
         .select('id,canonical_url,title,summary,source_name,published_at,created_at,region,image_url')
+        .in('source_name', FINANCE_SOURCES)
         .order('created_at',{ascending:false})
         .limit(limit),
       new Promise((_,rej)=>setTimeout(()=>rej(new Error('sb timeout')),8000)),
@@ -3296,20 +3311,8 @@ async function fetchHomeNews(){
   return _newsArticles;
 }
 
-// ── Manually pinned articles (prepended above live Supabase feed) ──
-const MANUAL_NEWS = [
-  {
-    id:'pinned-rubio-modi-1',
-    title:"Rubio Calls India 'Incredibly Important Partner', Extends Trump's Invite To PM Modi For White House Visit",
-    link:'https://www.ndtvprofit.com/world/rubio-calls-india-incredibly-important-partner-extends-trumps-invite-to-pm-modi-for-white-house-visit-11538489',
-    source:'NDTV Profit',
-    category:'POLICY',
-    region:'india',
-    pubDate:new Date().toISOString(),
-    excerpt:"US Secretary of State Marco Rubio called India an 'incredibly important partner' and extended President Trump's personal invitation to Prime Minister Modi for a White House visit.",
-    thumbnail:'https://c.ndtvimg.com/2026-05/bmk90pk4_rubio-and-modi_625x300_23_May_26.jpeg?im=FeatureCrop,algorithm=dnn,width=773,height=435',
-  },
-];
+// No pinned articles — hero cycles live from Supabase
+const MANUAL_NEWS = [];
 
 async function renderHero(){
   const heroEl=document.getElementById('heroEl');
@@ -3348,12 +3351,17 @@ async function renderNews3(){
     title:n.h, link:'#', source:n.src, category:n.tag, region:'india',
     pubDate:new Date(Date.now()-(i+1)*15*60000).toISOString(),
   }));
-  news3El.innerHTML=arts.slice(0,6).map(a=>`
-    <article class="ps-ng-card" onclick="window.open('${escH(a.link)}','_blank')">
+  news3El.innerHTML=arts.slice(0,9).map(a=>{
+    const tks=extractTickers(a.title,a.excerpt);
+    const tkAttr=tks.length?` data-tickers="${tks.map(t=>t.s).join(',')}"`:' ';
+    return`<article class="ps-ng-card"${tkAttr} onclick="window.open('${escH(a.link)}','_blank')">
       <span class="ps-ng-tag">${a.category||'MARKETS'}</span>
       <h3 class="ps-ng-h">${escH(a.title)}</h3>
       <span class="ps-ng-meta">${relTime(a.pubDate)} · ${escH(a.source||'')}</span>
-    </article>`).join('');
+      ${tks.length?'<div class="nc-tickers"></div>':''}
+    </article>`;
+  }).join('');
+  refreshNewsTickers();
 }
 
 function renderSbIdx(){
@@ -5614,5 +5622,22 @@ function updateDetailLive(){
   },60000);
 })();
 </script>
+
+<!-- ── FOOTER ── -->
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <span class="footer-brand">prvaaha.</span>
+    <div class="footer-links">
+      <a onclick="showSection('markets')">Markets</a>
+      <a onclick="showSection('news')">News</a>
+      <a onclick="showSection('ipo')">IPO</a>
+      <a onclick="showSection('screener')">Screener</a>
+      <a onclick="showSection('mf')">Mutual Funds</a>
+      <a onclick="showSection('crypto')">Crypto</a>
+    </div>
+    <span class="footer-copy">© 2026 Prvaaha · Data for informational purposes only · Not financial advice</span>
+  </div>
+</footer>
+
 </body>
 </html>
