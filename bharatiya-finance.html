@@ -5,13 +5,15 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>prvaaha. — Markets, News & Data</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230d1f10'/%3E%3Cpath d='M2,22 L6,16 L10,20 L14,9 C16,4 18,14 21,10 C24,6 27,13 30,8' fill='none' stroke='%23FF9933' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"/>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson@3/dist/topojson.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
+@font-face{
+  font-family:'Pathway Gothic One';
+  src:url('fonts/PathwayGothicOne-Regular.ttf') format('truetype');
+  font-weight:normal;font-style:normal;font-display:swap;
+}
 :root{
   --bg:#ffffff;--surface:#ffffff;--surface2:#f6f6f6;
   --border:#e0e0e0;--border2:#cccccc;--dim:#f0f0f0;
@@ -19,31 +21,31 @@
   --pos:#0f7748;--neg:#d9363e;--accent:#c9a84c;--link:#0078d4;
   --hdr:#0d0d0d;--map-ocean:#060d1e;--map-grid:#0e1f3e;
   --gold:#c9a84c;--paper:#f0d78c;--live:#c9a84c;
-  --serif:'Instrument Serif',ui-serif,Georgia,serif;
-  --mono:'Space Mono','Courier New',monospace;
-  --sans:'Work Sans',system-ui,-apple-system,sans-serif;
+  --serif:'Pathway Gothic One',sans-serif;
+  --mono:'Pathway Gothic One',sans-serif;
+  --sans:'Pathway Gothic One',sans-serif;
   transition:background .2s,color .2s;
 }
 [data-theme="light"]{
-  --bg:#fafaf5;--surface:#fff;--surface2:#f5f0e0;
-  --border:rgba(100,80,30,.2);--border2:rgba(100,80,30,.5);--dim:#efefea;
-  --text:#0d0d0d;--text2:rgba(13,13,13,.65);--muted:rgba(13,13,13,.4);
-  --pos:#166534;--neg:#991b1b;--accent:#b8943c;--link:#b8943c;
-  --hdr:#fafaf5;--map-ocean:#a8c8e8;--map-grid:#6ea8d0;
-  --gold:#b8943c;--paper:#c9a84c;--live:#b8943c;
+  --bg:#ffffff;--surface:#ffffff;--surface2:#f6f6f6;
+  --border:#e0e0e0;--border2:#cccccc;--dim:#f0f0f0;
+  --text:#1b2029;--text2:#444444;--muted:#767676;
+  --pos:#0f7748;--neg:#d9363e;--accent:#c9a84c;--link:#0078d4;
+  --hdr:#0d0d0d;--map-ocean:#a8c8e8;--map-grid:#6ea8d0;
+  --gold:#c9a84c;--paper:#f0d78c;--live:#c9a84c;
 }
 @media(prefers-color-scheme:light){
   :root:not([data-theme="dark"]){
-    --bg:#fafaf5;--surface:#fff;--surface2:#f5f0e0;
-    --border:rgba(100,80,30,.2);--border2:rgba(100,80,30,.5);--dim:#efefea;
-    --text:#0d0d0d;--text2:rgba(13,13,13,.65);--muted:rgba(13,13,13,.4);
-    --pos:#166534;--neg:#991b1b;--accent:#b8943c;--link:#b8943c;
-    --hdr:#fafaf5;--map-ocean:#a8c8e8;--map-grid:#6ea8d0;
-    --gold:#b8943c;--paper:#c9a84c;--live:#b8943c;
+    --bg:#ffffff;--surface:#ffffff;--surface2:#f6f6f6;
+    --border:#e0e0e0;--border2:#cccccc;--dim:#f0f0f0;
+    --text:#1b2029;--text2:#444444;--muted:#767676;
+    --pos:#0f7748;--neg:#d9363e;--accent:#c9a84c;--link:#0078d4;
+    --hdr:#0d0d0d;--map-ocean:#a8c8e8;--map-grid:#6ea8d0;
+    --gold:#c9a84c;--paper:#f0d78c;--live:#c9a84c;
   }
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.55;font-size:14px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;font-feature-settings:'ss01','cv09'}
+body{background:var(--bg);color:var(--text);font-family:'Pathway Gothic One',sans-serif;line-height:1.55;font-size:14px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cursor:pointer;font-family:inherit}
 
 /* ── HEADER ── */
@@ -136,7 +138,7 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 .tag{background:var(--accent);color:#000;font-size:9px;font-weight:700;padding:3px 8px;text-transform:uppercase;letter-spacing:.25px}
 .hero-src{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
 .hero-time{font-family:var(--mono);font-size:9px;color:var(--muted);margin-left:auto}
-.hero-h{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:800;line-height:1.2;color:var(--text);letter-spacing:-.3px;margin-bottom:10px}
+.hero-h{font-family:'Pathway Gothic One',sans-serif;font-size:24px;font-weight:800;line-height:1.2;color:var(--text);letter-spacing:-.3px;margin-bottom:10px}
 .hero-body{padding:16px 20px 20px;border-top:2px solid var(--text)}
 .hero-excerpt{font-family:var(--sans);font-size:13px;color:var(--text);line-height:1.7}
 
@@ -799,11 +801,11 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 /* ── Logo — gold square + uppercase "PRVAAHA" ── */
 .logo-flag{display:none}
 .logo::before{content:'';display:inline-block;width:20px;height:20px;background:var(--gold);flex-shrink:0;margin-right:8px}
-.logo-name{font-family:'Work Sans',sans-serif;font-weight:700;font-style:normal;font-size:18px;letter-spacing:.08em;text-transform:uppercase;color:var(--text);filter:none}
+.logo-name{font-family:'Pathway Gothic One',sans-serif;font-weight:700;font-style:normal;font-size:18px;letter-spacing:.08em;text-transform:uppercase;color:var(--text);filter:none}
 .logo-name em,.logo-dot{color:var(--text);font-style:normal}
 
 /* ── Nav links — uppercase, tracking-wider, muted ── */
-.nav a{color:var(--text2);font-family:'Work Sans',sans-serif;font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase}
+.nav a{color:var(--text2);font-family:'Pathway Gothic One',sans-serif;font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase}
 .nav a:hover{color:var(--text)}
 .nav a.on{color:var(--text);border-bottom-color:var(--gold);text-shadow:none}
 #nav-alpha{color:var(--gold)!important;text-shadow:none}
@@ -815,11 +817,11 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 .searchbox input:focus{border-color:var(--gold)}
 
 /* ── Sign In button ── */
-.signin{background:var(--text);color:var(--bg);border:none;box-shadow:none;font-family:'Work Sans',sans-serif;font-weight:700;letter-spacing:.08em;text-transform:uppercase;transition:opacity .15s}
+.signin{background:var(--text);color:var(--bg);border:none;box-shadow:none;font-family:'Pathway Gothic One',sans-serif;font-weight:700;letter-spacing:.08em;text-transform:uppercase;transition:opacity .15s}
 .signin:hover{opacity:.85;box-shadow:none;transform:none}
 
 /* ── Status strip — thin, gold text ── */
-.statusbar{background:var(--bg);border-bottom:1px solid var(--border);color:var(--gold);font-family:'Work Sans',sans-serif;font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;box-shadow:none}
+.statusbar{background:var(--bg);border-bottom:1px solid var(--border);color:var(--gold);font-family:'Pathway Gothic One',sans-serif;font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;box-shadow:none}
 .mkt-open{color:var(--pos)}.mkt-closed{color:var(--neg)}
 
 /* ── Ticker — dark surface, gold borders ── */
@@ -832,7 +834,7 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 .t-price{color:var(--text);font-size:11px;font-weight:600}
 
 /* ── Section labels — small, gold, uppercase ── */
-.label{font-family:'Work Sans',sans-serif;font-weight:700;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);border-bottom:1px solid var(--border);padding-bottom:9px;position:relative}
+.label{font-family:'Pathway Gothic One',sans-serif;font-weight:700;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);border-bottom:1px solid var(--border);padding-bottom:9px;position:relative}
 .label::after{display:none}
 .label a{color:var(--text2);font-size:10px}
 .label a:hover{color:var(--gold)}
@@ -842,7 +844,7 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 .hero:hover{box-shadow:none;border-color:var(--gold);transform:none}
 
 /* ── Hero headline — Instrument Serif, large ── */
-.hero-h{font-family:'Instrument Serif',ui-serif,Georgia,serif;font-size:32px;font-weight:400;font-style:normal;line-height:1.2;color:var(--text);letter-spacing:-.01em}
+.hero-h{font-family:'Pathway Gothic One',sans-serif;font-size:32px;font-weight:400;font-style:normal;line-height:1.2;color:var(--text);letter-spacing:-.01em}
 .hero:hover .hero-h{color:var(--gold)}
 
 /* ── Hero meta — category badge ── */
@@ -852,7 +854,7 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 .hero-excerpt{color:var(--text2);line-height:1.7}
 
 /* ── News card headlines — Instrument Serif ── */
-.nc-h,.np-hero-title{font-family:'Instrument Serif',ui-serif,Georgia,serif;font-size:18px;font-weight:400;line-height:1.35}
+.nc-h,.np-hero-title{font-family:'Pathway Gothic One',sans-serif;font-size:18px;font-weight:400;line-height:1.35}
 .np-hero-title{font-size:36px}
 .np-src{color:var(--gold)}
 .np-time{color:var(--muted)}
