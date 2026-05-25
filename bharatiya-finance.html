@@ -3249,17 +3249,35 @@ async function refreshNewsTickers(){
 
 function _decodeHtml(s){
   if(!s) return '';
-  return s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
-           .replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'");
+  // Strip literal HTML tags first
+  let r=s.replace(/<[^>]+>/g,' ');
+  // Decode HTML entities
+  r=r.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+      .replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'");
+  // Strip any tags revealed after entity decoding, then clean whitespace
+  return r.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+}
+
+function _guessCategory(title, defaultCat){
+  if(!title) return defaultCat;
+  const t=title.toLowerCase();
+  if(/cricket|ipl|bcci|rcb|csk|\bmi\b|kkr|srh|\brr\b|\bdc\b|ashwin|jadeja|kohli|rohit|dhoni|virat|bumrah|icc|test match|t20|one.?day/.test(t)) return 'SPORTS';
+  if(/chess|carlsen|gukesh|pragg|arjun erigaisi|fide|norway chess/.test(t)) return 'SPORTS';
+  if(/\bfilm\b|movie|actor|actress|bollywood|ott\b|netflix|amazon prime|web series/.test(t)) return 'ENTERTAINMENT';
+  if(/missile|military|army|navy|airstrike|ceasefire|war\b|troops|soldier/.test(t)) return 'WORLD';
+  if(/election|parliament|\bbjp\b|\bcongress\b|lok sabha|rajya sabha|cm\b|chief minister/.test(t)) return 'POLITICS';
+  return defaultCat;
 }
 
 function _mapSbArticle(r){
+  const baseCat=_SBCAT[r.source_name]||'MARKETS';
+  const title=_decodeHtml(r.title);
   return{
     id:        r.id,
-    title:     _decodeHtml(r.title),
+    title,
     link:      r.canonical_url,
     source:    r.source_name,
-    category:  _SBCAT[r.source_name]||'MARKETS',
+    category:  _guessCategory(title, baseCat),
     region:    r.region||'india',
     pubDate:   r.published_at||r.created_at||null,
     excerpt:   _decodeHtml(r.summary),
@@ -3324,11 +3342,16 @@ async function fetchHomeNews(){
 // No pinned articles — hero cycles live from Supabase
 const MANUAL_NEWS = [];
 
+const _NON_FINANCE_CATS=new Set(['SPORTS','ENTERTAINMENT']);
+function _isFinanceArticle(a){return !_NON_FINANCE_CATS.has(a.category);}
+
 async function renderHero(){
   const heroEl=document.getElementById('heroEl');
   heroEl.innerHTML=`<div class="skel" style="height:220px;border-radius:0"></div>`;
   const live=await fetchHomeNews();
-  const arts=live.length?live:NEWS.map((n,i)=>({
+  const arts=(live.length?live.filter(_isFinanceArticle):live).length
+    ? live.filter(_isFinanceArticle)
+    : NEWS.map((n,i)=>({
     title:n.h, link:'#', source:n.src, category:n.tag, region:'india',
     pubDate:new Date(Date.now()-i*15*60000).toISOString(),
     thumbnail:`https://picsum.photos/seed/${n.seed}/900/400`,
@@ -3347,8 +3370,7 @@ async function renderHero(){
           <span class="ps-hero-time">${relTime(n.pubDate)}</span>
         </div>
         <h1 class="ps-hero-h">${escH(n.title)}</h1>
-        ${n.excerpt?`<p class="ps-hero-excerpt">${escH(n.excerpt.slice(0,220))}</p>`:''}
-        <div class="ps-hero-footer"><span>Related:</span></div>
+        ${n.excerpt?`<p class="ps-hero-excerpt">${escH(n.excerpt.slice(0,240))}</p>`:''}
       </div>
       <div class="ps-hero-img-wrap">${imgHtml}</div>
     </article>`;
@@ -3357,7 +3379,8 @@ async function renderHero(){
 async function renderNews3(){
   const news3El=document.getElementById('news3El');
   const live=await fetchHomeNews();
-  const arts=live.length?live.slice(1):NEWS.slice(1).map((n,i)=>({
+  const financeOnly=live.filter(_isFinanceArticle);
+  const arts=financeOnly.length?financeOnly.slice(1):NEWS.slice(1).map((n,i)=>({
     title:n.h, link:'#', source:n.src, category:n.tag, region:'india',
     pubDate:new Date(Date.now()-(i+1)*15*60000).toISOString(),
   }));
