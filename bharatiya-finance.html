@@ -34,6 +34,14 @@
   --hdr:#0d0d0d;--map-ocean:#a8c8e8;--map-grid:#6ea8d0;
   --gold:#c9a84c;--paper:#f0d78c;--live:#c9a84c;
 }
+[data-theme="dark"]{
+  --bg:#0d0d0d;--surface:#1a1a1a;--surface2:rgba(26,26,26,.92);
+  --border:rgba(201,168,76,.22);--border2:rgba(201,168,76,.5);--dim:#111;
+  --text:#f5f0e0;--text2:rgba(245,240,224,.7);--muted:rgba(245,240,224,.5);
+  --pos:#6ee7a0;--neg:#f08a8a;--accent:#c9a84c;--link:#c9a84c;
+  --hdr:#0d0d0d;--map-ocean:#060d1e;--map-grid:#0e1f3e;
+  --gold:#c9a84c;--paper:#f0d78c;--live:#c9a84c;
+}
 @media(prefers-color-scheme:light){
   :root:not([data-theme="dark"]){
     --bg:#ffffff;--surface:#ffffff;--surface2:#f6f6f6;
@@ -4631,7 +4639,7 @@ const PROF = {
   applyTheme(val) {
     document.documentElement.setAttribute('data-theme', val);
     const btn = document.getElementById('themeBtn');
-    if (btn) btn.textContent = val==='dark' ? '🌙' : '☀️';
+    if (btn) btn.textContent = val==='dark' ? '☀️' : '🌙';
   },
 
   saveSettings() {
