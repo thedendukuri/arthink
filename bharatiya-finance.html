@@ -403,6 +403,7 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 .ps-hero{margin-bottom:48px}
 .ps-hero-art{display:flex;flex-direction:column;gap:24px;cursor:pointer}
 @media(min-width:900px){.ps-hero-art{flex-direction:row;align-items:flex-start}}
+.ps-hero-art.no-img{display:block}.ps-hero-art.no-img .ps-hero-text{max-width:680px}
 .ps-hero-text{flex:1;order:2}
 @media(min-width:900px){.ps-hero-text{order:1}}
 .ps-hero-img-wrap{width:100%;height:192px;overflow:hidden;border:1px solid var(--border);background:var(--surface);flex-shrink:0;order:1}
@@ -424,11 +425,24 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 /* 2-col news grid */
 .ps-newsgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px 28px;border-top:1px solid var(--border);padding-top:32px}
 @media(max-width:800px){.ps-newsgrid{grid-template-columns:1fr 1fr}}@media(max-width:500px){.ps-newsgrid{grid-template-columns:1fr}}
-.ps-ng-card{cursor:pointer}
+.ps-ng-card{cursor:pointer;padding-bottom:4px}
 .ps-ng-card:hover .ps-ng-h{color:var(--gold)}
-.ps-ng-tag{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--gold);margin-bottom:8px}
-.ps-ng-h{font-family:var(--serif);font-size:20px;line-height:1.3;color:var(--text);margin-bottom:8px;transition:color .15s}
-.ps-ng-meta{font-size:11px;color:var(--muted)}
+.ps-ng-tag{display:block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--gold);margin-bottom:5px}
+.ps-ng-h{font-family:var(--serif);font-size:15px;line-height:1.35;color:var(--text);margin-bottom:5px;transition:color .15s}
+.ps-ng-meta{font-size:10px;color:var(--muted)}
+/* ── Prvaaha Opinions ── */
+.ps-opinions{margin-top:48px;padding-top:28px;border-top:2px solid var(--border)}
+.ps-opinions-hdr{display:flex;align-items:baseline;gap:12px;margin-bottom:24px}
+.ps-opinions-title{font-family:var(--serif);font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text)}
+.ps-opinions-sub{font-size:11px;color:var(--muted);letter-spacing:.04em}
+.ps-opinions-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px 28px}
+@media(max-width:800px){.ps-opinions-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:500px){.ps-opinions-grid{grid-template-columns:1fr}}
+.ps-op-card{border-left:3px solid var(--gold);padding:12px 14px;background:var(--surface2);cursor:pointer;transition:background .15s}
+.ps-op-card:hover{background:var(--dim)}
+.ps-op-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--gold);margin-bottom:6px}
+.ps-op-title{font-family:var(--serif);font-size:15px;line-height:1.35;color:var(--text);margin-bottom:6px}
+.ps-op-byline{font-size:10px;color:var(--muted)}
 
 /* Sidebar panels */
 .ps-panel{border:1px solid var(--border);background:var(--surface);padding:12px}
@@ -945,10 +959,7 @@ body::after{display:none!important}
     <a class="on" href="/" onclick="showSection('home',this);return false;">Home</a>
     <a href="/#markets" onclick="showSection('markets',this);return false;">Markets</a>
     <a href="/#news" onclick="showSection('news',this);return false;">News</a>
-    <a href="/#ipo" onclick="showSection('ipo',this);return false;">IPO</a>
-    <a href="/#screener" onclick="showSection('screener',this);return false;">Screener</a>
     <a href="/#alpha" onclick="showSection('alpha',this);return false;" id="nav-alpha">Alpha ✦</a>
-    <a href="/#mf" onclick="showSection('mf',this);return false;">Mutual Funds</a>
     <a href="/#crypto" onclick="showSection('crypto',this);return false;">Crypto</a>
     <a href="/#watchlist" onclick="showSection('watchlist',this);return false;" id="nav-watchlist">Watchlist</a>
   </nav>
@@ -991,6 +1002,31 @@ body::after{display:none!important}
         </div>
         <div class="ps-hero" id="heroEl"></div>
         <div class="ps-newsgrid" id="news3El"></div>
+
+        <!-- ── Prvaaha Opinions ── -->
+        <div class="ps-opinions">
+          <div class="ps-opinions-hdr">
+            <span class="ps-opinions-title">Prvaaha Opinions</span>
+            <span class="ps-opinions-sub">Analysis &amp; Perspective</span>
+          </div>
+          <div class="ps-opinions-grid" id="opinionsEl">
+            <div class="ps-op-card">
+              <div class="ps-op-label">Opinion</div>
+              <div class="ps-op-title">The RBI's rate pause is a calculated bet — and it might just pay off</div>
+              <div class="ps-op-byline">Prvaaha Editorial · Coming Soon</div>
+            </div>
+            <div class="ps-op-card">
+              <div class="ps-op-label">Analysis</div>
+              <div class="ps-op-title">Why India's current account deficit is less alarming than it looks</div>
+              <div class="ps-op-byline">Prvaaha Editorial · Coming Soon</div>
+            </div>
+            <div class="ps-op-card">
+              <div class="ps-op-label">Markets</div>
+              <div class="ps-op-title">Midcap rally or froth? Reading the signals before the next correction</div>
+              <div class="ps-op-byline">Prvaaha Editorial · Coming Soon</div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- ── Sidebar ── -->
@@ -1273,12 +1309,12 @@ body::after{display:none!important}
 </div>
 
 <!-- ══ IPO ══ -->
-<div id="sec-ipo" class="section">
+<div id="sec-ipo" class="section" style="display:none!important">
   <div class="page" style="grid-template-columns:1fr"><div id="ipo-all"></div></div>
 </div>
 
 <!-- ══ SCREENER ══ -->
-<div id="sec-screener" class="section">
+<div id="sec-screener" class="section" style="display:none!important">
   <div class="mkt-wrap">
     <div class="label" style="margin-bottom:14px">Stock Screener</div>
     <div class="scr-header">
@@ -1528,7 +1564,7 @@ body::after{display:none!important}
 </div>
 
 <!-- ══ MF ══ -->
-<div id="sec-mf" class="section">
+<div id="sec-mf" class="section" style="display:none!important">
   <div class="page" style="grid-template-columns:1fr">
     <div class="label">Top Mutual Funds — Bhaarat</div>
     <table class="stbl"><thead><tr><th>Fund Name</th><th>Category</th><th class="tr">NAV (₹)</th><th class="tr">1Y Return</th><th class="tr">3Y Return</th><th class="tr">AUM</th><th class="tr">Rating</th></tr></thead><tbody id="mf-body"></tbody></table>
@@ -3358,11 +3394,12 @@ async function renderHero(){
     excerpt:n.x||'',
   }));
   const n=arts[0];
-  const imgHtml=n.thumbnail
-    ?`<img src="${escH(n.thumbnail)}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<div class=&quot;ps-hero-img-fb&quot;></div>'"/>`
-    :`<div class="ps-hero-img-fb"></div>`;
+  const hasImg=!!n.thumbnail;
+  const imgCol=hasImg
+    ?`<div class="ps-hero-img-wrap"><img src="${escH(n.thumbnail)}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"/></div>`
+    :'';
   heroEl.innerHTML=`
-    <article class="ps-hero-art" onclick="window.open('${escH(n.link)}','_blank')">
+    <article class="ps-hero-art${hasImg?'':' no-img'}" onclick="window.open('${escH(n.link)}','_blank')">
       <div class="ps-hero-text">
         <div class="ps-hero-meta">
           <span class="ps-hero-cat">${n.category||'MARKETS'}</span>
@@ -3370,9 +3407,9 @@ async function renderHero(){
           <span class="ps-hero-time">${relTime(n.pubDate)}</span>
         </div>
         <h1 class="ps-hero-h">${escH(n.title)}</h1>
-        ${n.excerpt?`<p class="ps-hero-excerpt">${escH(n.excerpt.slice(0,240))}</p>`:''}
+        ${n.excerpt?`<p class="ps-hero-excerpt">${escH(n.excerpt.slice(0,320))}</p>`:''}
       </div>
-      <div class="ps-hero-img-wrap">${imgHtml}</div>
+      ${imgCol}
     </article>`;
 }
 
@@ -5663,9 +5700,6 @@ function updateDetailLive(){
     <div class="footer-links">
       <a onclick="showSection('markets')">Markets</a>
       <a onclick="showSection('news')">News</a>
-      <a onclick="showSection('ipo')">IPO</a>
-      <a onclick="showSection('screener')">Screener</a>
-      <a onclick="showSection('mf')">Mutual Funds</a>
       <a onclick="showSection('crypto')">Crypto</a>
     </div>
     <span class="footer-copy">© 2026 Prvaaha · Data for informational purposes only · Not financial advice</span>
