@@ -3609,7 +3609,7 @@ let _newsCatFilter  = 'ALL';
 let _newsSrcFilter  = 'ALL';
 let _newsRegFilter  = 'ALL'; // ALL | india | world | ARCHIVES
 let _newsLastFetch  = 0;
-const NEWS_TTL = 30 * 60 * 1000;
+const NEWS_TTL = 10 * 60 * 1000; // 10 minutes
 
 function relTime(iso){
   const s=(Date.now()-new Date(iso))/1000;
@@ -5690,6 +5690,19 @@ function updateDetailLive(){
       renderSbTrend();
     }
   },60000);
+
+  // Every 10 minutes refresh news (clear cache + re-render if on home/news)
+  setInterval(async ()=>{
+    _newsArticles=[];
+    _newsLastFetch=0;
+    const activeSection=document.querySelector('.section.active')?.id;
+    if(activeSection==='sec-home'){
+      await renderHero();
+      await renderNews3();
+    } else if(activeSection==='sec-news'){
+      await renderNewsPage();
+    }
+  }, NEWS_TTL);
 })();
 </script>
 
