@@ -3662,6 +3662,46 @@ function _findArtById(id){
   return _newsArticles.find(a=>String(a.id)===s)||_newsArchives.find(a=>String(a.id)===s)||null;
 }
 
+// ── Editorial scoring ──────────────────────────────────────
+// score = tier_weight × recency_score
+// Recency uses a half-life decay: score halves every 90 minutes.
+// Tier weights: Tier 1 = 1.0, Tier 2 = 0.6, Tier 3 = 0.3
+const _TIER1 = new Set([
+  'Reuters Business News','AP Business',
+  'Business Standard Markets','Business Standard Economy',
+  'Financial Express','NDTV Profit',
+  'Moneycontrol Markets','Economic Times Economy',
+]);
+const _TIER2 = new Set([
+  'Economic Times Markets','Economic Times Stocks',
+  'Economic Times Wealth','Economic Times Industry',
+  'Economic Times Top Stories',
+  'Livemint Markets','Livemint Money',
+]);
+// Tier 3: everything else (Google News, ET Tech, ET Small Business,
+//         Moneycontrol Latest, BBC Business)
+
+function _tierWeight(source){
+  if(_TIER1.has(source)) return 1.0;
+  if(_TIER2.has(source)) return 0.6;
+  return 0.3;
+}
+
+function _recencyScore(pubDate){
+  if(!pubDate) return 0;
+  const ageMinutes=(Date.now()-new Date(pubDate))/60000;
+  const halfLifeMinutes=90;
+  return Math.pow(0.5, ageMinutes/halfLifeMinutes);
+}
+
+function _articleScore(a){
+  return _tierWeight(a.source) * _recencyScore(a.pubDate);
+}
+
+function _sortByScore(articles){
+  return [...articles].sort((a,b)=>_articleScore(b)-_articleScore(a));
+}
+
 function relTime(iso){
   const s=(Date.now()-new Date(iso))/1000;
   if(s<60)   return 'Just now';
@@ -3754,7 +3794,7 @@ function renderNewsGrid(){
 
   // ── Hero selection ──────────────────────────────────────
   // 1. Check for a manually pinned article (persists across refreshes, 12h TTL).
-  // 2. Fall back to most-recent article that has a thumbnail image.
+  // 2. Fall back to highest-scoring article (tier weight × recency decay).
   // The grid always shows ALL articles in strict chronological order.
   const pinnedId  = _getPinnedId();
   // Search both active + archive pools so pinned article is always findable
@@ -3764,13 +3804,12 @@ function renderNewsGrid(){
   // If pin ID stored but article is completely gone, clear stale pin
   if(pinnedId && !pinnedArt){ try{localStorage.removeItem(_PIN_KEY);}catch{} }
 
-  const withImg   = filtered.filter(a=>a.thumbnail);
-  const hero      = pinnedArt || (withImg.length?withImg[0]:filtered[0]);
-  const colPool   = withImg.filter(a=>a!==hero).slice(0,5);
-  const noImgPool = filtered.filter(a=>a!==hero&&!colPool.includes(a));
-  const colItems  = colPool.length>=5 ? colPool :
-                    [...colPool,...noImgPool.slice(0,5-colPool.length)];
+  // Sort all filtered articles by editorial score (tier × recency)
+  const scored    = _sortByScore(filtered);
+  const hero      = pinnedArt || scored[0];
+  const colItems  = scored.filter(a=>a!==hero).slice(0,5);
   const usedSet   = new Set([hero,...colItems]);
+  // Grid keeps strict chronological order — score only affects hero + column
   const gridItems = filtered.filter(a=>!usedSet.has(a));
 
   const heroImgH=hero.thumbnail
