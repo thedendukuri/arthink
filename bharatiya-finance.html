@@ -3358,7 +3358,7 @@ async function fetchSupabaseNews(limit=400){
       _sb.from('articles')
         .select('id,canonical_url,title,summary,source_name,published_at,created_at,region,image_url')
         .in('source_name', FINANCE_SOURCES)
-        .order('published_at',{ascending:false})
+        .order('published_at',{ascending:false,nullsFirst:false})
         .limit(limit),
       new Promise((_,rej)=>setTimeout(()=>rej(new Error('sb timeout')),8000)),
     ]);
