@@ -558,6 +558,25 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 .np-colart-title{font-family:var(--sans);font-size:13px;font-weight:700;line-height:1.4;color:var(--text);transition:color .15s;margin-bottom:4px}
 .np-colart-time{font-family:var(--mono);font-size:9px;color:var(--muted)}
 
+/* ── Pin button (appears on hover for any article card) ── */
+.np-colart{position:relative}
+.ng4-card{position:relative}
+.pin-btn{position:absolute;top:8px;right:8px;background:rgba(13,13,13,.72);color:#fff;border:none;
+  width:26px;height:26px;display:flex;align-items:center;justify-content:center;
+  font-size:11px;cursor:pointer;opacity:0;transition:opacity .15s;z-index:2;
+  backdrop-filter:blur(4px);border-radius:2px}
+.np-colart .pin-btn{top:50%;transform:translateY(-50%);right:0}
+.ng4-card:hover .pin-btn,.np-colart:hover .pin-btn{opacity:1}
+.pin-btn:hover{background:rgba(201,168,76,.85);color:#000}
+
+/* ── Pinned headline badge ── */
+.hero-pin-badge{display:inline-flex;align-items:center;gap:7px;background:var(--accent);
+  color:#000;font-size:9px;font-weight:700;padding:3px 8px;letter-spacing:.12px;
+  text-transform:uppercase;margin-bottom:10px;cursor:default}
+.hero-pin-badge .unpin{cursor:pointer;opacity:.7;text-decoration:underline;
+  font-size:9px;transition:opacity .15s}
+.hero-pin-badge .unpin:hover{opacity:1}
+
 /* 4-col grid below */
 .news-grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);margin-top:0}
 @media(max-width:900px){.news-grid4{grid-template-columns:1fr 1fr}}
@@ -3285,8 +3304,10 @@ async function refreshNewsTickers(){
 
 function _decodeHtml(s){
   if(!s) return '';
-  // Strip literal HTML tags first
-  let r=s.replace(/<[^>]+>/g,' ');
+  // Unwrap CDATA sections first (e.g. ET RSS: <![CDATA[content]]>)
+  let r=s.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g,'$1');
+  // Strip remaining HTML tags
+  r=r.replace(/<[^>]+>/g,' ');
   // Decode HTML entities
   r=r.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
       .replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'");
@@ -3322,25 +3343,28 @@ function _mapSbArticle(r){
 }
 
 // Fetch up to `limit` articles from Supabase, newest first
-async function fetchSupabaseNews(limit=200){
+async function fetchSupabaseNews(limit=400){
   if(!_sb) return [];
   try{
     // Race with 8s timeout — Supabase should never hang the news render
     const FINANCE_SOURCES=['Economic Times Stocks','Economic Times Economy','Economic Times Industry',
-      'Economic Times Wealth','Economic Times Markets','Economic Times Top Stories',
-      'The Hindu Business','Google News India Business','Google News India Economy',
-      'Moneycontrol Latest','NDTV Profit'];
+      'Economic Times Wealth','Economic Times Markets','Economic Times Tech','Economic Times Top Stories',
+      'The Hindu Business','Financial Express',
+      'Google News India Business','Google News India Economy','Google News India Startups',
+      'Moneycontrol Latest','Moneycontrol Markets',
+      'NDTV Profit','Livemint Markets','Livemint Money',
+      'BBC Business','Business Standard Markets','Business Standard Economy'];
     const result=await Promise.race([
       _sb.from('articles')
         .select('id,canonical_url,title,summary,source_name,published_at,created_at,region,image_url')
         .in('source_name', FINANCE_SOURCES)
-        .order('created_at',{ascending:false})
+        .order('published_at',{ascending:false})
         .limit(limit),
       new Promise((_,rej)=>setTimeout(()=>rej(new Error('sb timeout')),8000)),
     ]);
     const{data,error}=result;
     if(error||!data?.length) return[];
-    return data.map(_mapSbArticle);
+    return data.map(_mapSbArticle).filter(a=>a.title&&a.title.trim().length>3);
   }catch(e){return[];}
 }
 
@@ -3350,7 +3374,7 @@ async function fetchHomeNews(){
   if(_newsArticles.length) return _newsArticles;
 
   // 1️⃣ Try Supabase articles table
-  const sbNews=await fetchSupabaseNews(200);
+  const sbNews=await fetchSupabaseNews(400);
   if(sbNews.length){
     _newsLastFetch=Date.now();
     const existingIds=new Set(sbNews.map(a=>String(a.id)));
@@ -3611,6 +3635,33 @@ let _newsRegFilter  = 'ALL'; // ALL | india | world | ARCHIVES
 let _newsLastFetch  = 0;
 const NEWS_TTL = 10 * 60 * 1000; // 10 minutes
 
+// ── Pinned hero ────────────────────────────────────────────
+// Lets editors manually pin any article as the headline slot.
+// Pin auto-expires after 12 hours; the rest of the feed refreshes normally.
+const _PIN_KEY = 'bf_pinned_hero';
+const _PIN_TTL = 12 * 60 * 60 * 1000; // 12 hours
+
+function _getPinnedId(){
+  try{
+    const p=JSON.parse(localStorage.getItem(_PIN_KEY)||'null');
+    if(!p||!p.id) return null;
+    if(Date.now()-p.ts>_PIN_TTL){localStorage.removeItem(_PIN_KEY);return null;}
+    return String(p.id);
+  }catch{return null;}
+}
+function _pinHeroById(id){
+  try{localStorage.setItem(_PIN_KEY,JSON.stringify({id:String(id),ts:Date.now()}));}catch{}
+  renderNewsGrid();
+}
+function clearPinnedHero(){
+  try{localStorage.removeItem(_PIN_KEY);}catch{}
+  renderNewsGrid();
+}
+function _findArtById(id){
+  const s=String(id);
+  return _newsArticles.find(a=>String(a.id)===s)||_newsArchives.find(a=>String(a.id)===s)||null;
+}
+
 function relTime(iso){
   const s=(Date.now()-new Date(iso))/1000;
   if(s<60)   return 'Just now';
@@ -3701,16 +3752,36 @@ function renderNewsGrid(){
     return;
   }
 
-  const [hero,...rest]=filtered;
-  const colItems=rest.slice(0,5);
-  const gridItems=rest.slice(5);
+  // ── Hero selection ──────────────────────────────────────
+  // 1. Check for a manually pinned article (persists across refreshes, 12h TTL).
+  // 2. Fall back to most-recent article that has a thumbnail image.
+  // The grid always shows ALL articles in strict chronological order.
+  const pinnedId  = _getPinnedId();
+  // Search both active + archive pools so pinned article is always findable
+  const pinnedArt = pinnedId
+    ? (filtered.find(a=>String(a.id)===pinnedId) || _findArtById(pinnedId))
+    : null;
+  // If pin ID stored but article is completely gone, clear stale pin
+  if(pinnedId && !pinnedArt){ try{localStorage.removeItem(_PIN_KEY);}catch{} }
+
+  const withImg   = filtered.filter(a=>a.thumbnail);
+  const hero      = pinnedArt || (withImg.length?withImg[0]:filtered[0]);
+  const colPool   = withImg.filter(a=>a!==hero).slice(0,5);
+  const noImgPool = filtered.filter(a=>a!==hero&&!colPool.includes(a));
+  const colItems  = colPool.length>=5 ? colPool :
+                    [...colPool,...noImgPool.slice(0,5-colPool.length)];
+  const usedSet   = new Set([hero,...colItems]);
+  const gridItems = filtered.filter(a=>!usedSet.has(a));
 
   const heroImgH=hero.thumbnail
-    ?`<img src="${escH(hero.thumbnail)}" alt="" loading="lazy" onerror="this.style.display='none'">`:
-    `<div style="height:100%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:48px;opacity:.15">📰</div>`;
+    ?`<img src="${escH(hero.thumbnail)}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'">`:
+    `<div style="height:100%;background:linear-gradient(135deg,var(--surface2) 0%,rgba(201,168,76,.08) 100%);display:flex;align-items:center;justify-content:center;font-size:48px;opacity:.18">📰</div>`;
 
   const heroTks=extractTickers(hero.title,hero.excerpt);
   const heroTkAttr=heroTks.length?` data-tickers="${heroTks.map(t=>t.s).join(',')}"`:' ';
+  const heroPinBadge=pinnedArt
+    ?`<div class="hero-pin-badge">📌 Pinned Headline &nbsp;<span class="unpin" onclick="event.stopPropagation();clearPinnedHero()">Unpin</span></div>`
+    :'';
 
   el.innerHTML=`
     <div class="news-layout">
@@ -3723,6 +3794,7 @@ function renderNewsGrid(){
             ${regionBadge(hero.region)}
             <span class="np-time">${relTime(hero.pubDate)}</span>
           </div>
+          ${heroPinBadge}
           <div class="np-hero-title">${escH(hero.title)}</div>
           ${hero.excerpt?`<div class="np-hero-excerpt">${escH(hero.excerpt.slice(0,200))}</div>`:''}
           ${heroTks.length?'<div class="nc-tickers" style="margin-top:10px"></div>':''}
@@ -3732,8 +3804,9 @@ function renderNewsGrid(){
         ${colItems.map(a=>{
           const tks=extractTickers(a.title,a.excerpt);
           const tkAttr=tks.length?` data-tickers="${tks.map(t=>t.s).join(',')}"`:' ';
-          return`<div class="np-colart"${tkAttr}onclick="window.open('${escH(a.link)}','_blank')">
-            <div class="np-colart-img">${a.thumbnail?`<img src="${escH(a.thumbnail)}" alt="" loading="lazy" onerror="this.style.display='none'">`:''}</div>
+          return`<div class="np-colart${a.thumbnail?'':' no-img'}"${tkAttr}onclick="window.open('${escH(a.link)}','_blank')">
+            <button class="pin-btn" title="Pin as headline" onclick="event.stopPropagation();_pinHeroById('${escH(String(a.id))}')">📌</button>
+            ${a.thumbnail?`<div class="np-colart-img"><img src="${escH(a.thumbnail)}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`:''}
             <div class="np-colart-body">
               <div class="np-meta" style="margin-bottom:4px">
                 <span class="np-src" style="font-size:9px">${escH(a.source||'')}</span>
@@ -3753,6 +3826,7 @@ function renderNewsGrid(){
         const tks=extractTickers(a.title,a.excerpt);
         const tkAttr=tks.length?` data-tickers="${tks.map(t=>t.s).join(',')}"`:' ';
         return`<div class="ng4-card"${tkAttr}onclick="window.open('${escH(a.link)}','_blank')">
+          <button class="pin-btn" title="Pin as headline" onclick="event.stopPropagation();_pinHeroById('${escH(String(a.id))}')">📌</button>
           ${a.thumbnail?`<div class="ng4-img"><img src="${escH(a.thumbnail)}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`:''}
           <div class="ng4-meta">
             <span class="ng4-src">${escH(a.source||'')}</span>
