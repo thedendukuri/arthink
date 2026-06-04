@@ -1920,7 +1920,9 @@ function initData(){
     ohlcCache[i.sym]={};
   });
   STOCKS.forEach(s=>{
-    SD[s.sym]={price:s.base,chg:0,pct:0,vol:5000000};
+    const initPct=(Math.random()-0.5)*4; // seed -2% to +2% so gainers/losers/active always differ
+    const initPrice=s.base*(1+initPct/100);
+    SD[s.sym]={price:initPrice,chg:initPrice-s.base,pct:initPct,vol:Math.floor(3e6+Math.random()*8e6)};
     histS[s.sym]=genHist(s.base,true);
   });
   COMMS.forEach(c=>{
@@ -3462,7 +3464,7 @@ function renderSbIdx(){
   document.getElementById('sbIdx').innerHTML=REGIONS_DEF[0].indices.map(i=>{
     const d=ID_DATA[i.sym]||{price:i.base,pct:0};
     const cls=d.pct>0.005?'pos':d.pct<-0.005?'neg':'flat';
-    return`<div class="idx2" onclick="MKT.goIndex('${i.sym}','india')">
+    return`<div class="idx2" onclick="goToIndex('${i.sym}','india')">
       <div class="idx2-bar" style="background:${i.color}"></div>
       <div class="idx2-info">
         <div class="idx2-name">${i.n}</div>
@@ -4868,35 +4870,32 @@ const PROF = {
 
 // ══════════════════════════════════════════════
 // LIVE FETCH
-// When running via server.js → hits /api/quote (our Node proxy → Yahoo)
-// When opened as a plain file  → falls back to simulation
+// Reads stock prices from Supabase stock_prices table.
+// Table is populated by the fetch-stock-prices edge function (runs every 15 min).
+// Falls back to simulation if Supabase is unavailable.
 // ══════════════════════════════════════════════
-const IS_SERVED = window.location.protocol !== 'file:';
-
 async function fetchLive(){
-  if(!IS_SERVED) return false; // plain-file open — use simulation
-  const syms=[...ALL_INDICES.map(i=>i.sym),...STOCKS.map(s=>s.sym)].join(',');
+  if(!_sb) return false; // no Supabase client — use simulation
   try{
-    const r=await fetch(`/api/quote?syms=${encodeURIComponent(syms)}`,{signal:AbortSignal.timeout(8000)});
-    if(!r.ok)return false;
-    const {quoteResponse:{result=[]}}=await r.json();
-    result.forEach(q=>{
-      if(!q.regularMarketPrice) return;
-      const idx=ALL_INDICES.find(i=>i.sym===q.symbol);
-      if(idx){
-        ID_DATA[q.symbol]={price:q.regularMarketPrice,chg:q.regularMarketChange,pct:q.regularMarketChangePercent};
-        histI[q.symbol]?.push(q.regularMarketPrice);
-        if(histI[q.symbol]?.length>80) histI[q.symbol].shift();
-      } else {
-        SD[q.symbol]={price:q.regularMarketPrice,chg:q.regularMarketChange,pct:q.regularMarketChangePercent,vol:q.regularMarketVolume||0};
-        histS[q.symbol]?.push(q.regularMarketPrice);
-        if(histS[q.symbol]?.length>80) histS[q.symbol].shift();
-      }
+    const {data,error} = await _sb
+      .from('stock_prices')
+      .select('sym,price,chg,pct,volume,updated_at');
+    if(error || !data?.length) return false;
+
+    data.forEach(q=>{
+      if(q.price==null) return;
+      // stock_prices only covers STOCKS (sidebar) — not indices
+      SD[q.sym]={price:q.price, chg:q.chg||0, pct:q.pct||0, vol:q.volume||0};
+      histS[q.sym]?.push(q.price);
+      if(histS[q.sym]?.length>80) histS[q.sym].shift();
     });
-    const ok = result.length > 0;
-    if(ok) fetchRealSparklines(); // replace random hist with real intraday on first success
-    return ok;
-  }catch(e){return false;}
+
+    console.log(`[fetchLive] loaded ${data.length} prices from Supabase`);
+    return true;
+  }catch(e){
+    console.warn('[fetchLive] Supabase error:', e.message);
+    return false;
+  }
 }
 
 function renderSidebar(){renderSbIdx();renderSbMovers();renderSbTrend();}
