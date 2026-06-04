@@ -3505,7 +3505,7 @@ function mvTab(btn,m){
   btn.classList.add('on');mvMode2=m;renderSbMovers();
 }
 function mvTab2(btn,m){
-  btn.closest('.mv2-tabs').querySelectorAll('.mv2-tab').forEach(t=>t.classList.remove('on'));
+  btn.closest('.ps-mv-tabs').querySelectorAll('.ps-mv-tab').forEach(t=>t.classList.remove('on'));
   btn.classList.add('on');mvMode2=m;renderSbMovers();
 }
 
@@ -4010,7 +4010,7 @@ function showSection(id,el,afterFn){
   else if(id==='news') renderNewsPage();
   else if(id==='ipo') renderIpoPage();
   else if(id==='profile') PROF.render();
-  if(afterFn) setTimeout(afterFn,10);
+  if(afterFn) setTimeout(afterFn,120);
   // Update URL hash so reload restores position
   if(!afterFn) history.replaceState(null,'','#'+id);
 }
