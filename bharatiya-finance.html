@@ -3482,9 +3482,21 @@ function renderSbIdx(){
 let mvMode2='gainers';
 function renderSbMovers(){
   let list=[...STOCKS];
-  if(mvMode2==='gainers') list.sort((a,b)=>(SD[b.sym]?.pct||0)-(SD[a.sym]?.pct||0));
-  else if(mvMode2==='losers') list.sort((a,b)=>(SD[a.sym]?.pct||0)-(SD[b.sym]?.pct||0));
-  else list.sort((a,b)=>(SD[b.sym]?.vol||0)-(SD[a.sym]?.vol||0));
+  if(mvMode2==='gainers'){
+    list=list.filter(s=>(SD[s.sym]?.pct||0)>0);
+    list.sort((a,b)=>(SD[b.sym]?.pct||0)-(SD[a.sym]?.pct||0));
+  } else if(mvMode2==='losers'){
+    list=list.filter(s=>(SD[s.sym]?.pct||0)<0);
+    list.sort((a,b)=>(SD[a.sym]?.pct||0)-(SD[b.sym]?.pct||0));
+  } else {
+    list.sort((a,b)=>(SD[b.sym]?.vol||0)-(SD[a.sym]?.vol||0));
+  }
+  if(!list.length){
+    const msg=mvMode2==='gainers'?'No gainers today':'No losers today — all stocks up';
+    document.getElementById('sbMovers').innerHTML=
+      `<div style="padding:24px 12px;text-align:center;color:#666;font-size:12px">${msg}</div>`;
+    return;
+  }
   document.getElementById('sbMovers').innerHTML=list.slice(0,5).map((s,i)=>{
     const d=SD[s.sym]||{price:s.base,pct:0};
     const cls=d.pct>=0?'pos':'neg';
