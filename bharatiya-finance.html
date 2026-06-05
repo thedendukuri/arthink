@@ -4384,28 +4384,41 @@ const SCR = {
     }
   },
 
-  // ── Shared price fetcher ────────────────────────────────────────────────
+  // ── Shared price fetcher — queries Supabase stock_prices ───────────────
+  // stock_prices stores NSE tickers without suffix (RELIANCE, not RELIANCE.NS)
+  // so we strip .NS before querying then map results back to original syms.
   async fetchPrices(statusText) {
-    if (!this._currentSyms.length) return;
+    if (!this._currentSyms.length || !_sb) return;
     try {
-      const res = await fetch(`/api/markets/india/prices?syms=${encodeURIComponent(this._currentSyms.join(','))}`, { signal: AbortSignal.timeout(15_000) });
-      if (!res.ok) return;
-      const prices = await res.json();
+      // Build stripped sym → original sym map
+      const symMap = {};
+      this._currentSyms.forEach(s => { symMap[s.replace(/\.NS$/i,'')] = s; });
+      const sbSyms = Object.keys(symMap);
+
+      const { data, error } = await _sb
+        .from('stock_prices')
+        .select('sym,price,chg,pct,volume')
+        .in('sym', sbSyms);
+
+      if (error || !data?.length) return;
       if (statusText) document.getElementById('scr-stocks-count').textContent = statusText;
-      for (const [sym, p] of Object.entries(prices)) {
-        const id  = sym.replace(/\./g, '-');
+
+      data.forEach(q => {
+        const origSym = symMap[q.sym] || q.sym;
+        const id  = origSym.replace(/\./g, '-');
         const pEl = document.getElementById(`sp-${id}`);
         const cEl = document.getElementById(`sc-${id}`);
         const vEl = document.getElementById(`sv-${id}`);
         const mEl = document.getElementById(`sm-${id}`);
-        if (!pEl) continue;
-        const col = p.pct == null ? 'var(--muted)' : p.pct >= 0 ? 'var(--pos)' : 'var(--neg)';
-        pEl.innerHTML = p.price != null ? `<b>₹${fmt(p.price)}</b>` : '—';
-        if (cEl) { cEl.style.color = col; cEl.style.fontWeight = '700'; cEl.textContent = p.pct != null ? `${sgn(p.pct)}${fmt(p.pct)}%` : '—'; }
-        if (vEl) vEl.textContent = p.vol    != null ? fmtVol(p.vol)    : '—';
-        if (mEl) mEl.textContent = p.mktCap != null ? fmtCap(p.mktCap) : '—';
-      }
-    } catch {}
+        if (!pEl) return;
+        const pct = q.pct != null ? +q.pct : null;
+        const col = pct == null ? 'var(--muted)' : pct >= 0 ? 'var(--pos)' : 'var(--neg)';
+        pEl.innerHTML = q.price != null ? `<b>₹${fmt(+q.price)}</b>` : '—';
+        if (cEl) { cEl.style.color=col; cEl.style.fontWeight='700'; cEl.textContent = pct!=null ? `${sgn(pct)}${fmt(pct)}%` : '—'; }
+        if (vEl) vEl.textContent = q.volume != null ? fmtVol(+q.volume) : '—';
+        if (mEl) mEl.textContent = '—'; // mktCap not stored in stock_prices
+      });
+    } catch(e) { console.warn('[SCR.fetchPrices]', e.message); }
   },
 
   renderPagination() {
