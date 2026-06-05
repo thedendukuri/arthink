@@ -1146,7 +1146,7 @@ body::after{display:none!important}
           <button class="p-btn" id="gcCandle" onclick="gcSetType('candle',this)">Candles</button>
         </div>
       </div>
-      <!-- 2×2 chart grid — Nifty, Sensex, SPX, NASDAQ -->
+      <!-- Overview chart grid — Indian indices -->
       <div class="chart-grid" id="overviewChartGrid"></div>
 
       <!-- Region Cards -->
@@ -2939,10 +2939,8 @@ function chartColors(){
 // OVERVIEW CHART GRID
 // ══════════════════════════════════════════════
 const OVERVIEW_CHARTS=[
-  {sym:'^NSEI',   n:'Nifty 50',           region:'india', color:'#FF9933'},
-  {sym:'^BSESN',  n:'Sensex',             region:'india', color:'#a78bfa'},
-  {sym:'^GSPC',   n:'S&P 500',            region:'usa',   color:'#3b82f6'},
-  {sym:'^IXIC',   n:'NASDAQ Composite',   region:'usa',   color:'#60a5fa'},
+  {sym:'^NSEI',   n:'Nifty 50',  region:'india', color:'#FF9933'},
+  {sym:'^BSESN',  n:'Sensex',    region:'india', color:'#a78bfa'},
 ];
 
 let _gcType='line';
@@ -3157,36 +3155,55 @@ async function drawOverviewCharts(){
 }
 
 // ── Fetch today's last traded price for each overview card header ──────────
-// Uses 1m bars so we get the current session's last tick, not yesterday's close.
-// Runs after drawOverviewCharts() builds the skeleton and again every 60s.
+// Primary: 1m bars for today's session (most recent tick when market is open).
+// Fallback: 5d/1d bars — always returns at least the last completed session,
+//           so US indices show a real price even when their market is closed.
 async function refreshOverviewPrices(){
   await Promise.all(OVERVIEW_CHARTS.map(async c=>{
     try{
       const sym=encodeURIComponent(c.sym);
-      const r=await fetch(
-        `https://query2.finance.yahoo.com/v8/finance/chart/${sym}?interval=1m&range=1d&corsDomain=finance.yahoo.com`,
-        {signal:AbortSignal.timeout(8000),headers:{'Accept':'application/json'}}
-      );
-      if(!r.ok) return;
-      const json=await r.json();
-      const result=json?.chart?.result?.[0];
-      if(!result) return;
-      const ts=result.timestamp||[];
-      const q=result.indicators?.quote?.[0]||{};
-      // Walk backward for last non-null close; forward for first non-null open
-      let lastClose=null, firstOpen=null, lastTs=null;
-      for(let i=ts.length-1;i>=0;i--){
-        if(q.close?.[i]!=null){lastClose=q.close[i];lastTs=ts[i];break;}
+      const headers={'Accept':'application/json'};
+      const base=`https://query2.finance.yahoo.com/v8/finance/chart/${sym}`;
+      const qs   =`&corsDomain=finance.yahoo.com`;
+
+      // Helper: extract last close + first open from a YF result
+      const parse=result=>{
+        if(!result) return null;
+        const ts=result.timestamp||[];
+        const q =result.indicators?.quote?.[0]||{};
+        let lastClose=null,firstOpen=null;
+        for(let i=ts.length-1;i>=0;i--){ if(q.close?.[i]!=null){lastClose=q.close[i];break;} }
+        for(let i=0;i<ts.length;i++){    if(q.open?.[i] !=null){firstOpen=q.open[i]; break;} }
+        return (lastClose!=null&&firstOpen!=null)?{lastClose,firstOpen}:null;
+      };
+
+      let parsed=null;
+
+      // ── Try today's 1m bars first ──
+      try{
+        const r=await fetch(`${base}?interval=1m&range=1d${qs}`,{signal:AbortSignal.timeout(8000),headers});
+        if(r.ok){
+          const json=await r.json();
+          parsed=parse(json?.chart?.result?.[0]);
+        }
+      }catch(_){}
+
+      // ── Fallback: last 5 daily bars (always available, market open or closed) ──
+      if(!parsed){
+        try{
+          const r=await fetch(`${base}?interval=1d&range=5d${qs}`,{signal:AbortSignal.timeout(8000),headers});
+          if(r.ok){
+            const json=await r.json();
+            parsed=parse(json?.chart?.result?.[0]);
+          }
+        }catch(_){}
       }
-      for(let i=0;i<ts.length;i++){
-        if(q.open?.[i]!=null){firstOpen=q.open[i];break;}
-      }
-      if(lastClose==null||firstOpen==null) return;
+
+      if(!parsed) return;
+      const {lastClose,firstOpen}=parsed;
       const pct=(lastClose-firstOpen)/firstOpen*100;
-      const idKey=`gc-price-${c.sym.replace(/[\^\.]/g,'_')}`;
-      const chKey=`gc-chg-${c.sym.replace(/[\^\.]/g,'_')}`;
-      const priceEl=document.getElementById(idKey);
-      const chgEl  =document.getElementById(chKey);
+      const priceEl=document.getElementById(`gc-price-${c.sym.replace(/[\^\.]/g,'_')}`);
+      const chgEl  =document.getElementById(`gc-chg-${c.sym.replace(/[\^\.]/g,'_')}`);
       if(priceEl) priceEl.textContent=fmt(lastClose,lastClose>1000?0:2);
       if(chgEl){
         chgEl.textContent=`${sgn(pct)}${fmt(pct)}%`;
