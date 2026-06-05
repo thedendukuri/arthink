@@ -3004,8 +3004,7 @@ async function drawOverviewCharts(){
 
     let data=null;
     // ── Yahoo Finance v8 browser fetch (works without a server) ──
-    // For 1D period always use 5m bars so we get today's intraday movement.
-    const gcEffInterval = (period==='1D') ? '5m' : (interval||'1d');
+    const gcEffInterval = interval||'1d';
     try{
       const yfRange = (period==='CUSTOM'&&customFrom&&customTo)
         ? (() => {
