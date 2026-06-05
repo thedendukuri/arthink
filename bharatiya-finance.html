@@ -2055,7 +2055,7 @@ const MKT={
     renderRegionGrid();
     // Init interval options for default period, then draw charts
     onGlobalPeriodChange();
-    setTimeout(drawOverviewCharts, 60); // slight delay so DOM is ready
+    setTimeout(()=>{ drawOverviewCharts(); refreshOverviewPrices(); }, 60); // slight delay so DOM is ready
     if(!window._mapBuilt){this.buildMap();window._mapBuilt=true;}
   },
 
@@ -3171,6 +3171,46 @@ async function drawOverviewCharts(){
       wrap.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--neg);font-size:11px">Chart error</div>`;
     }
   });
+}
+
+// ── Fetch today's last traded price for each overview card header ──────────
+// Uses 1m bars so we get the current session's last tick, not yesterday's close.
+// Runs after drawOverviewCharts() builds the skeleton and again every 60s.
+async function refreshOverviewPrices(){
+  await Promise.all(OVERVIEW_CHARTS.map(async c=>{
+    try{
+      const sym=encodeURIComponent(c.sym);
+      const r=await fetch(
+        `https://query2.finance.yahoo.com/v8/finance/chart/${sym}?interval=1m&range=1d&corsDomain=finance.yahoo.com`,
+        {signal:AbortSignal.timeout(8000),headers:{'Accept':'application/json'}}
+      );
+      if(!r.ok) return;
+      const json=await r.json();
+      const result=json?.chart?.result?.[0];
+      if(!result) return;
+      const ts=result.timestamp||[];
+      const q=result.indicators?.quote?.[0]||{};
+      // Walk backward for last non-null close; forward for first non-null open
+      let lastClose=null, firstOpen=null, lastTs=null;
+      for(let i=ts.length-1;i>=0;i--){
+        if(q.close?.[i]!=null){lastClose=q.close[i];lastTs=ts[i];break;}
+      }
+      for(let i=0;i<ts.length;i++){
+        if(q.open?.[i]!=null){firstOpen=q.open[i];break;}
+      }
+      if(lastClose==null||firstOpen==null) return;
+      const pct=(lastClose-firstOpen)/firstOpen*100;
+      const idKey=`gc-price-${c.sym.replace(/[\^\.]/g,'_')}`;
+      const chKey=`gc-chg-${c.sym.replace(/[\^\.]/g,'_')}`;
+      const priceEl=document.getElementById(idKey);
+      const chgEl  =document.getElementById(chKey);
+      if(priceEl) priceEl.textContent=fmt(lastClose,lastClose>1000?0:2);
+      if(chgEl){
+        chgEl.textContent=`${sgn(pct)}${fmt(pct)}%`;
+        chgEl.className=`chart-card-chg ${pct>=0?'pos':'neg'}`;
+      }
+    }catch(e){ console.warn('[overview quote]',c.sym,e.message); }
+  }));
 }
 
 // ══════════════════════════════════════════════
@@ -5885,6 +5925,10 @@ function updateDetailLive(){
     }
     if(okIdx||ok){
       updateSbIdx();        // flash sidebar indices (uses ID_DATA)
+    }
+    // Refresh overview card prices if the overview grid is currently visible
+    if(document.getElementById('overviewChartGrid')?.closest('.view')?.classList.contains('active')){
+      refreshOverviewPrices();
     }
   },60000);
 
