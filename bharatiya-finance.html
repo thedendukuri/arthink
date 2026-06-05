@@ -3003,35 +3003,53 @@ async function drawOverviewCharts(){
     if(!wrap) return;
 
     let data=null;
-    if(IS_SERVED){
-      try{
-        let url;
-        if(period==='CUSTOM'&&customFrom&&customTo){
-          url=`/api/chart?sym=${encodeURIComponent(c.sym)}&period=custom&interval=${interval}&from=${customFrom}&to=${customTo}`;
-        } else {
-          url=`/api/chart?sym=${encodeURIComponent(c.sym)}&period=${MKT._yfPeriod(period)}&interval=${interval}`;
-        }
-        const r=await fetch(url,{signal:AbortSignal.timeout(12000)});
-        if(r.ok){
-          const {ohlc,meta}=await r.json();
-          if(ohlc&&ohlc.length){
-            data=ohlc.map(b=>({...b,date:new Date(b.date)}));
-            // Update live price display from latest bar
+    // ── Yahoo Finance v8 browser fetch (works without a server) ──
+    try{
+      const yfRange = (period==='CUSTOM'&&customFrom&&customTo)
+        ? (() => {
+            const days=Math.round((new Date(customTo)-new Date(customFrom))/864e5);
+            return days<=5?'5d':days<=30?'1mo':days<=90?'3mo':days<=365?'1y':'2y';
+          })()
+        : (MKT._yfPeriod?.(period)||'1mo');
+      const yfInterval = interval||'1d';
+      const yfSym = encodeURIComponent(c.sym);
+      const yfUrl = `https://query2.finance.yahoo.com/v8/finance/chart/${yfSym}?interval=${yfInterval}&range=${yfRange}&corsDomain=finance.yahoo.com`;
+      const r = await fetch(yfUrl, {
+        signal: AbortSignal.timeout(12000),
+        headers: {'Accept':'application/json'}
+      });
+      if(r.ok){
+        const json = await r.json();
+        const result = json?.chart?.result?.[0];
+        if(result){
+          const ts = result.timestamp || [];
+          const q  = result.indicators?.quote?.[0] || {};
+          const adj = result.indicators?.adjclose?.[0]?.adjclose;
+          data = ts.map((t,i)=>({
+            date:  new Date(t*1000),
+            open:  q.open?.[i]  ?? null,
+            high:  q.high?.[i]  ?? null,
+            low:   q.low?.[i]   ?? null,
+            close: (adj?.[i] ?? q.close?.[i]) ?? null,
+            vol:   q.volume?.[i]?? 0
+          })).filter(b => b.close != null);
+          if(data.length){
+            // Update the price/chg header from last bar
             const last=data[data.length-1];
             const first=data[0];
-            if(last){
-              const priceEl=document.getElementById(`gc-price-${c.sym.replace(/[\^\.]/g,'_')}`);
-              const chgEl=document.getElementById(`gc-chg-${c.sym.replace(/[\^\.]/g,'_')}`);
-              if(priceEl) priceEl.textContent=fmt(last.close,last.close>1000?0:2);
-              if(chgEl){
-                const pct=(last.close-first.open)/first.open*100;
-                chgEl.textContent=`${sgn(pct)}${fmt(pct)}%`;
-                chgEl.className=`chart-card-chg ${pct>=0?'pos':'neg'}`;
-              }
+            const priceEl=document.getElementById(`gc-price-${c.sym.replace(/[\^\.]/g,'_')}`);
+            const chgEl  =document.getElementById(`gc-chg-${c.sym.replace(/[\^\.]/g,'_')}`);
+            if(priceEl) priceEl.textContent=fmt(last.close, last.close>1000?0:2);
+            if(chgEl){
+              const pct=(last.close-first.open)/first.open*100;
+              chgEl.textContent=`${sgn(pct)}${fmt(pct)}%`;
+              chgEl.className=`chart-card-chg ${pct>=0?'pos':'neg'}`;
             }
           }
         }
-      }catch(e){}
+      }
+    }catch(yfErr){
+      console.warn('[overview chart YF]',c.sym, yfErr.message);
     }
 
     // Fallback simulation
@@ -3050,98 +3068,103 @@ async function drawOverviewCharts(){
 
     if(!data||!data.length){ wrap.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--dim);font-size:12px">No data</div>'; return; }
 
-    wrap.innerHTML='';
-    const W=wrap.clientWidth||520;
-    const H=210;
-    const m={top:10,right:12,bottom:32,left:62};
-    const iW=W-m.left-m.right, iH=H-m.top-m.bottom;
-    const isIntraday=period==='1D'||['1m','5m','15m','30m','60m'].includes(interval);
-    const OCC=chartColors();
+    try{
+      wrap.innerHTML='';
+      const W=wrap.clientWidth||520;
+      const H=210;
+      const m={top:10,right:12,bottom:32,left:62};
+      const iW=W-m.left-m.right, iH=H-m.top-m.bottom;
+      const isIntraday=period==='1D'||['1m','5m','15m','30m','60m'].includes(interval);
+      const OCC=chartColors();
 
-    const svg=d3.select(wrap).append('svg').attr('width','100%').attr('height',H).attr('viewBox',`0 0 ${W} ${H}`);
-    const g=svg.append('g').attr('transform',`translate(${m.left},${m.top})`);
+      const svg=d3.select(wrap).append('svg').attr('width','100%').attr('height',H).attr('viewBox',`0 0 ${W} ${H}`);
+      const g=svg.append('g').attr('transform',`translate(${m.left},${m.top})`);
 
-    const xScale=d3.scaleTime().domain(d3.extent(data,d=>d.date)).range([0,iW]);
-    const yExt=[d3.min(data,d=>d.low||d.close)*.997,d3.max(data,d=>d.high||d.close)*1.003];
-    const yScale=d3.scaleLinear().domain(yExt).range([iH,0]);
+      const xScale=d3.scaleTime().domain(d3.extent(data,d=>d.date)).range([0,iW]);
+      const yExt=[d3.min(data,d=>d.low||d.close)*.997,d3.max(data,d=>d.high||d.close)*1.003];
+      const yScale=d3.scaleLinear().domain(yExt).range([iH,0]);
 
-    // Grid
-    g.append('g').attr('class','grid')
-      .call(d3.axisLeft(yScale).ticks(4).tickSize(-iW).tickFormat(''))
-      .selectAll('line').attr('stroke',OCC.grid).attr('stroke-dasharray','3');
-    g.select('.grid .domain').remove();
+      // Grid
+      g.append('g').attr('class','grid')
+        .call(d3.axisLeft(yScale).ticks(4).tickSize(-iW).tickFormat(''))
+        .selectAll('line').attr('stroke',OCC.grid).attr('stroke-dasharray','3');
+      g.select('.grid .domain').remove();
 
-    // Axes
-    g.append('g').attr('transform',`translate(0,${iH})`)
-      .call(d3.axisBottom(xScale).ticks(4).tickFormat(d=>d3.timeFormat(isIntraday?'%H:%M':'%b %d')(d)))
-      .selectAll('text').attr('fill',OCC.tick).attr('font-size',10);
-    g.append('g')
-      .call(d3.axisLeft(yScale).ticks(4).tickFormat(v=>v>=1000?`${(v/1000).toFixed(1)}K`:fmt(v,0)))
-      .selectAll('text').attr('fill',OCC.tick).attr('font-size',10);
-    g.selectAll('.domain,.tick line').attr('stroke',OCC.axis);
+      // Axes
+      g.append('g').attr('transform',`translate(0,${iH})`)
+        .call(d3.axisBottom(xScale).ticks(4).tickFormat(d=>d3.timeFormat(isIntraday?'%H:%M':'%b %d')(d)))
+        .selectAll('text').attr('fill',OCC.tick).attr('font-size',10);
+      g.append('g')
+        .call(d3.axisLeft(yScale).ticks(4).tickFormat(v=>v>=1000?`${(v/1000).toFixed(1)}K`:fmt(v,0)))
+        .selectAll('text').attr('fill',OCC.tick).attr('font-size',10);
+      g.selectAll('.domain,.tick line').attr('stroke',OCC.axis);
 
-    if(_gcType==='candle'){
-      // Index-based x for candle mode (no weekend/session gaps)
-      const gcN=data.length;const gcBarW=iW/Math.max(gcN,1);
-      const gcXBar=i=>(i+0.5)*gcBarW;
-      const cw=Math.max(1.5,Math.min(10,gcBarW*0.7));
-      g.selectAll('.wick').data(data).join('line')
-        .attr('x1',(d,i)=>gcXBar(i)).attr('x2',(d,i)=>gcXBar(i))
-        .attr('y1',d=>yScale(d.high)).attr('y2',d=>yScale(d.low))
-        .attr('stroke',d=>d.close>=d.open?'#00d964':'#f44336').attr('stroke-width',.8);
-      g.selectAll('.body').data(data).join('rect')
-        .attr('x',(d,i)=>gcXBar(i)-cw/2).attr('y',d=>yScale(Math.max(d.open,d.close)))
-        .attr('width',cw).attr('height',d=>Math.max(1,Math.abs(yScale(d.open)-yScale(d.close))))
-        .attr('fill',d=>d.close>=d.open?'#00d964':'#f44336');
-      // Replace time x-axis with ordinal labels
-      g.select('g:not(.grid)').remove();
-      const numTkOv=Math.min(6,gcN);const stepOv=Math.max(1,Math.floor(gcN/numTkOv));
-      const gxOv=g.append('g').attr('transform',`translate(0,${iH})`);
-      gxOv.append('line').attr('x1',0).attr('x2',iW).attr('y1',0).attr('y2',0).attr('stroke',OCC.axis);
-      for(let ti=0;ti<gcN;ti+=stepOv){
-        gxOv.append('text').attr('x',gcXBar(ti)).attr('y',16).attr('text-anchor','middle')
-          .attr('fill',OCC.tick).attr('font-size',9)
-          .text(d3.timeFormat(isIntraday?'%H:%M':'%b %d')(data[ti].date));
+      if(_gcType==='candle'){
+        // Index-based x for candle mode (no weekend/session gaps)
+        const gcN=data.length;const gcBarW=iW/Math.max(gcN,1);
+        const gcXBar=i=>(i+0.5)*gcBarW;
+        const cw=Math.max(1.5,Math.min(10,gcBarW*0.7));
+        g.selectAll('.wick').data(data).join('line')
+          .attr('x1',(d,i)=>gcXBar(i)).attr('x2',(d,i)=>gcXBar(i))
+          .attr('y1',d=>yScale(d.high)).attr('y2',d=>yScale(d.low))
+          .attr('stroke',d=>d.close>=d.open?'#00d964':'#f44336').attr('stroke-width',.8);
+        g.selectAll('.body').data(data).join('rect')
+          .attr('x',(d,i)=>gcXBar(i)-cw/2).attr('y',d=>yScale(Math.max(d.open,d.close)))
+          .attr('width',cw).attr('height',d=>Math.max(1,Math.abs(yScale(d.open)-yScale(d.close))))
+          .attr('fill',d=>d.close>=d.open?'#00d964':'#f44336');
+        // Replace time x-axis with ordinal labels
+        g.select('g:not(.grid)').remove();
+        const numTkOv=Math.min(6,gcN);const stepOv=Math.max(1,Math.floor(gcN/numTkOv));
+        const gxOv=g.append('g').attr('transform',`translate(0,${iH})`);
+        gxOv.append('line').attr('x1',0).attr('x2',iW).attr('y1',0).attr('y2',0).attr('stroke',OCC.axis);
+        for(let ti=0;ti<gcN;ti+=stepOv){
+          gxOv.append('text').attr('x',gcXBar(ti)).attr('y',16).attr('text-anchor','middle')
+            .attr('fill',OCC.tick).attr('font-size',9)
+            .text(d3.timeFormat(isIntraday?'%H:%M':'%b %d')(data[ti].date));
+        }
+      } else {
+        const pctChange=(data[data.length-1].close-data[0].close)/data[0].close;
+        const lineColor=pctChange>=0?c.color:'#f44336';
+        const gradId='gc'+Math.random().toString(36).slice(2,6);
+        const defs=svg.append('defs');
+        const grad=defs.append('linearGradient').attr('id',gradId).attr('x1',0).attr('y1',0).attr('x2',0).attr('y2',1);
+        grad.append('stop').attr('offset','0%').attr('stop-color',lineColor).attr('stop-opacity',.25);
+        grad.append('stop').attr('offset','100%').attr('stop-color',lineColor).attr('stop-opacity',.01);
+        const area=d3.area().x(d=>xScale(d.date)).y0(iH).y1(d=>yScale(d.close)).curve(d3.curveMonotoneX);
+        const line=d3.line().x(d=>xScale(d.date)).y(d=>yScale(d.close)).curve(d3.curveMonotoneX);
+        g.append('path').datum(data).attr('fill',`url(#${gradId})`).attr('d',area);
+        g.append('path').datum(data).attr('fill','none').attr('stroke',lineColor).attr('stroke-width',1.8).attr('d',line);
       }
-    } else {
-      const pctChange=(data[data.length-1].close-data[0].close)/data[0].close;
-      const lineColor=pctChange>=0?c.color:'#f44336';
-      const gradId='gc'+Math.random().toString(36).slice(2,6);
-      const defs=svg.append('defs');
-      const grad=defs.append('linearGradient').attr('id',gradId).attr('x1',0).attr('y1',0).attr('x2',0).attr('y2',1);
-      grad.append('stop').attr('offset','0%').attr('stop-color',lineColor).attr('stop-opacity',.25);
-      grad.append('stop').attr('offset','100%').attr('stop-color',lineColor).attr('stop-opacity',.01);
-      const area=d3.area().x(d=>xScale(d.date)).y0(iH).y1(d=>yScale(d.close)).curve(d3.curveMonotoneX);
-      const line=d3.line().x(d=>xScale(d.date)).y(d=>yScale(d.close)).curve(d3.curveMonotoneX);
-      g.append('path').datum(data).attr('fill',`url(#${gradId})`).attr('d',area);
-      g.append('path').datum(data).attr('fill','none').attr('stroke',lineColor).attr('stroke-width',1.8).attr('d',line);
-    }
 
-    // Hover overlay
-    const tt=document.getElementById('chartTT');
-    const crossV=g.append('line').attr('y1',0).attr('y2',iH).attr('stroke','#666').attr('stroke-dasharray','3').attr('opacity',0);
-    const dot=g.append('circle').attr('r',3.5).attr('fill',c.color).attr('stroke','#111').attr('stroke-width',1.5).attr('opacity',0);
-    g.append('rect').attr('width',iW).attr('height',iH).attr('fill','transparent')
-      .on('mousemove',(e)=>{
-        const [mx]=d3.pointer(e);
-        const date=xScale.invert(mx);
-        const bi=d3.bisector(d=>d.date).left;
-        const ii=bi(data,date,1);
-        const dpt=(data[ii]&&date-data[ii-1]?.date>data[ii].date-date)?data[ii]:data[ii-1];
-        if(!dpt) return;
-        crossV.attr('x1',xScale(dpt.date)).attr('x2',xScale(dpt.date)).attr('opacity',.7);
-        dot.attr('cx',xScale(dpt.date)).attr('cy',yScale(dpt.close)).attr('opacity',1);
-        const rect=wrap.getBoundingClientRect();
-        const chg=dpt.close-(data[0]?.close||dpt.close);
-        const pct2=chg/(data[0]?.close||dpt.close)*100;
-        tt.style.display='block';
-        tt.style.left=(rect.left+m.left+xScale(dpt.date)+12)+'px';
-        tt.style.top=(rect.top+m.top+yScale(dpt.close)-30)+'px';
-        tt.innerHTML=`<div class="ct-date">${d3.timeFormat(isIntraday?'%b %d %H:%M':'%b %d, %Y')(dpt.date)}</div>
-          <div style="font-weight:700">${fmt(dpt.close,dpt.close>1000?0:2)}</div>
-          <div style="font-size:11px;color:${clr(pct2)}">${sgn(chg)}${fmt(chg,0)} (${sgn(pct2)}${fmt(pct2)}%)</div>`;
-      })
-      .on('mouseleave',()=>{crossV.attr('opacity',0);dot.attr('opacity',0);tt.style.display='none';});
+      // Hover overlay
+      const tt=document.getElementById('chartTT');
+      const crossV=g.append('line').attr('y1',0).attr('y2',iH).attr('stroke','#666').attr('stroke-dasharray','3').attr('opacity',0);
+      const dot=g.append('circle').attr('r',3.5).attr('fill',c.color).attr('stroke','#111').attr('stroke-width',1.5).attr('opacity',0);
+      g.append('rect').attr('width',iW).attr('height',iH).attr('fill','transparent')
+        .on('mousemove',(e)=>{
+          const [mx]=d3.pointer(e);
+          const date=xScale.invert(mx);
+          const bi=d3.bisector(d=>d.date).left;
+          const ii=bi(data,date,1);
+          const dpt=(data[ii]&&date-data[ii-1]?.date>data[ii].date-date)?data[ii]:data[ii-1];
+          if(!dpt) return;
+          crossV.attr('x1',xScale(dpt.date)).attr('x2',xScale(dpt.date)).attr('opacity',.7);
+          dot.attr('cx',xScale(dpt.date)).attr('cy',yScale(dpt.close)).attr('opacity',1);
+          const rect=wrap.getBoundingClientRect();
+          const chg=dpt.close-(data[0]?.close||dpt.close);
+          const pct2=chg/(data[0]?.close||dpt.close)*100;
+          tt.style.display='block';
+          tt.style.left=(rect.left+m.left+xScale(dpt.date)+12)+'px';
+          tt.style.top=(rect.top+m.top+yScale(dpt.close)-30)+'px';
+          tt.innerHTML=`<div class="ct-date">${d3.timeFormat(isIntraday?'%b %d %H:%M':'%b %d, %Y')(dpt.date)}</div>
+            <div style="font-weight:700">${fmt(dpt.close,dpt.close>1000?0:2)}</div>
+            <div style="font-size:11px;color:${clr(pct2)}">${sgn(chg)}${fmt(chg,0)} (${sgn(pct2)}${fmt(pct2)}%)</div>`;
+        })
+        .on('mouseleave',()=>{crossV.attr('opacity',0);dot.attr('opacity',0);tt.style.display='none';});
+    }catch(drawErr){
+      console.error('[overview chart draw]',c.sym, drawErr);
+      wrap.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--neg);font-size:11px">Chart error</div>`;
+    }
   });
 }
 
