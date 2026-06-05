@@ -2839,19 +2839,19 @@ const MKT={
       }
 
       // Fetch authoritative India boundary (Survey of India claimed line)
-      // via jsDelivr CDN (mirrors datameet/maps — reliable, no rate limits).
-      // If it fails, we just show the 110m topojson shape which is correct
-      // for mainland India + Arunachal Pradesh — no fake rectangles.
-      if(IS_SERVED){
-        try{
-          const claimed=await fetch('/api/geodata?src=india-claimed',
-            {signal:AbortSignal.timeout(12_000)}).then(r=>r.json());
-          if(claimed&&claimed.type) drawGeoJSONAsSVG(claimed,'#FF9933','#FF9933');
-        }catch(geoErr){
-          console.warn('[geodata] India claimed boundary unavailable — showing 110m shape only:',geoErr.message);
-          // Intentionally no fallback: the base 110m path for id=356 is already
-          // rendered in layer 2. Showing no overlay is cleaner than rectangles.
+      // via jsDelivr CDN — works on GitHub Pages and any static host.
+      // If it fails, the 110m topojson shape for id=356 is already rendered.
+      try{
+        const r=await fetch(
+          'https://cdn.jsdelivr.net/gh/datameet/maps/Country/india-composite.geojson',
+          {signal:AbortSignal.timeout(12_000)}
+        );
+        if(r.ok){
+          const claimed=await r.json();
+          if(claimed?.type) drawGeoJSONAsSVG(claimed,'#FF9933','#FF9933');
         }
+      }catch(geoErr){
+        console.warn('[geodata] India claimed boundary unavailable:',geoErr.message);
       }
 
       // ── Financial city markers — glowing pulse rings ──────────────
