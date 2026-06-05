@@ -3001,41 +3001,74 @@ async function drawOverviewCharts(){
     if(!wrap) return;
 
     let data=null;
-    // ── Yahoo Finance v8 browser fetch (works without a server) ──
     const gcEffInterval = interval||'1d';
-    try{
-      const yfRange = (period==='CUSTOM'&&customFrom&&customTo)
-        ? (() => {
-            const days=Math.round((new Date(customTo)-new Date(customFrom))/864e5);
-            return days<=5?'5d':days<=30?'1mo':days<=90?'3mo':days<=365?'1y':'2y';
-          })()
-        : (MKT._yfPeriod?.(period)||'1mo');
-      const yfSym = encodeURIComponent(c.sym);
-      const yfUrl = `https://query2.finance.yahoo.com/v8/finance/chart/${yfSym}?interval=${gcEffInterval}&range=${yfRange}&corsDomain=finance.yahoo.com`;
-      const r = await fetch(yfUrl, {
-        signal: AbortSignal.timeout(12000),
-        headers: {'Accept':'application/json'}
-      });
-      if(r.ok){
-        const json = await r.json();
-        const result = json?.chart?.result?.[0];
-        if(result){
-          const ts = result.timestamp || [];
-          const q  = result.indicators?.quote?.[0] || {};
-          const adj = result.indicators?.adjclose?.[0]?.adjclose;
-          data = ts.map((t,i)=>({
-            date:  new Date(t*1000),
-            open:  q.open?.[i]  ?? null,
-            high:  q.high?.[i]  ?? null,
-            low:   q.low?.[i]   ?? null,
-            close: (adj?.[i] ?? q.close?.[i]) ?? null,
-            vol:   q.volume?.[i]?? 0
-          })).filter(b => b.close != null);
-          // headers are owned by refreshOverviewPrices() — don't touch them here
+
+    // ── Supabase index_ohlc_daily (primary — all periods except 1D intraday) ──
+    if(period !== '1D' && _sb && c.sym !== '^BSESN'){
+      try{
+        const fromDate = (period==='CUSTOM'&&customFrom) ? customFrom : (() => {
+          const d=new Date();
+          const days={'5D':7,'1M':31,'3M':92,'6M':183,'1Y':366,'2Y':732,'5Y':1827}[period]||31;
+          d.setDate(d.getDate()-days);
+          return d.toISOString().slice(0,10);
+        })();
+        let q=_sb.from('index_ohlc_daily')
+          .select('date,open,high,low,close,volume')
+          .eq('sym',c.sym)
+          .gte('date',fromDate)
+          .order('date',{ascending:true});
+        if(period==='CUSTOM'&&customTo) q=q.lte('date',customTo);
+        const {data:sbData,error:sbErr}=await q;
+        if(!sbErr&&sbData?.length){
+          data=sbData.map(r=>({
+            date:  new Date(r.date),
+            open:  r.open  ??null,
+            high:  r.high  ??null,
+            low:   r.low   ??null,
+            close: r.close ??null,
+            vol:   r.volume??0
+          }));
         }
+      }catch(sbErr){
+        console.warn('[overview chart SB]',c.sym,sbErr.message);
       }
-    }catch(yfErr){
-      console.warn('[overview chart YF]',c.sym, yfErr.message);
+    }
+
+    // ── Yahoo Finance fallback (1D intraday, Sensex, or if Supabase returned nothing) ──
+    if(!data||!data.length){
+      try{
+        const yfRange = (period==='CUSTOM'&&customFrom&&customTo)
+          ? (() => {
+              const days=Math.round((new Date(customTo)-new Date(customFrom))/864e5);
+              return days<=5?'5d':days<=30?'1mo':days<=90?'3mo':days<=365?'1y':'2y';
+            })()
+          : (MKT._yfPeriod?.(period)||'1mo');
+        const yfSym = encodeURIComponent(c.sym);
+        const yfUrl = `https://query2.finance.yahoo.com/v8/finance/chart/${yfSym}?interval=${gcEffInterval}&range=${yfRange}&corsDomain=finance.yahoo.com`;
+        const r = await fetch(yfUrl, {
+          signal: AbortSignal.timeout(12000),
+          headers: {'Accept':'application/json'}
+        });
+        if(r.ok){
+          const json = await r.json();
+          const result = json?.chart?.result?.[0];
+          if(result){
+            const ts = result.timestamp || [];
+            const q  = result.indicators?.quote?.[0] || {};
+            const adj = result.indicators?.adjclose?.[0]?.adjclose;
+            data = ts.map((t,i)=>({
+              date:  new Date(t*1000),
+              open:  q.open?.[i]  ?? null,
+              high:  q.high?.[i]  ?? null,
+              low:   q.low?.[i]   ?? null,
+              close: (adj?.[i] ?? q.close?.[i]) ?? null,
+              vol:   q.volume?.[i]?? 0
+            })).filter(b => b.close != null);
+          }
+        }
+      }catch(yfErr){
+        console.warn('[overview chart YF]',c.sym, yfErr.message);
+      }
     }
 
     // Fallback simulation
