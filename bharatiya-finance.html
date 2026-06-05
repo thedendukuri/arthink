@@ -3466,6 +3466,8 @@ function renderSbIdx(){
   document.getElementById('sbIdx').innerHTML=REGIONS_DEF[0].indices.map(i=>{
     const d=ID_DATA[i.sym]||{price:i.base,pct:0};
     const cls=d.pct>0.005?'pos':d.pct<-0.005?'neg':'flat';
+    // Show pct only if data came from Supabase (live:true); otherwise show '—'
+    const pctStr=d.live?`${sgn(d.pct)}${fmt(d.pct)}%`:'—';
     return`<div class="idx2" onclick="goToIndex('${i.sym}','india')">
       <div class="idx2-bar" style="background:${i.color}"></div>
       <div class="idx2-info">
@@ -3475,7 +3477,7 @@ function renderSbIdx(){
       <div class="idx2-spark" data-sbspark="${i.sym}">${spark(histI[i.sym]||[],76,30,1.4)}</div>
       <div class="idx2-right">
         <span class="idx2-price" data-sbprice="${i.sym}">${fmt(d.price)}</span>
-        <span class="idx2-chip ${cls}" data-sbpct="${i.sym}">${sgn(d.pct)}${fmt(d.pct)}%</span>
+        <span class="idx2-chip ${cls}" data-sbpct="${i.sym}">${pctStr}</span>
       </div>
     </div>`;
   }).join('');
@@ -4111,108 +4113,66 @@ const IST = {
   },
 
   async load() {
-    const tbody = document.getElementById('india-stocks-body');
+    const tbody   = document.getElementById('india-stocks-body');
     const countEl = document.getElementById('india-stocks-count');
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted);font-family:var(--mono);font-size:12px">Loading…</td></tr>`;
     document.getElementById('india-pagination').innerHTML = '';
 
-    const params = new URLSearchParams({
-      page: this.page,
-      limit: this.pageSize,
-      search: this.search,
-      exchange: this.exchange,
-      sector: this.sector,
-    });
+    if (!_sb) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--neg)">Live data unavailable — Supabase not connected.</td></tr>`;
+      countEl.textContent = '';
+      return;
+    }
 
     try {
-      const res  = await fetch(`/api/markets/india/stocks?${params}`, { signal: AbortSignal.timeout(10_000) });
-      const data = await res.json();
+      const from = (this.page - 1) * this.pageSize;
+      const to   = from + this.pageSize - 1;
 
-      if (data.loading) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted);font-family:var(--mono);font-size:12px">
-          <div style="margin-bottom:10px">⏳ Server is starting up, fetching stock list…</div>
-          <div style="font-size:11px">This only happens once. Page will refresh automatically.</div>
-        </td></tr>`;
-        countEl.textContent = 'Loading…';
-        setTimeout(() => this.load(), 4000); // retry in 4s
-        return;
-      }
-      if (!data.stocks?.length) {
+      let query = _sb.from('stock_prices')
+        .select('sym,price,chg,pct,volume', { count: 'exact' });
+
+      if (this.search) query = query.ilike('sym', `%${this.search}%`);
+      query = query.order('sym', { ascending: true }).range(from, to);
+
+      const { data, error, count } = await query;
+
+      if (error) throw new Error(error.message);
+      if (!data?.length) {
         tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--muted)">No companies match your filters.</td></tr>`;
         countEl.textContent = '';
         return;
       }
 
-      this.totalPages = data.pages;
-      this.total = data.total;
-      this._currentSyms = data.stocks.map(s => s.sym);
+      this.total      = count ?? data.length;
+      this.totalPages = Math.max(1, Math.ceil(this.total / this.pageSize));
+      this._currentSyms = data.map(s => s.sym);
 
-      // Populate sector dropdown once
-      if (data.sectors?.length && this.sectors.length === 0) {
-        this.sectors = data.sectors;
-        const sel = document.getElementById('india-sector-filter');
-        const cur = sel.value;
-        sel.innerHTML = '<option value="">All Sectors</option>' +
-          data.sectors.map(s => `<option value="${escH(s)}"${s===cur?' selected':''}>${escH(s)}</option>`).join('');
-      }
+      const searchLabel = this.search ? ` · "${escH(this.search)}"` : '';
+      countEl.textContent = `${fmtN(this.total)} NSE stocks${searchLabel} · page ${this.page} of ${this.totalPages}`;
 
-      const cur = this.exchange || 'NSE+BSE';
-      countEl.textContent = `${fmtN(data.total)} companies · ${cur} · page ${data.page} of ${data.pages}`;
-
-      // Render rows with price placeholders
-      tbody.innerHTML = data.stocks.map(s => `
-        <tr style="cursor:pointer" onclick="goToStock('${escH(s.sym)}','india')">
-          <td><b style="font-family:var(--mono);font-size:12px">${escH(s.shortSym)}</b></td>
-          <td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escH(s.name)}</td>
-          <td><span style="font-size:10px;padding:2px 5px;background:${s.exchange==='NSE'?'rgba(255,153,51,.15)':'rgba(59,130,246,.15)'};color:${s.exchange==='NSE'?'var(--accent)':'#60a5fa'};font-weight:700">${s.exchange}</span></td>
-          <td class="tr price-loading" id="p-${s.sym.replace(/\./g,'-')}">—</td>
-          <td class="tr price-loading" id="c-${s.sym.replace(/\./g,'-')}">—</td>
-          <td class="tr price-loading" id="v-${s.sym.replace(/\./g,'-')}">—</td>
-          <td class="tr price-loading" id="m-${s.sym.replace(/\./g,'-')}">—</td>
-        </tr>`).join('');
+      tbody.innerHTML = data.map(s => {
+        const pct = s.pct != null ? +s.pct : null;
+        const col = pct == null ? 'var(--muted)' : pct >= 0 ? 'var(--pos)' : 'var(--neg)';
+        return `<tr style="cursor:pointer" onclick="goToStock('${escH(s.sym)}','india')">
+          <td><b style="font-family:var(--mono);font-size:12px">${escH(s.sym)}</b></td>
+          <td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted);font-size:11px">NSE Equity</td>
+          <td><span style="font-size:10px;padding:2px 5px;background:rgba(255,153,51,.15);color:var(--accent);font-weight:700">NSE</span></td>
+          <td class="tr"><b>${s.price != null ? '₹'+fmt(+s.price) : '—'}</b></td>
+          <td class="tr" style="color:${col};font-weight:700">${pct != null ? sgn(pct)+fmt(pct)+'%' : '—'}</td>
+          <td class="tr">${s.volume != null ? fmtVol(+s.volume) : '—'}</td>
+          <td class="tr">—</td>
+        </tr>`;
+      }).join('');
 
       this.renderPagination();
-
-      // Kick off price fetch
-      clearTimeout(this._priceTimer);
-      this._priceTimer = setTimeout(() => this.fetchPrices(), 50);
-
     } catch(e) {
       tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--neg)">Failed to load: ${escH(e.message)}</td></tr>`;
     }
   },
 
-  async fetchPrices() {
-    if (!this._currentSyms.length) return;
-    try {
-      const syms = this._currentSyms.join(',');
-      const res  = await fetch(`/api/markets/india/prices?syms=${encodeURIComponent(syms)}`, { signal: AbortSignal.timeout(15_000) });
-      if (!res.ok) return;
-      const prices = await res.json();
-
-      for (const [sym, p] of Object.entries(prices)) {
-        const id = sym.replace(/\./g, '-');
-        const pEl = document.getElementById(`p-${id}`);
-        const cEl = document.getElementById(`c-${id}`);
-        const vEl = document.getElementById(`v-${id}`);
-        const mEl = document.getElementById(`m-${id}`);
-        if (!pEl) continue;
-
-        const price = p.price;
-        const pct   = p.pct;
-        const col   = pct == null ? 'var(--muted)' : pct >= 0 ? 'var(--pos)' : 'var(--neg)';
-
-        if (pEl) pEl.innerHTML = price != null ? `<b>₹${fmt(price)}</b>` : '—';
-        if (cEl) {
-          cEl.style.color = col;
-          cEl.style.fontWeight = '700';
-          cEl.textContent = pct != null ? `${sgn(pct)}${fmt(pct)}%` : '—';
-        }
-        if (vEl) vEl.textContent = p.vol != null ? fmtVol(p.vol) : '—';
-        if (mEl) mEl.textContent = p.mktCap != null ? fmtCap(p.mktCap) : '—';
-      }
-    } catch {}
-  },
+  // fetchPrices() no longer needed — prices are inline from Supabase.
+  // Kept as no-op so any lingering setTimeout calls don't throw.
+  async fetchPrices() {},
 
   renderPagination() {
     const pg  = this.page;
@@ -4967,7 +4927,8 @@ async function fetchLiveIndices(){
     if(error||!data?.length) return false;
     data.forEach(q=>{
       if(q.price==null) return;
-      ID_DATA[q.sym]={price:+(q.price||0),chg:+(q.chg||0),pct:+(q.pct||0)};
+      // live:true flag lets renderSbIdx distinguish real data from stale base values
+      ID_DATA[q.sym]={price:+(q.price||0),chg:+(q.chg||0),pct:+(q.pct||0),live:true};
     });
     console.log(`[fetchLiveIndices] loaded ${data.length} index prices`);
     return true;
@@ -5758,7 +5719,7 @@ function updateSbIdx(){
     const ce=document.querySelector(`[data-sbpct="${i.sym}"]`);
     const se=document.querySelector(`[data-sbspark="${i.sym}"]`);
     if(pe){pe.textContent=fmt(d.price); if(dir)flashEl(pe,dir);}
-    if(ce){ce.textContent=`${sgn(d.pct)}${fmt(d.pct)}%`;ce.className=`idx2-chip ${d.pct>0.005?'pos':d.pct<-0.005?'neg':'flat'}`;}
+    if(ce){ce.textContent=d.live?`${sgn(d.pct)}${fmt(d.pct)}%`:'—';ce.className=`idx2-chip ${d.pct>0.005?'pos':d.pct<-0.005?'neg':'flat'}`;}
     if(se) se.innerHTML=spark(histI[i.sym]||[],76,30,1.4);
   });
 }
