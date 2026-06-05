@@ -3033,24 +3033,7 @@ async function drawOverviewCharts(){
             close: (adj?.[i] ?? q.close?.[i]) ?? null,
             vol:   q.volume?.[i]?? 0
           })).filter(b => b.close != null);
-          if(data.length){
-            // Update the price/chg header from YF only if Supabase doesn't already
-            // have a live value for this symbol (Supabase covers NSE indices; YF
-            // covers GSPC, IXIC, BSESN which aren't in index_prices).
-            const liveD = ID_DATA[c.sym];
-            if(!liveD?.live){
-              const last=data[data.length-1];
-              const first=data[0];
-              const priceEl=document.getElementById(`gc-price-${c.sym.replace(/[\^\.]/g,'_')}`);
-              const chgEl  =document.getElementById(`gc-chg-${c.sym.replace(/[\^\.]/g,'_')}`);
-              if(priceEl) priceEl.textContent=fmt(last.close, last.close>1000?0:2);
-              if(chgEl){
-                const pct=(last.close-first.open)/first.open*100;
-                chgEl.textContent=`${sgn(pct)}${fmt(pct)}%`;
-                chgEl.className=`chart-card-chg ${pct>=0?'pos':'neg'}`;
-              }
-            }
-          }
+          // headers are owned by refreshOverviewPrices() — don't touch them here
         }
       }
     }catch(yfErr){
@@ -5926,8 +5909,9 @@ function updateDetailLive(){
     if(okIdx||ok){
       updateSbIdx();        // flash sidebar indices (uses ID_DATA)
     }
-    // Refresh overview card prices if the overview grid is currently visible
+    // Redraw overview charts + refresh prices if the overview is currently visible
     if(document.getElementById('overviewChartGrid')?.closest('.view')?.classList.contains('active')){
+      await drawOverviewCharts();
       refreshOverviewPrices();
     }
   },60000);
