@@ -52,9 +52,14 @@ button{cursor:pointer;font-family:inherit}
 .lf1{flex:1;background:#FF9933}.lf2{flex:1;background:#fff;display:flex;align-items:center;justify-content:center;font-size:6px;font-weight:900;color:#000080}.lf3{flex:1;background:#138808}
 .logo-name{font-family:var(--serif);font-size:18px;font-weight:700;color:#3d1a00;white-space:nowrap;font-style:italic}
 .logo-name em{color:#138808;font-style:italic}.logo-dot{color:#138808}
-.hdr-right{display:flex;align-items:center;gap:8px;margin-left:auto}
+.nav{display:flex;flex:1;padding-left:10px;overflow:hidden}
+.nav a{color:rgba(255,255,255,.92);font-size:13px;font-weight:500;letter-spacing:.01px;padding:0 15px;height:52px;display:flex;align-items:center;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s,opacity .15s;cursor:pointer;text-decoration:none}
+.nav a:hover{color:#fff;opacity:1}
+#nav-alpha{color:#fff!important;font-weight:700;text-shadow:0 0 8px rgba(255,255,255,.5)}
+.hdr-right{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0}
 .theme-btn{background:none;border:1px solid rgba(0,0,0,.2);width:30px;height:30px;display:flex;align-items:center;justify-content:center;color:rgba(0,0,0,.55);font-size:13px}
 .theme-btn:hover{border-color:#138808;color:#138808}
+.signin-btn{background:#1a0a00;color:#FF9933;border:none;padding:5px 14px;font-size:11px;font-weight:600;letter-spacing:.2px;text-transform:uppercase;white-space:nowrap;cursor:pointer}
 
 /* Symbol Bar */
 .sym-bar{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:55px;z-index:400}
@@ -150,8 +155,17 @@ button{cursor:pointer;font-family:inherit}
     <div class="logo-flag"><div class="lf1"></div><div class="lf2">⊙</div><div class="lf3"></div></div>
     <span class="logo-name"><em>p</em>rvaaha<span class="logo-dot">.</span></span>
   </div>
+  <nav class="nav">
+    <a href="/">Home</a>
+    <a href="/#markets">Markets</a>
+    <a href="/#news">News</a>
+    <a href="/#alpha" id="nav-alpha">Alpha ✦</a>
+    <a href="/#crypto">Crypto</a>
+    <a href="/#watchlist">Watchlist</a>
+  </nav>
   <div class="hdr-right">
     <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">◐</button>
+    <button class="signin-btn" id="auth-btn" onclick="location.href='/'">Sign In</button>
   </div>
 </header>
 
