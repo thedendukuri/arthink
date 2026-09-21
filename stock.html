@@ -632,8 +632,9 @@ function showUserDropdown(){
       <div style="font-size:10px;color:var(--muted);margin-top:2px">${USER.email}</div>
       <div style="margin-top:6px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#FF9933">✦ Full Access Unlocked</div>
     </div>
-    ${ddItem('Home','location.href=\'/\'')}
+    ${ddItem('My Profile','location.href=\'/?goto=profile\'')}
     ${ddItem('Watchlist','location.href=\'/#watchlist\'')}
+    ${ddItem('Settings','location.href=\'/?goto=settings\'')}
     <div style="height:1px;background:var(--border);margin:2px 0"></div>
     ${ddItem('Sign Out','if(confirm(\'Sign out of prvaaha.?\'))amSignOut()','var(--neg)')}
   `;

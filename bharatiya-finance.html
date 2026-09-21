@@ -4592,6 +4592,11 @@ function goToStock(sym,fromSection){
 
 // Restore position on reload from URL hash
 function restoreFromHash(){
+  // Handle ?goto= deep-links from stock/index detail pages
+  const goto=new URLSearchParams(window.location.search).get('goto');
+  if(goto==='profile'){ history.replaceState(null,'','/'); showSection('profile'); return; }
+  if(goto==='settings'){ history.replaceState(null,'','/'); showSection('profile',null,()=>setTimeout(()=>PROF?.tab('settings'),80)); return; }
+
   const h=window.location.hash.slice(1);
   if(!h||h==='home') return; // default
   const navEl=document.querySelector('.nav a:nth-child(2)');
