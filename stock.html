@@ -603,17 +603,42 @@ async function initAuth(){
 function updateAuthBtn(){
   const btn=document.getElementById('auth-btn');
   if(!btn) return;
+  document.getElementById('stk-user-dd')?.remove();
   if(USER){
     const name=(USER.user_metadata?.name||USER.email.split('@')[0]);
     const ini=name.slice(0,2).toUpperCase();
-    btn.innerHTML=`<span style="display:inline-flex;align-items:center;gap:6px">
-      <span style="background:#138808;color:#fff;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800">${ini}</span>
-      ${name.split(' ')[0]}</span>`;
-    btn.onclick=amSignOut;
+    btn.innerHTML=`<span style="display:inline-flex;align-items:center;gap:6px"><span style="background:#138808;color:#fff;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800">${ini}</span>${name.split(' ')[0]}<span style="font-size:9px;opacity:.5">▾</span></span>`;
+    btn.style.cssText='background:rgba(255,153,51,.15);border:1px solid rgba(255,153,51,.3);color:#FF9933;padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap';
+    btn.onclick=(e)=>{e.stopPropagation();showUserDropdown();};
   } else {
     btn.innerHTML='Sign In';
+    btn.style.cssText='';
     btn.onclick=openAuthModal;
   }
+}
+function showUserDropdown(){
+  const existing=document.getElementById('stk-user-dd');
+  if(existing){existing.remove();return;}
+  const btn=document.getElementById('auth-btn');
+  const r=btn.getBoundingClientRect();
+  const dd=document.createElement('div');
+  dd.id='stk-user-dd';
+  dd.style.cssText=`position:fixed;top:${r.bottom+6}px;right:${window.innerWidth-r.right}px;background:var(--surface);border:1px solid var(--border2);min-width:200px;box-shadow:0 16px 48px rgba(0,0,0,.55);z-index:600;padding:4px 0;font-family:var(--sans)`;
+  const name=(USER.user_metadata?.name||USER.email.split('@')[0]);
+  const ddItem=(label,fn,color='var(--text)')=>`<button onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'" onclick="event.stopPropagation();${fn};document.getElementById('stk-user-dd')?.remove()" style="display:block;width:100%;text-align:left;padding:9px 16px;background:none;border:none;color:${color};font-size:11px;font-weight:600;cursor:pointer;letter-spacing:.2px">${label}</button>`;
+  dd.innerHTML=`
+    <div style="padding:12px 16px 10px;border-bottom:1px solid var(--border)">
+      <div style="font-size:12px;font-weight:700;color:var(--text)">${name}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:2px">${USER.email}</div>
+      <div style="margin-top:6px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#FF9933">✦ Full Access Unlocked</div>
+    </div>
+    ${ddItem('Home','location.href=\'/\'')}
+    ${ddItem('Watchlist','location.href=\'/#watchlist\'')}
+    <div style="height:1px;background:var(--border);margin:2px 0"></div>
+    ${ddItem('Sign Out','if(confirm(\'Sign out of prvaaha.?\'))amSignOut()','var(--neg)')}
+  `;
+  document.body.appendChild(dd);
+  setTimeout(()=>document.addEventListener('click',()=>dd.remove(),{once:true}),50);
 }
 
 function openAuthModal(){ document.getElementById('auth-modal').classList.add('open'); }
