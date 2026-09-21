@@ -1712,6 +1712,11 @@ const _sb = window.supabase?.createClient(
   'sb_publishable_Z8bb16ZVksxuZtl9FHC20Q_qQiUaeJZ'
 ) ?? null;
 
+// ── IS_SERVED ──────────────────────────────────
+// True when running on the Railway server (not opened as a local file).
+// Guards all /api/* fetch calls so they don't fire when previewing locally.
+const IS_SERVED = location.protocol !== 'file:';
+
 // ══════════════════════════════════════════════
 // DATA
 // ══════════════════════════════════════════════
@@ -1721,87 +1726,87 @@ const REGIONS_DEF = [
    // ISO numeric country IDs used in world-atlas
    countries:[356],
    indices:[
-    {sym:'^NSEI',    n:'Nifty 50',     s:'NIFTY',   base:24039, exch:'NSE', color:'#FF9933'},
-    {sym:'^BSESN',   n:'Sensex',       s:'SENSEX',  base:79012, exch:'BSE', color:'#a78bfa'},
-    {sym:'^NSEBANK', n:'Bank Nifty',   s:'BNIFTY',  base:52400, exch:'NSE', color:'#38bdf8'},
-    {sym:'^CNXIT',   n:'Nifty IT',     s:'NIFTYIT', base:36140, exch:'NSE', color:'#34d399'},
-    {sym:'^CNXAUTO', n:'Nifty Auto',   s:'AUTO',    base:22480, exch:'NSE', color:'#fb923c'},
-    {sym:'^CNXPHARMA',n:'Nifty Pharma',s:'PHARMA',  base:21620, exch:'NSE', color:'#f472b6'},
+    {sym:'^NSEI',    n:'Nifty 50',     s:'NIFTY',   base:25100, exch:'NSE', color:'#FF9933'},
+    {sym:'^BSESN',   n:'Sensex',       s:'SENSEX',  base:82500, exch:'BSE', color:'#a78bfa'},
+    {sym:'^NSEBANK', n:'Bank Nifty',   s:'BNIFTY',  base:54200, exch:'NSE', color:'#38bdf8'},
+    {sym:'^CNXIT',   n:'Nifty IT',     s:'NIFTYIT', base:38800, exch:'NSE', color:'#34d399'},
+    {sym:'^CNXAUTO', n:'Nifty Auto',   s:'AUTO',    base:23600, exch:'NSE', color:'#fb923c'},
+    {sym:'^CNXPHARMA',n:'Nifty Pharma',s:'PHARMA',  base:22900, exch:'NSE', color:'#f472b6'},
    ]},
   {id:'usa', name:'United States', emoji:'🇺🇸', flag:'https://flagcdn.com/24x18/us.png', color:'#3b82f6',
    countries:[840,124],
    indices:[
-    {sym:'^GSPC', n:'S&P 500',           s:'SPX',   base:5611,  exch:'NYSE',   color:'#3b82f6'},
-    {sym:'^IXIC', n:'NASDAQ Composite',  s:'COMP',  base:17716, exch:'NASDAQ', color:'#60a5fa'},
-    {sym:'^DJI',  n:'Dow Jones',         s:'DJIA',  base:41218, exch:'NYSE',   color:'#93c5fd'},
-    {sym:'^RUT',  n:'Russell 2000',      s:'RUT',   base:2032,  exch:'NYSE',   color:'#bfdbfe'},
+    {sym:'^GSPC', n:'S&P 500',           s:'SPX',   base:6150,  exch:'NYSE',   color:'#3b82f6'},
+    {sym:'^IXIC', n:'NASDAQ Composite',  s:'COMP',  base:19800, exch:'NASDAQ', color:'#60a5fa'},
+    {sym:'^DJI',  n:'Dow Jones',         s:'DJIA',  base:44200, exch:'NYSE',   color:'#93c5fd'},
+    {sym:'^RUT',  n:'Russell 2000',      s:'RUT',   base:2250,  exch:'NYSE',   color:'#bfdbfe'},
    ]},
   {id:'europe', name:'Europe', emoji:'🇪🇺', flag:'https://flagcdn.com/24x18/eu.png', color:'#8b5cf6',
    countries:[276,250,826,724,380,528,752,756,40,56,208,246,616,372,620,191,300,703,705,348],
    indices:[
-    {sym:'^FTSE',    n:'FTSE 100',     s:'UKX',   base:8347,  exch:'LSE',      color:'#8b5cf6'},
-    {sym:'^GDAXI',   n:'DAX',          s:'DAX',   base:21732, exch:'XETRA',    color:'#a78bfa'},
-    {sym:'^FCHI',    n:'CAC 40',       s:'CAC',   base:7706,  exch:'Euronext', color:'#c4b5fd'},
-    {sym:'^STOXX50E',n:'EURO STOXX 50',s:'SX5E',  base:5306,  exch:'Euronext', color:'#ddd6fe'},
-    {sym:'^IBEX',    n:'IBEX 35',      s:'IBEX',  base:13142, exch:'BME',      color:'#ede9fe'},
+    {sym:'^FTSE',    n:'FTSE 100',     s:'UKX',   base:8650,  exch:'LSE',      color:'#8b5cf6'},
+    {sym:'^GDAXI',   n:'DAX',          s:'DAX',   base:23400, exch:'XETRA',    color:'#a78bfa'},
+    {sym:'^FCHI',    n:'CAC 40',       s:'CAC',   base:7900,  exch:'Euronext', color:'#c4b5fd'},
+    {sym:'^STOXX50E',n:'EURO STOXX 50',s:'SX5E',  base:5450,  exch:'Euronext', color:'#ddd6fe'},
+    {sym:'^IBEX',    n:'IBEX 35',      s:'IBEX',  base:13600, exch:'BME',      color:'#ede9fe'},
    ]},
   {id:'japan', name:'Japan', emoji:'🇯🇵', flag:'https://flagcdn.com/24x18/jp.png', color:'#ec4899',
    countries:[392],
    indices:[
-    {sym:'^N225', n:'Nikkei 225', s:'N225', base:35617, exch:'TSE', color:'#ec4899'},
-    {sym:'^TOPX', n:'TOPIX',      s:'TOPX', base:2608,  exch:'TSE', color:'#f9a8d4'},
+    {sym:'^N225', n:'Nikkei 225', s:'N225', base:38500, exch:'TSE', color:'#ec4899'},
+    {sym:'^TOPX', n:'TOPIX',      s:'TOPX', base:2730,  exch:'TSE', color:'#f9a8d4'},
    ]},
   {id:'china', name:'Greater China', emoji:'🇨🇳', flag:'https://flagcdn.com/24x18/cn.png', color:'#ef4444',
    countries:[156,344,158],
    indices:[
-    {sym:'000001.SS', n:'Shanghai Composite', s:'SHCOMP', base:3296,  exch:'SSE',  color:'#ef4444'},
-    {sym:'399001.SZ', n:'Shenzhen Composite', s:'SZCOMP', base:9884,  exch:'SZSE', color:'#f87171'},
-    {sym:'^HSI',      n:'Hang Seng',          s:'HSI',    base:21971, exch:'HKEX', color:'#fca5a5'},
+    {sym:'000001.SS', n:'Shanghai Composite', s:'SHCOMP', base:3380,  exch:'SSE',  color:'#ef4444'},
+    {sym:'399001.SZ', n:'Shenzhen Composite', s:'SZCOMP', base:10400, exch:'SZSE', color:'#f87171'},
+    {sym:'^HSI',      n:'Hang Seng',          s:'HSI',    base:22800, exch:'HKEX', color:'#fca5a5'},
    ]},
   {id:'apac', name:'Asia-Pacific', emoji:'🌏', flag:'https://flagcdn.com/24x18/sg.png', color:'#14b8a6',
    countries:[36,702,410,458,764,104,360,608,704,554],
    indices:[
-    {sym:'^AXJO', n:'ASX 200',    s:'XJO',  base:7984, exch:'ASX', color:'#14b8a6'},
-    {sym:'^STI',  n:'Straits Times',s:'STI', base:3910, exch:'SGX', color:'#2dd4bf'},
-    {sym:'^KS11', n:'KOSPI',      s:'KS11', base:2481, exch:'KRX', color:'#5eead4'},
-    {sym:'^TWII', n:'TAIEX',      s:'TWII', base:21148,exch:'TWSE',color:'#99f6e4'},
+    {sym:'^AXJO', n:'ASX 200',    s:'XJO',  base:8250, exch:'ASX', color:'#14b8a6'},
+    {sym:'^STI',  n:'Straits Times',s:'STI', base:3980, exch:'SGX', color:'#2dd4bf'},
+    {sym:'^KS11', n:'KOSPI',      s:'KS11', base:2650, exch:'KRX', color:'#5eead4'},
+    {sym:'^TWII', n:'TAIEX',      s:'TWII', base:22500,exch:'TWSE',color:'#99f6e4'},
    ]},
   {id:'latam', name:'Latin America', emoji:'🌎', flag:'https://flagcdn.com/24x18/br.png', color:'#22c55e',
    countries:[76,484,152,32,604,858,170,218,591,340,222,320,558,188,214],
    indices:[
-    {sym:'^BVSP', n:'Ibovespa',   s:'BVSP', base:131400,exch:'B3',  color:'#22c55e'},
-    {sym:'^MXX',  n:'IPC Mexico', s:'MXX',  base:53680, exch:'BMV', color:'#4ade80'},
+    {sym:'^BVSP', n:'Ibovespa',   s:'BVSP', base:140000,exch:'B3',  color:'#22c55e'},
+    {sym:'^MXX',  n:'IPC Mexico', s:'MXX',  base:55200, exch:'BMV', color:'#4ade80'},
    ]},
 ];
 
 const STOCKS = [
-  {sym:'RELIANCE.NS', n:'Reliance Industries',  s:'RELIANCE',  sect:'Energy', base:2890, mcap:19.6, pe:26.4, hi52:3217, lo52:2199, region:'india'},
-  {sym:'TCS.NS',      n:'Tata Consultancy',     s:'TCS',       sect:'IT',     base:3720, mcap:13.5, pe:31.2, hi52:4592, lo52:3326, region:'india'},
-  {sym:'HDFCBANK.NS', n:'HDFC Bank',            s:'HDFCBANK',  sect:'Banking',base:1680, mcap:12.8, pe:18.6, hi52:1880, lo52:1363, region:'india'},
-  {sym:'INFY.NS',     n:'Infosys',              s:'INFY',      sect:'IT',     base:1490, mcap:6.2,  pe:24.8, hi52:2006, lo52:1351, region:'india'},
-  {sym:'ICICIBANK.NS',n:'ICICI Bank',           s:'ICICIBANK', sect:'Banking',base:1190, mcap:8.4,  pe:17.2, hi52:1380, lo52:943,  region:'india'},
-  {sym:'HINDUNILVR.NS',n:'Hindustan Unilever',  s:'HUL',       sect:'FMCG',   base:2380, mcap:5.6,  pe:56.2, hi52:2860, lo52:2162, region:'india'},
-  {sym:'ITC.NS',      n:'ITC Ltd',              s:'ITC',       sect:'FMCG',   base:450,  mcap:5.6,  pe:27.6, hi52:528,  lo52:399,  region:'india'},
-  {sym:'SBIN.NS',     n:'State Bank of Bhaarat',  s:'SBIN',      sect:'Banking',base:820,  mcap:7.3,  pe:9.8,  hi52:912,  lo52:600,  region:'india'},
-  {sym:'BAJFINANCE.NS',n:'Bajaj Finance',       s:'BAJFIN',    sect:'NBFC',   base:7200, mcap:4.4,  pe:32.1, hi52:8192, lo52:6187, region:'india'},
-  {sym:'WIPRO.NS',    n:'Wipro',                s:'WIPRO',     sect:'IT',     base:520,  mcap:2.7,  pe:21.4, hi52:622,  lo52:421,  region:'india'},
-  {sym:'MARUTI.NS',   n:'Maruti Suzuki',        s:'MARUTI',    sect:'Auto',   base:10800,mcap:3.2,  pe:29.3, hi52:13680,lo52:9849, region:'india'},
-  {sym:'SUNPHARMA.NS',n:'Sun Pharma',           s:'SUNPHARMA', sect:'Pharma', base:1550, mcap:3.7,  pe:34.6, hi52:1960, lo52:1310, region:'india'},
-  {sym:'LT.NS',       n:'Larsen & Toubro',      s:'LT',        sect:'Infra',  base:3550, mcap:5.1,  pe:38.2, hi52:3964, lo52:2747, region:'india'},
-  {sym:'TATASTEEL.NS',n:'Tata Steel',           s:'TATASTEEL', sect:'Metals', base:165,  mcap:2.1,  pe:14.2, hi52:187,  lo52:119,  region:'india'},
-  {sym:'ADANIPORTS.NS',n:'Adani Ports',         s:'ADANIPORTS',sect:'Infra',  base:1340, mcap:2.9,  pe:23.8, hi52:1608, lo52:1001, region:'india'},
-  {sym:'HCLTECH.NS',  n:'HCL Technologies',     s:'HCLTECH',   sect:'IT',     base:1580, mcap:4.3,  pe:27.3, hi52:2012, lo52:1311, region:'india'},
+  {sym:'RELIANCE.NS', n:'Reliance Industries',  s:'RELIANCE',  sect:'Energy', base:3100, mcap:20.8, pe:26.4, hi52:3400, lo52:2540, region:'india'},
+  {sym:'TCS.NS',      n:'Tata Consultancy',     s:'TCS',       sect:'IT',     base:4200, mcap:15.2, pe:31.2, hi52:4800, lo52:3600, region:'india'},
+  {sym:'HDFCBANK.NS', n:'HDFC Bank',            s:'HDFCBANK',  sect:'Banking',base:1920, mcap:14.6, pe:18.6, hi52:2100, lo52:1580, region:'india'},
+  {sym:'INFY.NS',     n:'Infosys',              s:'INFY',      sect:'IT',     base:1720, mcap:7.1,  pe:24.8, hi52:2100, lo52:1420, region:'india'},
+  {sym:'ICICIBANK.NS',n:'ICICI Bank',           s:'ICICIBANK', sect:'Banking',base:1360, mcap:9.6,  pe:17.2, hi52:1580, lo52:1080, region:'india'},
+  {sym:'HINDUNILVR.NS',n:'Hindustan Unilever',  s:'HUL',       sect:'FMCG',   base:2480, mcap:5.8,  pe:56.2, hi52:2920, lo52:2100, region:'india'},
+  {sym:'ITC.NS',      n:'ITC Ltd',              s:'ITC',       sect:'FMCG',   base:480,  mcap:6.0,  pe:27.6, hi52:560,  lo52:400,  region:'india'},
+  {sym:'SBIN.NS',     n:'State Bank of Bhaarat',  s:'SBIN',      sect:'Banking',base:880,  mcap:7.8,  pe:9.8,  hi52:980,  lo52:680,  region:'india'},
+  {sym:'BAJFINANCE.NS',n:'Bajaj Finance',       s:'BAJFIN',    sect:'NBFC',   base:8100, mcap:5.0,  pe:32.1, hi52:9000, lo52:6500, region:'india'},
+  {sym:'WIPRO.NS',    n:'Wipro',                s:'WIPRO',     sect:'IT',     base:580,  mcap:3.0,  pe:21.4, hi52:680,  lo52:450,  region:'india'},
+  {sym:'MARUTI.NS',   n:'Maruti Suzuki',        s:'MARUTI',    sect:'Auto',   base:12400,mcap:3.7,  pe:29.3, hi52:14200,lo52:10200,region:'india'},
+  {sym:'SUNPHARMA.NS',n:'Sun Pharma',           s:'SUNPHARMA', sect:'Pharma', base:1820, mcap:4.4,  pe:34.6, hi52:2200, lo52:1480, region:'india'},
+  {sym:'LT.NS',       n:'Larsen & Toubro',      s:'LT',        sect:'Infra',  base:3900, mcap:5.6,  pe:38.2, hi52:4400, lo52:3100, region:'india'},
+  {sym:'TATASTEEL.NS',n:'Tata Steel',           s:'TATASTEEL', sect:'Metals', base:178,  mcap:2.3,  pe:14.2, hi52:210,  lo52:130,  region:'india'},
+  {sym:'ADANIPORTS.NS',n:'Adani Ports',         s:'ADANIPORTS',sect:'Infra',  base:1500, mcap:3.2,  pe:23.8, hi52:1750, lo52:1120, region:'india'},
+  {sym:'HCLTECH.NS',  n:'HCL Technologies',     s:'HCLTECH',   sect:'IT',     base:1860, mcap:5.0,  pe:27.3, hi52:2200, lo52:1480, region:'india'},
 ];
 
 // All indices flattened
 const ALL_INDICES = REGIONS_DEF.flatMap(r => r.indices.map(i => ({...i, region:r.id, regionName:r.name, regionEmoji:r.emoji})));
 
 const COMMS=[
-  {icon:'🥇',n:'Gold',     unit:'₹/10g',    base:72400,d:2},
-  {icon:'🥈',n:'Silver',   unit:'₹/kg',     base:84200,d:0},
-  {icon:'🛢️',n:'Crude Oil',unit:'USD/bbl',  base:82.4, d:2},
-  {icon:'💵',n:'USD/INR',  unit:'per 1 USD',base:83.42,d:2},
-  {icon:'💶',n:'EUR/INR',  unit:'per 1 EUR',base:89.71,d:2},
+  {icon:'🥇',n:'Gold',     unit:'₹/10g',    base:88000,d:2},
+  {icon:'🥈',n:'Silver',   unit:'₹/kg',     base:96000,d:0},
+  {icon:'🛢️',n:'Crude Oil',unit:'USD/bbl',  base:74.5, d:2},
+  {icon:'💵',n:'USD/INR',  unit:'per 1 USD',base:84.80,d:2},
+  {icon:'💶',n:'EUR/INR',  unit:'per 1 EUR',base:93.50,d:2},
 ];
 
 const WORLD_LIST=[
@@ -4993,73 +4998,126 @@ const PROF = {
 
 // ══════════════════════════════════════════════
 // LIVE FETCH
-// Reads stock prices from Supabase stock_prices table.
-// Table is populated by the fetch-stock-prices edge function (runs every 15 min).
-// Falls back to simulation if Supabase is unavailable.
+// Reads stock prices from Supabase stock_prices table (primary).
+// Falls back to /api/movers (Railway server, NSE Direct) if table is empty.
+// Falls back to simulation if both sources fail.
 // ══════════════════════════════════════════════
 async function fetchLive(){
-  if(!_sb) return false; // no Supabase client — use simulation
-  try{
-    // 1. Pull sidebar stocks (16) for SD + sparkline updates
-    const sidebarSyms = STOCKS.map(s=>s.sym);
-    const {data:sideData, error:sideErr} = await _sb
-      .from('stock_prices')
-      .select('sym,price,chg,pct,volume')
-      .in('sym', sidebarSyms);
+  // ── Primary: Supabase stock_prices ──
+  let sbOk = false;
+  if(_sb){
+    try{
+      const sidebarSyms = STOCKS.map(s=>s.sym);
+      const {data:sideData, error:sideErr} = await _sb
+        .from('stock_prices')
+        .select('sym,price,chg,pct,volume')
+        .in('sym', sidebarSyms);
 
-    if(!sideErr && sideData?.length){
-      sideData.forEach(q=>{
-        if(q.price==null) return;
-        SD[q.sym]={price:+q.price, chg:+(q.chg||0), pct:+(q.pct||0), vol:+(q.volume||0)};
-        histS[q.sym]?.push(+q.price);
-        if(histS[q.sym]?.length>80) histS[q.sym].shift();
-      });
+      if(!sideErr && sideData?.length){
+        sideData.forEach(q=>{
+          if(q.price==null) return;
+          SD[q.sym]={price:+q.price, chg:+(q.chg||0), pct:+(q.pct||0), vol:+(q.volume||0)};
+          histS[q.sym]?.push(+q.price);
+          if(histS[q.sym]?.length>80) histS[q.sym].shift();
+        });
+      }
+
+      const toM=q=>({sym:q.sym,price:+(q.price||0),pct:+(q.pct||0),vol:+(q.volume||0)});
+      const [gainRes,loseRes,actRes]=await Promise.all([
+        _sb.from('stock_prices').select('sym,price,pct,volume')
+           .gt('pct',0).order('pct',{ascending:false}).limit(20),
+        _sb.from('stock_prices').select('sym,price,pct,volume')
+           .lt('pct',0).order('pct',{ascending:true}).limit(20),
+        _sb.from('stock_prices').select('sym,price,pct,volume')
+           .order('volume',{ascending:false}).limit(20),
+      ]);
+      if(gainRes.data?.length)  LIVE_MOVERS.gainers = gainRes.data.map(toM);
+      if(loseRes.data?.length)  LIVE_MOVERS.losers  = loseRes.data.map(toM);
+      if(actRes.data?.length)   LIVE_MOVERS.active  = actRes.data.map(toM);
+
+      // Supabase succeeded only if we actually got prices
+      sbOk = !!(sideData?.length || gainRes.data?.length);
+      if(sbOk) console.log(`[fetchLive] sb sidebar:${sideData?.length||0} gainers:${LIVE_MOVERS.gainers.length}`);
+    }catch(e){
+      console.warn('[fetchLive] Supabase error:', e.message);
     }
+  }
 
-    // 2. Pull top movers from the full ~2452-stock universe (3 parallel queries)
-    const toM=q=>({sym:q.sym,price:+(q.price||0),pct:+(q.pct||0),vol:+(q.volume||0)});
-    const [gainRes,loseRes,actRes]=await Promise.all([
-      _sb.from('stock_prices').select('sym,price,pct,volume')
-         .gt('pct',0).order('pct',{ascending:false}).limit(20),
-      _sb.from('stock_prices').select('sym,price,pct,volume')
-         .lt('pct',0).order('pct',{ascending:true}).limit(20),
-      _sb.from('stock_prices').select('sym,price,pct,volume')
-         .order('volume',{ascending:false}).limit(20),
-    ]);
-    if(gainRes.data?.length)  LIVE_MOVERS.gainers = gainRes.data.map(toM);
-    if(loseRes.data?.length)  LIVE_MOVERS.losers  = loseRes.data.map(toM);
-    if(actRes.data?.length)   LIVE_MOVERS.active  = actRes.data.map(toM);
-
-    console.log(`[fetchLive] sidebar:${sideData?.length||0} gainers:${LIVE_MOVERS.gainers.length} losers:${LIVE_MOVERS.losers.length}`);
-    return true;
-  }catch(e){
-    console.warn('[fetchLive] Supabase error:', e.message);
+  // ── Fallback: /api/movers (Railway server → NSE Direct) ──
+  // Used when Supabase stock_prices table is empty or unavailable.
+  if(!sbOk && IS_SERVED){
+    try{
+      const r=await fetch('/api/movers',{signal:AbortSignal.timeout(12000)});
+      if(r.ok){
+        const d=await r.json();
+        // Update sidebar SD from whatever movers overlap with STOCKS
+        const allMovers=[...(d.gainers||[]),...(d.losers||[]),...(d.active||[])];
+        const bySymRaw=new Map(allMovers.map(m=>[m.sym,m]));
+        STOCKS.forEach(s=>{
+          const m=bySymRaw.get(s.sym);
+          if(m){
+            SD[s.sym]={price:m.price,chg:0,pct:m.pct,vol:m.vol};
+            histS[s.sym]?.push(m.price);
+            if(histS[s.sym]?.length>80) histS[s.sym].shift();
+          }
+        });
+        if(d.gainers?.length) LIVE_MOVERS.gainers=d.gainers;
+        if(d.losers?.length)  LIVE_MOVERS.losers=d.losers;
+        if(d.active?.length)  LIVE_MOVERS.active=d.active;
+        console.log(`[fetchLive] api/movers scanned:${d.scanned||'?'} g:${LIVE_MOVERS.gainers.length} l:${LIVE_MOVERS.losers.length}`);
+        return true;
+      }
+    }catch(e){
+      console.warn('[fetchLive] /api/movers fallback failed:', e.message);
+    }
     return false;
   }
+
+  return sbOk;
 }
 
 // ══════════════════════════════════════════════
 // INDEX PRICES FETCH
 // Reads Nifty 50, Bank Nifty, sector indices etc.
-// from Supabase index_prices table (147 NSE indices).
+// Primary: Supabase index_prices table (populated by edge function).
+// Fallback: /api/indices (Railway server → NSE Direct + Yahoo).
 // Populates ID_DATA so renderSbIdx() shows live values.
 // ══════════════════════════════════════════════
 async function fetchLiveIndices(){
-  if(!_sb) return false;
+  // ── Primary: Supabase index_prices ──
+  if(_sb){
+    try{
+      const {data,error}=await _sb
+        .from('index_prices')
+        .select('sym,price,chg,pct');
+      if(!error && data?.length){
+        data.forEach(q=>{
+          if(q.price==null) return;
+          ID_DATA[q.sym]={price:+(q.price||0),chg:+(q.chg||0),pct:+(q.pct||0),live:true};
+        });
+        console.log(`[fetchLiveIndices] sb: ${data.length} index prices`);
+        return true;
+      }
+    }catch(e){
+      console.warn('[fetchLiveIndices] Supabase error:',e.message);
+    }
+  }
+
+  // ── Fallback: /api/indices (Railway server → NSE Direct / Yahoo) ──
+  if(!IS_SERVED) return false;
   try{
-    const {data,error}=await _sb
-      .from('index_prices')
-      .select('sym,price,chg,pct');
-    if(error||!data?.length) return false;
-    data.forEach(q=>{
-      if(q.price==null) return;
-      // live:true flag lets renderSbIdx distinguish real data from stale base values
+    const r=await fetch('/api/indices',{signal:AbortSignal.timeout(10000)});
+    if(!r.ok) return false;
+    const d=await r.json();
+    if(!d.quotes?.length) return false;
+    d.quotes.forEach(q=>{
+      if(!q.sym || q.price==null) return;
       ID_DATA[q.sym]={price:+(q.price||0),chg:+(q.chg||0),pct:+(q.pct||0),live:true};
     });
-    console.log(`[fetchLiveIndices] loaded ${data.length} index prices`);
+    console.log(`[fetchLiveIndices] api/indices: ${d.quotes.length} quotes`);
     return true;
   }catch(e){
-    console.warn('[fetchLiveIndices]',e.message);
+    console.warn('[fetchLiveIndices] /api/indices fallback failed:',e.message);
     return false;
   }
 }

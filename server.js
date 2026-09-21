@@ -1301,6 +1301,114 @@ app.get('/api/markets/india/prices', async (req, res) => {
   }
 });
 
+// ── GET /api/indices ─────────────────────────────────────────
+// Live prices for all 6 India sidebar indices.
+// Consumed by fetchLiveIndices() as fallback when Supabase index_prices is empty.
+// Response: { quotes: [{sym, price, chg, pct}], ts }
+// Cache: 20 seconds — fast enough for the 60-second UI refresh cycle.
+app.get('/api/indices', async (req, res) => {
+  const INDIA_INDEX_SYMS = ['^NSEI','^BSESN','^NSEBANK','^CNXIT','^CNXAUTO','^CNXPHARMA'];
+  const cacheKey = 'india-indices';
+  const cached = getCache(cacheKey, 20_000);
+  if (cached) return res.json(cached);
+
+  try {
+    const raw = await fetchQuotes(INDIA_INDEX_SYMS);
+    const quotes = raw
+      .filter(q => q?.symbol)
+      .map(q => ({
+        sym  : q.symbol,
+        price: q.regularMarketPrice   ?? 0,
+        chg  : q.regularMarketChange  ?? 0,
+        pct  : q.regularMarketChangePercent ?? 0,
+      }));
+    const payload = { quotes, ts: Date.now() };
+    setCache(cacheKey, payload);
+    res.json(payload);
+  } catch (err) {
+    console.error('[indices]', err.message);
+    const stale = getStale('india-indices');
+    if (stale) return res.json({ ...stale, _stale: true });
+    res.status(502).json({ error: err.message });
+  }
+});
+
+// ── GET /api/movers ───────────────────────────────────────────
+// Top gainers / losers / most-active from the NSE universe.
+// Consumed by fetchLive() as fallback when Supabase stock_prices is empty.
+// Scans the top ~100 NSE liquid stocks (Nifty 100 universe) via NSE Direct.
+// Response: { gainers, losers, active, scanned, ts }
+// Cache: 90 seconds (movers shift slowly intraday; NSE rate-limit friendly).
+
+// Top ~100 most-liquid NSE tickers (Nifty 50 + Nifty Next 50 core).
+// These get converted to .NS format for fetching. Keep this list tight —
+// each entry is a separate HTTP request to NSE Direct.
+const MOVERS_SEED = [
+  // Nifty 50
+  'RELIANCE','TCS','HDFCBANK','INFY','ICICIBANK','HINDUNILVR','ITC',
+  'SBIN','BHARTIARTL','KOTAKBANK','LT','AXISBANK','MARUTI','ASIANPAINT',
+  'HCLTECH','BAJFINANCE','SUNPHARMA','TITAN','BAJAJFINSV','WIPRO',
+  'ULTRACEMCO','ONGC','NESTLEIND','POWERGRID','TECHM','NTPC',
+  'INDUSINDBK','TATAMOTORS','GRASIM','JSWSTEEL','ADANIENT','TATASTEEL',
+  'ADANIPORTS','HINDALCO','COALINDIA','DIVISLAB','DRREDDY','CIPLA',
+  'APOLLOHOSP','EICHERMOT','HEROMOTOCO','BPCL','BRITANNIA','SBILIFE',
+  'BAJAJ-AUTO','M&M','HDFCLIFE','SHREECEM','TATACONSUM','UPL',
+  // Nifty Next 50 (high liquidity)
+  'ADANIGREEN','SIEMENS','ABB','HAVELLS','PIDILITIND','MARICO',
+  'BERGEPAINT','PAGEIND','TORNTPHARM','MUTHOOTFIN','LICHSGFIN','PNB',
+  'BANKBARODA','CANBK','UNIONBANK','INDIGO','IRCTC','DMART','JUBLFOOD',
+  'NYKAA','ZOMATO','POLICYBZR','LICI','ADANITRANS','ADANIPOWER',
+  'ATGL','LTIM','LTTS','MPHASIS','PERSISTENT','COFORGE','OFSS','KPIT',
+  'TATACOMM','TATACHEM','GODREJCP','GODREJPROP','DLF','PHOENIXLTD',
+  // Additional liquid mid-caps
+  'TVSMOTOR','ASHOKLEY','MOTHERSON','BOSCHLTD','BHARATFORG','MRF',
+  'APOLLOTYRE','BALKRISIND','FEDERALBNK','IDFCFIRSTB','BANDHANBNK',
+  'CHOLAFIN','MANAPPURAM','SBICARD','ABCAPITAL','TATAPOWER',
+].filter((v, i, a) => a.indexOf(v) === i); // deduplicate
+
+app.get('/api/movers', async (req, res) => {
+  const cacheKey = 'india-movers';
+  const cached = getCache(cacheKey, 90_000);
+  if (cached) return res.json(cached);
+
+  try {
+    const nsyms = MOVERS_SEED.map(s => s + '.NS');
+    const raw   = await nseQuotes(nsyms);
+
+    const quotes = raw
+      .filter(q => q?.regularMarketPrice != null && q.regularMarketPrice > 0)
+      .map(q => ({
+        sym  : q.symbol,
+        price: q.regularMarketPrice            ?? 0,
+        pct  : q.regularMarketChangePercent    ?? 0,
+        vol  : q.regularMarketVolume           ?? 0,
+      }));
+
+    const gainers = [...quotes]
+      .filter(q => q.pct > 0)
+      .sort((a, b) => b.pct - a.pct)
+      .slice(0, 20);
+
+    const losers = [...quotes]
+      .filter(q => q.pct < 0)
+      .sort((a, b) => a.pct - b.pct)
+      .slice(0, 20);
+
+    const active = [...quotes]
+      .sort((a, b) => b.vol - a.vol)
+      .slice(0, 20);
+
+    const payload = { gainers, losers, active, scanned: quotes.length, ts: Date.now() };
+    setCache(cacheKey, payload);
+    res.json(payload);
+  } catch (err) {
+    console.error('[movers]', err.message);
+    const stale = getStale('india-movers');
+    if (stale) return res.json({ ...stale, _stale: true });
+    res.status(502).json({ error: err.message });
+  }
+});
+
 // ── Start ────────────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`
