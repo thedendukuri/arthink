@@ -2153,7 +2153,7 @@ const MKT={
     // Index grid
     document.getElementById('regionIdxGrid').innerHTML=r.indices.map(i=>{
       const d=ID_DATA[i.sym]||{price:i.base,pct:0,chg:0};
-      return`<div class="idx-card" onclick="location.href='/index/${encodeURIComponent(i.sym)}'">
+      return`<div class="idx-card" onclick="goToIndex('${i.sym}','${r.id}')">
         <div class="idx-card-sym">${i.s} · ${i.exch}</div>
         <div class="idx-card-name" style="color:${i.color}">${i.n}</div>
         <div class="idx-card-price">${fmt(d.price)}</div>

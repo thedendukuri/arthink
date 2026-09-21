@@ -561,6 +561,12 @@ button{cursor:pointer;font-family:inherit}
 // ══════════════════════════════════════════════════════
 // DATA & STATE
 // ══════════════════════════════════════════════════════
+
+// ── IS_SERVED ──────────────────────────────────────────────────────────────
+// True when running on the Railway server (not opened as a local file).
+// Guards all /api/* fetch calls so they don't fire when previewing locally.
+const IS_SERVED = location.protocol !== 'file:';
+
 const SYM = decodeURIComponent(window.location.pathname.replace('/stock/','').replace(/\/$/,''));
 const _sb  = window.supabase.createClient(
   'https://hepkrvmhcbptoibzdwvg.supabase.co',
@@ -652,6 +658,15 @@ async function init(){
 
   await initAuth();
   if(!SYM){ document.getElementById('sym-ticker').textContent='No symbol'; return; }
+
+  if(!IS_SERVED){
+    // Running as a local file — API calls will fail; show a clear message instead
+    document.getElementById('sym-company').textContent='Open via the Railway server to load live data';
+    document.getElementById('sym-time').textContent='Local preview only';
+    const el=document.getElementById('overview-chart-el');
+    if(el){el.className='';el.innerHTML='<div class="error-state">Chart requires the Railway server — open via https://</div>';}
+    return;
+  }
 
   // Load summary + chart in parallel
   await Promise.all([
@@ -916,6 +931,7 @@ document.querySelectorAll('.tf-btn[data-tf]').forEach(btn=>{
 // ══════════════════════════════════════════════════════
 async function loadFinancials(){
   if(FIN_DATA) return;
+  if(!IS_SERVED){ FIN_DATA={}; return; }
   try{
     const r=await fetch(`/api/stock/${encodeURIComponent(SYM)}/financials`,{signal:AbortSignal.timeout(15000)});
     FIN_DATA=await r.json();
