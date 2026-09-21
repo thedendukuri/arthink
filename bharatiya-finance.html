@@ -966,36 +966,6 @@ body::after{display:none!important}
 .rise.in{opacity:1;transform:none}
 .rise.d1{transition-delay:.07s}.rise.d2{transition-delay:.14s}.rise.d3{transition-delay:.21s}.rise.d4{transition-delay:.28s}.rise.d5{transition-delay:.35s}
 
-/* ── Market pulse hero strip (home page) ── */
-.ps-mkt-pulse{
-  background:linear-gradient(135deg,#0a0906 0%,#100d07 60%,#0a0906 100%);
-  border-bottom:1px solid rgba(201,168,76,.16);
-  padding:18px 24px;position:relative;overflow:hidden;
-}
-.ps-mkt-pulse::before{
-  content:'';position:absolute;inset:0;
-  background:radial-gradient(ellipse 70% 120% at 50% 110%,rgba(201,168,76,.055),transparent);
-  pointer-events:none;
-}
-.ps-mkt-pulse-inner{
-  max-width:1440px;margin:0 auto;
-  display:flex;align-items:center;gap:28px;flex-wrap:wrap;position:relative;z-index:1;
-}
-.ps-mp-eyebrow{
-  font-size:8.5px;letter-spacing:.32em;text-transform:uppercase;
-  color:rgba(201,168,76,.6);display:flex;align-items:center;gap:10px;flex-shrink:0;
-}
-.ps-mp-eyebrow::before,.ps-mp-eyebrow::after{content:'';width:18px;height:1px;background:rgba(201,168,76,.35)}
-.ps-mp-indices{display:flex;gap:20px;flex-wrap:wrap;flex:1;min-width:0}
-.ps-mp-idx{display:flex;flex-direction:column;gap:1px;cursor:pointer;padding:4px 12px;border-left:1px solid rgba(201,168,76,.12);transition:background .2s}
-.ps-mp-idx:first-child{border-left:none}
-.ps-mp-idx:hover{background:rgba(201,168,76,.05)}
-.ps-mp-sym{font-size:8px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:rgba(201,168,76,.55);margin-bottom:2px}
-.ps-mp-val{font-family:'Pathway Gothic One',sans-serif;font-size:19px;font-weight:700;color:#f5f0e0;letter-spacing:-.3px;line-height:1}
-.ps-mp-chg{font-size:11px;font-weight:700;letter-spacing:.01em;margin-top:1px}
-.ps-mp-mkt{margin-left:auto;flex-shrink:0;display:flex;align-items:center;gap:8px;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(201,168,76,.55)}
-.ps-mp-dot{width:6px;height:6px;border-radius:50%;background:#6ee7a0;animation:blink 2s ease-in-out infinite;flex-shrink:0}
-
 /* ── Ticker dark ── */
 [data-theme="dark"] .tbar{background:#0a0906;border-bottom:1px solid rgba(201,168,76,.09)}
 [data-theme="dark"] .tbar::before{background:linear-gradient(to right,#0a0906 40%,transparent)}
@@ -1184,18 +1154,6 @@ body::after{display:none!important}
 <!-- ══ HOME ══ -->
 <div id="sec-home" class="section active">
   <div class="ps-home-outer">
-    <!-- ── Market Pulse cinematic strip ── -->
-    <div class="ps-mkt-pulse" id="mktPulseStrip">
-      <div class="ps-mkt-pulse-inner">
-        <div class="ps-mp-eyebrow">Market Pulse</div>
-        <div class="ps-mp-indices" id="mpIndicesRow">
-          <!-- populated by JS -->
-        </div>
-        <div class="ps-mp-mkt" id="mpMktStatus">
-          <span class="ps-mp-dot"></span><span id="mpMktLabel">NSE</span>
-        </div>
-      </div>
-    </div>
     <div class="ps-grid-overlay"></div>
     <div class="ps-home-inner">
 
@@ -6235,35 +6193,6 @@ function updateDetailLive(){
       refreshOverviewPrices();
     }
   },60000);
-
-  // ── Market Pulse strip population ──
-  function renderMktPulse(){
-    const row=document.getElementById('mpIndicesRow');
-    if(!row)return;
-    // Pull from REGIONS_DEF India indices (first 5)
-    const indiaIndices=REGIONS_DEF[0]?.indices||[];
-    const slots=indiaIndices.slice(0,5);
-    row.innerHTML=slots.map(idx=>{
-      const price=ID_DATA[idx.sym]?.price||idx.price||0;
-      const chg=ID_DATA[idx.sym]?.chg||idx.chg||0;
-      const pct=ID_DATA[idx.sym]?.pct||idx.pct||0;
-      const up=pct>=0;
-      return `<div class="ps-mp-idx" onclick="showSection('markets');setTimeout(()=>MKT&&MKT.showIndex&&MKT.showIndex('${idx.sym}'),120)">
-        <div class="ps-mp-sym">${idx.sym.replace(/\.NS$/,'').replace(/_/,' ')}</div>
-        <div class="ps-mp-val">${price>0?price.toLocaleString('en-IN',{maximumFractionDigits:2}):'—'}</div>
-        <div class="ps-mp-chg ${up?'pos':'neg'}">${up?'+':''}${pct.toFixed(2)}%</div>
-      </div>`;
-    }).join('');
-  }
-  renderMktPulse();
-  // Re-render after live data arrives
-  const _origFLI=window.fetchLiveIndices;
-  // Refresh pulse when sidebar indices are updated
-  const _origUSI=window.updateSbIdx;
-  if(typeof updateSbIdx==='function'){
-    const _savedUSI=updateSbIdx;
-    window.updateSbIdx=function(){_savedUSI.apply(this,arguments);renderMktPulse();};
-  }
 
   // ── Glass header scroll listener ──
   const _hdr=document.querySelector('header.hdr');
