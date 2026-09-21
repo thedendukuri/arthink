@@ -2153,7 +2153,7 @@ const MKT={
     // Index grid
     document.getElementById('regionIdxGrid').innerHTML=r.indices.map(i=>{
       const d=ID_DATA[i.sym]||{price:i.base,pct:0,chg:0};
-      return`<div class="idx-card" onclick="goToIndex('${i.sym}','${r.id}')">
+      return`<div class="idx-card" onclick="location.href='/index/${encodeURIComponent(i.sym)}'">
         <div class="idx-card-sym">${i.s} · ${i.exch}</div>
         <div class="idx-card-name" style="color:${i.color}">${i.n}</div>
         <div class="idx-card-price">${fmt(d.price)}</div>
@@ -4183,10 +4183,10 @@ function showSection(id,el,afterFn){
 }
 
 // Navigate to a specific index from anywhere
+// Routes to the full index-detail page (/index/:sym) which has the
+// complete chart, sidebars, constituents table and about tab.
 function goToIndex(sym,region){
-  const navEl=document.querySelector('.nav a:nth-child(2)');
-  history.replaceState(null,'','#index:'+sym+':'+region);
-  showSection('markets',navEl,()=>MKT.goIndex(sym,region));
+  location.href='/index/'+encodeURIComponent(sym);
 }
 
 // ══════════════════════════════════════════════
