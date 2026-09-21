@@ -4592,11 +4592,6 @@ function goToStock(sym,fromSection){
 
 // Restore position on reload from URL hash
 function restoreFromHash(){
-  // Handle ?goto= deep-links from stock/index detail pages
-  const goto=new URLSearchParams(window.location.search).get('goto');
-  if(goto==='profile'){ history.replaceState(null,'','/'); showSection('profile'); return; }
-  if(goto==='settings'){ history.replaceState(null,'','/'); showSection('profile',null,()=>setTimeout(()=>PROF?.tab('settings'),80)); return; }
-
   const h=window.location.hash.slice(1);
   if(!h||h==='home') return; // default
   const navEl=document.querySelector('.nav a:nth-child(2)');
@@ -5979,6 +5974,15 @@ function updateDetailLive(){
   // Auth — restore signed-in session (best-effort — must never block page render)
   try{ await AUTH.init(); }catch(e){ console.warn('[auth]',e.message); }
 
+  // Handle ?goto= deep-links from stock/index-detail pages.
+  // Do this BEFORE rendering home content so the wrong section never paints.
+  const _goto = new URLSearchParams(location.search).get('goto');
+  if(_goto){
+    history.replaceState(null,'','/');
+    const _sid = (_goto==='settings')?'profile':_goto;
+    SECS.forEach(s=>{const e=document.getElementById('sec-'+s);if(e)e.className='section'+(s===_sid?' active':'');});
+  }
+
   initData();
   renderHero();
   renderNews3();
@@ -6020,7 +6024,9 @@ function updateDetailLive(){
   }
 
   // Restore page position from URL hash (e.g. after reload)
-  restoreFromHash();
+  // Skip if we already handled a ?goto= deep-link above
+  if(!_goto) restoreFromHash();
+  else if(_goto==='profile'||_goto==='settings'){ PROF.render(); if(_goto==='settings') setTimeout(()=>PROF.tab('settings'),80); }
 
   // Every 60 seconds pull real API data, then flash-update everything
   setInterval(async ()=>{
