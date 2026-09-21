@@ -42,16 +42,7 @@
   --hdr:#0d0d0d;--map-ocean:#060d1e;--map-grid:#0e1f3e;
   --gold:#c9a84c;--paper:#f0d78c;--live:#c9a84c;
 }
-@media(prefers-color-scheme:light){
-  :root:not([data-theme="dark"]){
-    --bg:#ffffff;--surface:#ffffff;--surface2:#f6f6f6;
-    --border:#e0e0e0;--border2:#cccccc;--dim:#f0f0f0;
-    --text:#1b2029;--text2:#444444;--muted:#767676;
-    --pos:#0f7748;--neg:#d9363e;--accent:#c9a84c;--link:#0078d4;
-    --hdr:#0d0d0d;--map-ocean:#a8c8e8;--map-grid:#6ea8d0;
-    --gold:#c9a84c;--paper:#f0d78c;--live:#c9a84c;
-  }
-}
+/* Light OS preference intentionally not overriding — dark is default */
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:'Pathway Gothic One',sans-serif;line-height:1.55;font-size:14px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cursor:pointer;font-family:inherit}
@@ -906,9 +897,9 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 /* ── Source pills ── */
 .ns-pill.on{box-shadow:none;border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.07);transform:none}
 
-/* ── Region & index cards ── */
-.region-card,.idx-card,.chart-card{border:1px solid var(--border);box-shadow:none;transition:border-color .2s}
-.region-card:hover,.idx-card:hover,.chart-card:hover{border-color:var(--gold);box-shadow:none;transform:none}
+/* ── Region & index cards — light mode only (dark overrides below in glass block) ── */
+[data-theme="light"] .region-card,[data-theme="light"] .idx-card,[data-theme="light"] .chart-card{border:1px solid var(--border);box-shadow:none;transition:border-color .2s}
+[data-theme="light"] .region-card:hover,[data-theme="light"] .idx-card:hover,[data-theme="light"] .chart-card:hover{border-color:var(--gold);box-shadow:none;transform:none}
 
 /* ── Sidebar ── */
 .sidebar{box-shadow:none;border:1px solid var(--border)}
@@ -965,6 +956,189 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}button{cur
 
 /* ── No ambient glow ── */
 body::after{display:none!important}
+
+/* ══════════════════════════════════════════════
+   GLASS UI OVERHAUL — dark-first cinematic layer
+   ══════════════════════════════════════════════ */
+
+/* ── Scroll reveal ── */
+.rise{opacity:0;transform:translateY(28px);transition:opacity .85s cubic-bezier(.22,.61,.2,1),transform .95s cubic-bezier(.22,.61,.2,1)}
+.rise.in{opacity:1;transform:none}
+.rise.d1{transition-delay:.07s}.rise.d2{transition-delay:.14s}.rise.d3{transition-delay:.21s}.rise.d4{transition-delay:.28s}.rise.d5{transition-delay:.35s}
+
+/* ── Market pulse hero strip (home page) ── */
+.ps-mkt-pulse{
+  background:linear-gradient(135deg,#0a0906 0%,#100d07 60%,#0a0906 100%);
+  border-bottom:1px solid rgba(201,168,76,.16);
+  padding:18px 24px;position:relative;overflow:hidden;
+}
+.ps-mkt-pulse::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 70% 120% at 50% 110%,rgba(201,168,76,.055),transparent);
+  pointer-events:none;
+}
+.ps-mkt-pulse-inner{
+  max-width:1440px;margin:0 auto;
+  display:flex;align-items:center;gap:28px;flex-wrap:wrap;position:relative;z-index:1;
+}
+.ps-mp-eyebrow{
+  font-size:8.5px;letter-spacing:.32em;text-transform:uppercase;
+  color:rgba(201,168,76,.6);display:flex;align-items:center;gap:10px;flex-shrink:0;
+}
+.ps-mp-eyebrow::before,.ps-mp-eyebrow::after{content:'';width:18px;height:1px;background:rgba(201,168,76,.35)}
+.ps-mp-indices{display:flex;gap:20px;flex-wrap:wrap;flex:1;min-width:0}
+.ps-mp-idx{display:flex;flex-direction:column;gap:1px;cursor:pointer;padding:4px 12px;border-left:1px solid rgba(201,168,76,.12);transition:background .2s}
+.ps-mp-idx:first-child{border-left:none}
+.ps-mp-idx:hover{background:rgba(201,168,76,.05)}
+.ps-mp-sym{font-size:8px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:rgba(201,168,76,.55);margin-bottom:2px}
+.ps-mp-val{font-family:'Pathway Gothic One',sans-serif;font-size:19px;font-weight:700;color:#f5f0e0;letter-spacing:-.3px;line-height:1}
+.ps-mp-chg{font-size:11px;font-weight:700;letter-spacing:.01em;margin-top:1px}
+.ps-mp-mkt{margin-left:auto;flex-shrink:0;display:flex;align-items:center;gap:8px;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(201,168,76,.55)}
+.ps-mp-dot{width:6px;height:6px;border-radius:50%;background:#6ee7a0;animation:blink 2s ease-in-out infinite;flex-shrink:0}
+
+/* ── Ticker dark ── */
+[data-theme="dark"] .tbar{background:#0a0906;border-bottom:1px solid rgba(201,168,76,.09)}
+[data-theme="dark"] .tbar::before{background:linear-gradient(to right,#0a0906 40%,transparent)}
+[data-theme="dark"] .tbar::after{background:linear-gradient(to left,#0a0906 40%,transparent)}
+[data-theme="dark"] .t-sym{color:#f5f0e0}
+[data-theme="dark"] .t-price{color:rgba(245,240,224,.5)}
+[data-theme="dark"] .tick{border-right-color:rgba(201,168,76,.08)}
+[data-theme="dark"] .tick:hover{background:rgba(201,168,76,.05)}
+
+/* ── Status bar ── */
+.statusbar{color:rgba(245,240,224,.45);border-bottom:1px solid rgba(201,168,76,.08)}
+
+/* ── News hero glass ── */
+[data-theme="dark"] .ps-hero{
+  border:1px solid rgba(201,168,76,.13);
+  background:rgba(21,17,11,.75);
+  backdrop-filter:blur(8px);
+  transition:border-color .3s,transform .3s,box-shadow .3s;
+  margin-bottom:48px;
+}
+[data-theme="dark"] .ps-hero:hover{
+  border-color:rgba(201,168,76,.3);
+  box-shadow:0 16px 48px rgba(0,0,0,.5),0 0 0 1px rgba(201,168,76,.07);
+}
+[data-theme="dark"] .ps-hero-h{color:#efe7d6}
+[data-theme="dark"] .ps-hero-art:hover .ps-hero-h{color:var(--gold)}
+[data-theme="dark"] .ps-hero-excerpt{color:rgba(239,231,214,.6)}
+
+/* ── News 3-col cards glass ── */
+[data-theme="dark"] .ps-ng-card{
+  border-bottom:1px solid rgba(201,168,76,.1);
+  padding:0 0 18px;
+  transition:transform .25s;
+}
+[data-theme="dark"] .ps-ng-card:hover{transform:translateY(-2px)}
+[data-theme="dark"] .ps-ng-h{color:#efe7d6}
+[data-theme="dark"] .ps-newsgrid{border-top-color:rgba(201,168,76,.15);padding-top:28px}
+
+/* ── Opinions glass ── */
+[data-theme="dark"] .ps-op-card{
+  background:rgba(18,14,9,.85);
+  border-left:3px solid rgba(201,168,76,.45);
+  border-top:1px solid rgba(201,168,76,.09);
+  border-right:1px solid rgba(201,168,76,.05);
+  border-bottom:1px solid rgba(201,168,76,.05);
+  backdrop-filter:blur(6px);
+  transition:border-left-color .2s,transform .25s;
+}
+[data-theme="dark"] .ps-op-card:hover{
+  border-left-color:var(--gold);
+  transform:translateY(-2px);
+}
+[data-theme="dark"] .ps-op-title{color:#efe7d6}
+
+/* ── Sidebar panels glass ── */
+[data-theme="dark"] .ps-panel{
+  border:1px solid rgba(201,168,76,.13);
+  background:rgba(18,14,9,.82);
+  backdrop-filter:blur(12px);
+  transition:border-color .25s;
+}
+[data-theme="dark"] .ps-panel:hover{border-color:rgba(201,168,76,.26)}
+
+/* ── Region cards glass (markets) ── */
+[data-theme="dark"] .region-card{
+  background:rgba(18,14,9,.85);
+  border:1px solid rgba(201,168,76,.12);
+  backdrop-filter:blur(10px);
+  transition:border-color .3s,transform .3s,box-shadow .3s;
+}
+[data-theme="dark"] .region-card:hover{
+  border-color:rgba(201,168,76,.38);
+  transform:translateY(-3px);
+  box-shadow:0 14px 36px rgba(0,0,0,.45);
+}
+[data-theme="dark"] .rc-name{color:#efe7d6}
+[data-theme="dark"] .rc-idx-name{color:rgba(201,168,76,.5)}
+[data-theme="dark"] .rc-count{color:rgba(201,168,76,.4)}
+
+/* ── Chart cards glass (markets overview) ── */
+[data-theme="dark"] .chart-card{
+  background:rgba(15,12,8,.88);
+  border:1px solid rgba(201,168,76,.11);
+  backdrop-filter:blur(8px);
+  transition:border-color .3s,transform .3s,box-shadow .3s;
+}
+[data-theme="dark"] .chart-card:hover{
+  border-color:rgba(201,168,76,.3);
+  transform:translateY(-3px);
+  box-shadow:0 12px 32px rgba(0,0,0,.4);
+}
+[data-theme="dark"] .chart-card-title{color:#efe7d6}
+
+/* ── Index cards glass ── */
+[data-theme="dark"] .idx-card{
+  background:rgba(18,14,9,.85);
+  border:1px solid rgba(201,168,76,.11);
+  backdrop-filter:blur(8px);
+  transition:border-color .25s,transform .25s;
+}
+[data-theme="dark"] .idx-card:hover{
+  border-color:rgba(201,168,76,.33);
+  transform:translateY(-2px);
+}
+[data-theme="dark"] .idx-card-name{color:#efe7d6}
+
+/* ── Map container enhanced ── */
+[data-theme="dark"] .map-wrap{
+  border:1px solid rgba(201,168,76,.16);
+  box-shadow:0 0 60px rgba(0,80,180,.05) inset,0 6px 40px rgba(0,0,0,.5);
+}
+
+/* ── Global ctrl bar glass ── */
+[data-theme="dark"] .global-ctrl{
+  background:rgba(18,14,9,.8);
+  border-color:rgba(201,168,76,.12);
+}
+
+/* ── Section label lines (markets) ── */
+[data-theme="dark"] .label{color:rgba(201,168,76,.65);border-bottom-color:rgba(201,168,76,.14)}
+
+/* ── Home Top Stories header ── */
+[data-theme="dark"] .ps-ts-title{
+  font-size:9px;letter-spacing:.32em;text-transform:uppercase;color:rgba(201,168,76,.65);
+  display:flex;align-items:center;gap:14px;
+}
+[data-theme="dark"] .ps-ts-title::before{content:'';flex:none;width:22px;height:1px;background:rgba(201,168,76,.35)}
+[data-theme="dark"] .ps-ts-hdr{border-bottom-color:rgba(201,168,76,.14)}
+
+/* ── Opinions header ── */
+[data-theme="dark"] .ps-opinions{border-top-color:rgba(201,168,76,.15)}
+[data-theme="dark"] .ps-opinions-title{color:#efe7d6;letter-spacing:.12em}
+[data-theme="dark"] .ps-opinions-sub{color:rgba(201,168,76,.45)}
+
+/* ── Home outer backdrop ── */
+[data-theme="dark"] .ps-home-outer{background:var(--bg)}
+[data-theme="dark"] body{background:#0a0906}
+[data-theme="dark"] :root{--bg:#0a0906;--surface:#141109;--surface2:rgba(20,17,9,.9)}
+
+/* ── Mkt crumb ── */
+[data-theme="dark"] .mkt-crumb{border-bottom-color:rgba(201,168,76,.1)}
+[data-theme="dark"] .mkt-crumb span:hover{color:var(--gold)}
+[data-theme="dark"] .mkt-crumb .cur{color:#efe7d6}
 </style>
 </head>
 <body>
@@ -1010,6 +1184,18 @@ body::after{display:none!important}
 <!-- ══ HOME ══ -->
 <div id="sec-home" class="section active">
   <div class="ps-home-outer">
+    <!-- ── Market Pulse cinematic strip ── -->
+    <div class="ps-mkt-pulse" id="mktPulseStrip">
+      <div class="ps-mkt-pulse-inner">
+        <div class="ps-mp-eyebrow">Market Pulse</div>
+        <div class="ps-mp-indices" id="mpIndicesRow">
+          <!-- populated by JS -->
+        </div>
+        <div class="ps-mp-mkt" id="mpMktStatus">
+          <span class="ps-mp-dot"></span><span id="mpMktLabel">NSE</span>
+        </div>
+      </div>
+    </div>
     <div class="ps-grid-overlay"></div>
     <div class="ps-home-inner">
 
@@ -1029,17 +1215,17 @@ body::after{display:none!important}
             <span class="ps-opinions-sub">Analysis &amp; Perspective</span>
           </div>
           <div class="ps-opinions-grid" id="opinionsEl">
-            <div class="ps-op-card">
+            <div class="ps-op-card rise d1">
               <div class="ps-op-label">Opinion</div>
               <div class="ps-op-title">The RBI's rate pause is a calculated bet — and it might just pay off</div>
               <div class="ps-op-byline">Prvaaha Editorial · Coming Soon</div>
             </div>
-            <div class="ps-op-card">
+            <div class="ps-op-card rise d2">
               <div class="ps-op-label">Analysis</div>
               <div class="ps-op-title">Why India's current account deficit is less alarming than it looks</div>
               <div class="ps-op-byline">Prvaaha Editorial · Coming Soon</div>
             </div>
-            <div class="ps-op-card">
+            <div class="ps-op-card rise d3">
               <div class="ps-op-label">Markets</div>
               <div class="ps-op-title">Midcap rally or froth? Reading the signals before the next correction</div>
               <div class="ps-op-byline">Prvaaha Editorial · Coming Soon</div>
@@ -1150,8 +1336,8 @@ body::after{display:none!important}
       <div class="chart-grid" id="overviewChartGrid"></div>
 
       <!-- Region Cards -->
-      <div class="label">Markets by Region</div>
-      <div class="region-grid" id="regionGrid"></div>
+      <div class="label" style="margin-top:32px">Markets by Region</div>
+      <div class="region-grid rise" id="regionGrid"></div>
     </div>
   </div>
 
@@ -2979,10 +3165,11 @@ async function drawOverviewCharts(){
   const customTo=document.getElementById('gcTo')?.value||null;
 
   // Build card skeletons
-  grid.innerHTML=OVERVIEW_CHARTS.map(c=>{
+  grid.innerHTML=OVERVIEW_CHARTS.map((c,ci)=>{
     const d=ID_DATA[c.sym]||{price:0,pct:0,chg:0};
     const isIdx=ALL_INDICES.find(i=>i.sym===c.sym);
-    return`<div class="chart-card" style="cursor:pointer" onclick="${isIdx?`goToIndex('${c.sym}','${c.region}')`:''}" >
+    const rDelay=ci<5?` d${ci+1}`:'';
+    return`<div class="chart-card rise${rDelay}" style="cursor:pointer" onclick="${isIdx?`goToIndex('${c.sym}','${c.region}')`:''}" >
       <div class="chart-card-hdr">
         <div class="chart-card-left">
           <div class="chart-card-title" style="color:${c.color}">${c.n}</div>
@@ -3268,9 +3455,10 @@ async function refreshOverviewPrices(){
 // ══════════════════════════════════════════════
 // Region cards
 function renderRegionGrid(){
-  document.getElementById('regionGrid').innerHTML=REGIONS_DEF.map(r=>{
+  document.getElementById('regionGrid').innerHTML=REGIONS_DEF.map((r,ri)=>{
     const topIdx=r.indices.slice(0,3);
-    return`<div class="region-card" onclick="MKT.goRegion('${r.id}')">
+    const _rd=ri<4?` d${ri+1}`:'';
+    return`<div class="region-card rise${_rd}" onclick="MKT.goRegion('${r.id}')">
       <div class="rc-top">
         <img src="${r.flag}" width="28" height="21" style="border-radius:3px;object-fit:cover;flex-shrink:0" onerror="this.outerHTML='<span style=\'font-size:20px\'>${r.emoji}</span>'"/>
         <div><div class="rc-name">${r.name}</div><div class="rc-count">${r.indices.length} indices</div></div>
@@ -3545,7 +3733,7 @@ async function renderHero(){
     ?`<div class="ps-hero-img-wrap"><img src="${escH(n.thumbnail)}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"/></div>`
     :'';
   heroEl.innerHTML=`
-    <article class="ps-hero-art${hasImg?'':' no-img'}" onclick="window.open('${escH(n.link)}','_blank')">
+    <article class="ps-hero-art rise${hasImg?'':' no-img'}" onclick="window.open('${escH(n.link)}','_blank')">
       <div class="ps-hero-text">
         <div class="ps-hero-meta">
           <span class="ps-hero-cat">${n.category||'MARKETS'}</span>
@@ -3567,10 +3755,11 @@ async function renderNews3(){
     title:n.h, link:'#', source:n.src, category:n.tag, region:'india',
     pubDate:new Date(Date.now()-(i+1)*15*60000).toISOString(),
   }));
-  news3El.innerHTML=arts.slice(0,9).map(a=>{
+  news3El.innerHTML=arts.slice(0,9).map((a,i)=>{
     const tks=extractTickers(a.title,a.excerpt);
     const tkAttr=tks.length?` data-tickers="${tks.map(t=>t.s).join(',')}"`:' ';
-    return`<article class="ps-ng-card"${tkAttr} onclick="window.open('${escH(a.link)}','_blank')">
+    const dCls=i<5?` d${i+1}`:'';
+    return`<article class="ps-ng-card rise${dCls}"${tkAttr} onclick="window.open('${escH(a.link)}','_blank')">
       <span class="ps-ng-tag">${a.category||'MARKETS'}</span>
       <h3 class="ps-ng-h">${escH(a.title)}</h3>
       <span class="ps-ng-meta">${relTime(a.pubDate)} · ${escH(a.source||'')}</span>
@@ -4699,7 +4888,7 @@ function closeSearch(){
 (function initTheme(){
   // Default to light (Yahoo Finance-style); user can override via toggle
   const stored=localStorage.getItem('prvaaha-theme');
-  const theme=stored||'light';
+  const theme=stored||'dark';
   document.documentElement.setAttribute('data-theme',theme);
 })();
 
@@ -5969,7 +6158,7 @@ function updateDetailLive(){
   if(_si){_si.value='';setTimeout(()=>{_si.value='';},50);}
 
   // Set correct theme button icon on load
-  updateThemeBtn(document.documentElement.getAttribute('data-theme')||'light');
+  updateThemeBtn(document.documentElement.getAttribute('data-theme')||'dark');
 
   // Auth — restore signed-in session (best-effort — must never block page render)
   try{ await AUTH.init(); }catch(e){ console.warn('[auth]',e.message); }
@@ -6046,6 +6235,67 @@ function updateDetailLive(){
       refreshOverviewPrices();
     }
   },60000);
+
+  // ── Market Pulse strip population ──
+  function renderMktPulse(){
+    const row=document.getElementById('mpIndicesRow');
+    if(!row)return;
+    // Pull from REGIONS_DEF India indices (first 5)
+    const indiaIndices=REGIONS_DEF[0]?.indices||[];
+    const slots=indiaIndices.slice(0,5);
+    row.innerHTML=slots.map(idx=>{
+      const price=ID_DATA[idx.sym]?.price||idx.price||0;
+      const chg=ID_DATA[idx.sym]?.chg||idx.chg||0;
+      const pct=ID_DATA[idx.sym]?.pct||idx.pct||0;
+      const up=pct>=0;
+      return `<div class="ps-mp-idx" onclick="showSection('markets');setTimeout(()=>MKT&&MKT.showIndex&&MKT.showIndex('${idx.sym}'),120)">
+        <div class="ps-mp-sym">${idx.sym.replace(/\.NS$/,'').replace(/_/,' ')}</div>
+        <div class="ps-mp-val">${price>0?price.toLocaleString('en-IN',{maximumFractionDigits:2}):'—'}</div>
+        <div class="ps-mp-chg ${up?'pos':'neg'}">${up?'+':''}${pct.toFixed(2)}%</div>
+      </div>`;
+    }).join('');
+  }
+  renderMktPulse();
+  // Re-render after live data arrives
+  const _origFLI=window.fetchLiveIndices;
+  // Refresh pulse when sidebar indices are updated
+  const _origUSI=window.updateSbIdx;
+  if(typeof updateSbIdx==='function'){
+    const _savedUSI=updateSbIdx;
+    window.updateSbIdx=function(){_savedUSI.apply(this,arguments);renderMktPulse();};
+  }
+
+  // ── Glass header scroll listener ──
+  const _hdr=document.querySelector('header.hdr');
+  if(_hdr){
+    const onScroll=()=>{
+      _hdr.style.backdropFilter=window.scrollY>8?'blur(14px)':'';
+      _hdr.style.boxShadow=window.scrollY>8?'0 2px 40px rgba(0,0,0,.5)':'';
+    };
+    window.addEventListener('scroll',onScroll,{passive:true});
+    onScroll();
+  }
+
+  // ── IntersectionObserver for scroll reveal ──
+  const _riseObs=new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');_riseObs.unobserve(e.target);}});
+  },{threshold:0.08,rootMargin:'0px 0px -40px 0px'});
+  // Observe all current .rise elements + watch for dynamic ones
+  function observeRise(root=document){
+    root.querySelectorAll('.rise:not(.in)').forEach(el=>_riseObs.observe(el));
+  }
+  observeRise();
+  // Re-observe after news renders (renderHero / renderNews3 inject cards)
+  const _bodyObs=new MutationObserver(()=>observeRise());
+  _bodyObs.observe(document.getElementById('sec-home')||document.body,{childList:true,subtree:true});
+  // Also observe on section switch
+  const _origShow=window.showSection;
+  if(typeof showSection==='function'){
+    window.showSection=function(){
+      _origShow.apply(this,arguments);
+      setTimeout(()=>observeRise(),50);
+    };
+  }
 
   // Every 10 minutes refresh news (clear cache + re-render if on home/news)
   setInterval(async ()=>{
