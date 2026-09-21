@@ -1366,41 +1366,34 @@ const MOVERS_SEED = [
   'CHOLAFIN','MANAPPURAM','SBICARD','ABCAPITAL','TATAPOWER',
 ].filter((v, i, a) => a.indexOf(v) === i); // deduplicate
 
+async function buildMoversCache() {
+  const nsyms = MOVERS_SEED.map(s => s + '.NS');
+  const raw   = await nseQuotes(nsyms);
+
+  const quotes = raw
+    .filter(q => q?.regularMarketPrice != null && q.regularMarketPrice > 0)
+    .map(q => ({
+      sym  : q.symbol,
+      price: q.regularMarketPrice            ?? 0,
+      pct  : q.regularMarketChangePercent    ?? 0,
+      vol  : q.regularMarketVolume           ?? 0,
+    }));
+
+  const gainers = [...quotes].filter(q => q.pct > 0).sort((a, b) => b.pct - a.pct).slice(0, 20);
+  const losers  = [...quotes].filter(q => q.pct < 0).sort((a, b) => a.pct - b.pct).slice(0, 20);
+  const active  = [...quotes].sort((a, b) => b.vol - a.vol).slice(0, 20);
+
+  const payload = { gainers, losers, active, scanned: quotes.length, ts: Date.now() };
+  setCache('india-movers', payload);
+  return payload;
+}
+
 app.get('/api/movers', async (req, res) => {
-  const cacheKey = 'india-movers';
-  const cached = getCache(cacheKey, 90_000);
+  const cached = getCache('india-movers', 90_000);
   if (cached) return res.json(cached);
 
   try {
-    const nsyms = MOVERS_SEED.map(s => s + '.NS');
-    const raw   = await nseQuotes(nsyms);
-
-    const quotes = raw
-      .filter(q => q?.regularMarketPrice != null && q.regularMarketPrice > 0)
-      .map(q => ({
-        sym  : q.symbol,
-        price: q.regularMarketPrice            ?? 0,
-        pct  : q.regularMarketChangePercent    ?? 0,
-        vol  : q.regularMarketVolume           ?? 0,
-      }));
-
-    const gainers = [...quotes]
-      .filter(q => q.pct > 0)
-      .sort((a, b) => b.pct - a.pct)
-      .slice(0, 20);
-
-    const losers = [...quotes]
-      .filter(q => q.pct < 0)
-      .sort((a, b) => a.pct - b.pct)
-      .slice(0, 20);
-
-    const active = [...quotes]
-      .sort((a, b) => b.vol - a.vol)
-      .slice(0, 20);
-
-    const payload = { gainers, losers, active, scanned: quotes.length, ts: Date.now() };
-    setCache(cacheKey, payload);
-    res.json(payload);
+    res.json(await buildMoversCache());
   } catch (err) {
     console.error('[movers]', err.message);
     const stale = getStale('india-movers');
@@ -1425,4 +1418,13 @@ app.listen(PORT, () => {
   setInterval(() => {
     loadIndiaStocks().catch(e => console.error('[india-stocks] refresh error:', e.message));
   }, 24 * 60 * 60_000);
+
+  // Prewarm movers cache so the first real user gets instant data
+  buildMoversCache()
+    .then(p => console.log(`[movers] prewarm done — ${p.scanned} stocks scanned`))
+    .catch(e => console.warn('[movers] prewarm failed:', e.message));
+  // Re-warm every 90s to keep cache fresh between user requests
+  setInterval(() => {
+    buildMoversCache().catch(e => console.warn('[movers] refresh error:', e.message));
+  }, 90_000);
 });
