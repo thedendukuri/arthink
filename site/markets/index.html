@@ -600,38 +600,38 @@ body.theme-light .table-container::-webkit-scrollbar-thumb{background:rgba(0,0,0
 // ── INDEX DATA (all 27 indices) ──
 const indices = [
   // India
-  {r:1,region:'india',name:'Nifty 50',exch:'NSE',last:24832,chg:167.2,pct:0.68,open:24680,high:24901,low:24643,trend:'up'},
-  {r:2,region:'india',name:'Sensex',exch:'BSE',last:81224,chg:572.4,pct:0.71,open:80680,high:81340,low:80540,trend:'up'},
-  {r:3,region:'india',name:'Bank Nifty',exch:'NSE',last:52180,chg:412.0,pct:0.80,open:51800,high:52340,low:51720,trend:'up'},
-  {r:4,region:'india',name:'Nifty IT',exch:'NSE',last:38420,chg:-116.1,pct:-0.30,open:38610,high:38680,low:38290,trend:'down'},
-  {r:5,region:'india',name:'Nifty Midcap 150',exch:'NSE',last:18340,chg:184.2,pct:1.01,open:18170,high:18420,low:18110,trend:'up'},
-  {r:6,region:'india',name:'Nifty Smallcap 250',exch:'NSE',last:12845,chg:98.4,pct:0.77,open:12762,high:12910,low:12720,trend:'up'},
+  {r:1,region:'india',sym:'^NSEI',name:'Nifty 50',exch:'NSE',last:24832,chg:167.2,pct:0.68,open:24680,high:24901,low:24643,trend:'up'},
+  {r:2,region:'india',sym:'^BSESN',name:'Sensex',exch:'BSE',last:81224,chg:572.4,pct:0.71,open:80680,high:81340,low:80540,trend:'up'},
+  {r:3,region:'india',sym:'^NSEBANK',name:'Bank Nifty',exch:'NSE',last:52180,chg:412.0,pct:0.80,open:51800,high:52340,low:51720,trend:'up'},
+  {r:4,region:'india',sym:'^CNXIT',name:'Nifty IT',exch:'NSE',last:38420,chg:-116.1,pct:-0.30,open:38610,high:38680,low:38290,trend:'down'},
+  {r:5,region:'india',sym:'^NSMIDCP',name:'Nifty Midcap 150',exch:'NSE',last:18340,chg:184.2,pct:1.01,open:18170,high:18420,low:18110,trend:'up'},
+  {r:6,region:'india',sym:'^CNXSC',name:'Nifty Smallcap 250',exch:'NSE',last:12845,chg:98.4,pct:0.77,open:12762,high:12910,low:12720,trend:'up'},
   // Americas
-  {r:7,region:'americas',name:'S&P 500',exch:'NYSE',last:5847,chg:18.1,pct:0.31,open:5832,high:5862,low:5821,trend:'up'},
-  {r:8,region:'americas',name:'Nasdaq Composite',exch:'NASDAQ',last:18742,chg:87.4,pct:0.47,open:18670,high:18810,low:18620,trend:'up'},
-  {r:9,region:'americas',name:'Dow Jones',exch:'NYSE',last:39284,chg:124.6,pct:0.32,open:39172,high:39340,low:39100,trend:'up'},
-  {r:10,region:'americas',name:'Russell 2000',exch:'NYSE',last:2082,chg:-12.4,pct:-0.59,open:2096,high:2102,low:2074,trend:'down'},
-  {r:11,region:'americas',name:'Bovespa',exch:'B3',last:128420,chg:730.5,pct:0.57,open:127820,high:128640,low:127510,trend:'up'},
-  {r:12,region:'americas',name:'IPC Mexico',exch:'BMV',last:54280,chg:-218.4,pct:-0.40,open:54520,high:54580,low:54100,trend:'down'},
+  {r:7,region:'americas',sym:'^GSPC',name:'S&P 500',exch:'NYSE',last:5847,chg:18.1,pct:0.31,open:5832,high:5862,low:5821,trend:'up'},
+  {r:8,region:'americas',sym:'^IXIC',name:'Nasdaq Composite',exch:'NASDAQ',last:18742,chg:87.4,pct:0.47,open:18670,high:18810,low:18620,trend:'up'},
+  {r:9,region:'americas',sym:'^DJI',name:'Dow Jones',exch:'NYSE',last:39284,chg:124.6,pct:0.32,open:39172,high:39340,low:39100,trend:'up'},
+  {r:10,region:'americas',sym:'^RUT',name:'Russell 2000',exch:'NYSE',last:2082,chg:-12.4,pct:-0.59,open:2096,high:2102,low:2074,trend:'down'},
+  {r:11,region:'americas',sym:'^BVSP',name:'Bovespa',exch:'B3',last:128420,chg:730.5,pct:0.57,open:127820,high:128640,low:127510,trend:'up'},
+  {r:12,region:'americas',sym:'^MXX',name:'IPC Mexico',exch:'BMV',last:54280,chg:-218.4,pct:-0.40,open:54520,high:54580,low:54100,trend:'down'},
   // Europe
-  {r:13,region:'europe',name:'DAX',exch:'XETRA',last:18642,chg:112.4,pct:0.61,open:18540,high:18710,low:18490,trend:'up'},
-  {r:14,region:'europe',name:'FTSE 100',exch:'LSE',last:8312,chg:-12.5,pct:-0.15,open:8328,high:8345,low:8294,trend:'down'},
-  {r:15,region:'europe',name:'CAC 40',exch:'Euronext',last:7824,chg:38.2,pct:0.49,open:7792,high:7848,low:7774,trend:'up'},
-  {r:16,region:'europe',name:'Euro Stoxx 50',exch:'Euronext',last:5012,chg:24.6,pct:0.49,open:4990,high:5028,low:4975,trend:'up'},
+  {r:13,region:'europe',sym:'^GDAXI',name:'DAX',exch:'XETRA',last:18642,chg:112.4,pct:0.61,open:18540,high:18710,low:18490,trend:'up'},
+  {r:14,region:'europe',sym:'^FTSE',name:'FTSE 100',exch:'LSE',last:8312,chg:-12.5,pct:-0.15,open:8328,high:8345,low:8294,trend:'down'},
+  {r:15,region:'europe',sym:'^FCHI',name:'CAC 40',exch:'Euronext',last:7824,chg:38.2,pct:0.49,open:7792,high:7848,low:7774,trend:'up'},
+  {r:16,region:'europe',sym:'^STOXX50E',name:'Euro Stoxx 50',exch:'Euronext',last:5012,chg:24.6,pct:0.49,open:4990,high:5028,low:4975,trend:'up'},
   // Asia-Pacific
-  {r:17,region:'asia-pac',name:'Nikkei 225',exch:'TSE',last:38946,chg:366.4,pct:0.95,open:38610,high:39040,low:38580,trend:'up'},
-  {r:18,region:'asia-pac',name:'Hang Seng',exch:'HKEX',last:21832,chg:-274.4,pct:-1.24,open:22140,high:22180,low:21790,trend:'down'},
-  {r:19,region:'asia-pac',name:'Shanghai Composite',exch:'SSE',last:3048,chg:-21.4,pct:-0.70,open:3072,high:3078,low:3040,trend:'down'},
-  {r:20,region:'asia-pac',name:'ASX 200',exch:'ASX',last:7842,chg:48.4,pct:0.62,open:7798,high:7860,low:7782,trend:'up'},
-  {r:21,region:'asia-pac',name:'KOSPI',exch:'KRX',last:2680,chg:16.8,pct:0.63,open:2666,high:2694,low:2658,trend:'up'},
-  {r:22,region:'asia-pac',name:'STI Singapore',exch:'SGX',last:3378,chg:14.2,pct:0.42,open:3366,high:3386,low:3354,trend:'up'},
+  {r:17,region:'asia-pac',sym:'^N225',name:'Nikkei 225',exch:'TSE',last:38946,chg:366.4,pct:0.95,open:38610,high:39040,low:38580,trend:'up'},
+  {r:18,region:'asia-pac',sym:'^HSI',name:'Hang Seng',exch:'HKEX',last:21832,chg:-274.4,pct:-1.24,open:22140,high:22180,low:21790,trend:'down'},
+  {r:19,region:'asia-pac',sym:'000001.SS',name:'Shanghai Composite',exch:'SSE',last:3048,chg:-21.4,pct:-0.70,open:3072,high:3078,low:3040,trend:'down'},
+  {r:20,region:'asia-pac',sym:'^AXJO',name:'ASX 200',exch:'ASX',last:7842,chg:48.4,pct:0.62,open:7798,high:7860,low:7782,trend:'up'},
+  {r:21,region:'asia-pac',sym:'^KS11',name:'KOSPI',exch:'KRX',last:2680,chg:16.8,pct:0.63,open:2666,high:2694,low:2658,trend:'up'},
+  {r:22,region:'asia-pac',sym:'^STI',name:'STI Singapore',exch:'SGX',last:3378,chg:14.2,pct:0.42,open:3366,high:3386,low:3354,trend:'up'},
   // Middle East
-  {r:23,region:'middle-east',name:'Tadawul (TASI)',exch:'Tadawul',last:11842,chg:84.2,pct:0.72,open:11770,high:11890,low:11748,trend:'up'},
-  {r:24,region:'middle-east',name:'DFM General',exch:'DFM',last:4284,chg:-32.4,pct:-0.75,open:4320,high:4328,low:4272,trend:'down'},
-  {r:25,region:'middle-east',name:'QSE Index',exch:'QSE',last:10142,chg:48.8,pct:0.48,open:10096,high:10178,low:10072,trend:'up'},
+  {r:23,region:'middle-east',sym:'^TASI.SR',name:'Tadawul (TASI)',exch:'Tadawul',last:11842,chg:84.2,pct:0.72,open:11770,high:11890,low:11748,trend:'up'},
+  {r:24,region:'middle-east',sym:'^DFMGI',name:'DFM General',exch:'DFM',last:4284,chg:-32.4,pct:-0.75,open:4320,high:4328,low:4272,trend:'down'},
+  {r:25,region:'middle-east',sym:'^QSI',name:'QSE Index',exch:'QSE',last:10142,chg:48.8,pct:0.48,open:10096,high:10178,low:10072,trend:'up'},
   // Africa
-  {r:26,region:'africa',name:'JSE All Share',exch:'JSE',last:82420,chg:384.4,pct:0.47,open:82060,high:82580,low:81940,trend:'up'},
-  {r:27,region:'africa',name:'EGX 30',exch:'EGX',last:27840,chg:-214.4,pct:-0.76,open:28080,high:28120,low:27780,trend:'down'},
+  {r:26,region:'africa',sym:'^J203.JO',name:'JSE All Share',exch:'JSE',last:82420,chg:384.4,pct:0.47,open:82060,high:82580,low:81940,trend:'up'},
+  {r:27,region:'africa',sym:'^EGX30.CA',name:'EGX 30',exch:'EGX',last:27840,chg:-214.4,pct:-0.76,open:28080,high:28120,low:27780,trend:'down'},
 ];
 
 // ── FORMAT HELPERS ──
@@ -759,6 +759,11 @@ function renderTable(data){
       <td class="sparkline-cell ctr"><canvas class="spark" width="80" height="24" id="spark-${d.r}"></canvas></td>
     `;
     tbody.appendChild(tr);
+    // Click-through to index detail page
+    tr.style.cursor = 'pointer';
+    tr.addEventListener('click', () => {
+      location.href = '/index-detail/' + encodeURIComponent(d.sym);
+    });
   });
   // Draw sparklines after DOM insert
   sorted.forEach(d=>{
@@ -1124,18 +1129,18 @@ function updateClock(){
 
 // ══ BUBBLE MAP DATA + JS ══
 const centers = [
-  {id:'mumbai',city:'Mumbai',abbr:'MUM',exchange:'NSE',index:'NIFTY 50',lat:19.07,lon:72.87,pct:+0.68,r:28,color:'#22c55e',price:'24,871',open:'24,705',high:'24,920',low:'24,688',prev:'24,703',spark:[24703,24710,24688,24720,24760,24800,24835,24860,24871]},
-  {id:'newyork',city:'New York',abbr:'NYS',exchange:'NYSE',index:'S&P 500',lat:40.71,lon:-74.00,pct:+0.31,r:32,color:'#16a34a',price:'5,618',open:'5,601',high:'5,634',low:'5,598',prev:'5,600',spark:[5600,5598,5605,5610,5608,5612,5615,5617,5618]},
-  {id:'london',city:'London',abbr:'LON',exchange:'LSE',index:'FTSE 100',lat:51.50,lon:-0.12,pct:-0.15,r:26,color:'#ef4444',price:'8,204',open:'8,216',high:'8,219',low:'8,195',prev:'8,216',spark:[8216,8215,8212,8208,8204,8200,8198,8202,8204]},
-  {id:'tokyo',city:'Tokyo',abbr:'TOK',exchange:'TSE',index:'Nikkei 225',lat:35.68,lon:139.69,pct:+0.95,r:26,color:'#22c55e',price:'38,942',open:'38,574',high:'39,010',low:'38,555',prev:'38,574',spark:[38574,38600,38650,38720,38800,38870,38910,38940,38942]},
-  {id:'hongkong',city:'Hong Kong',abbr:'HKG',exchange:'HKEX',index:'Hang Seng',lat:22.32,lon:114.17,pct:-1.24,r:22,color:'#dc2626',price:'18,221',open:'18,453',high:'18,460',low:'18,188',prev:'18,450',spark:[18450,18420,18390,18350,18310,18270,18240,18228,18221]},
-  {id:'shanghai',city:'Shanghai',abbr:'SHA',exchange:'SSE',index:'SSE Composite',lat:31.22,lon:121.46,pct:-0.89,r:24,color:'#ef4444',price:'3,098',open:'3,126',high:'3,128',low:'3,092',prev:'3,126',spark:[3126,3120,3115,3110,3105,3101,3098,3095,3098]},
-  {id:'frankfurt',city:'Frankfurt',abbr:'FRA',exchange:'XETRA',index:'DAX 40',lat:50.11,lon:8.68,pct:-0.42,r:22,color:'#ef4444',price:'18,504',open:'18,582',high:'18,590',low:'18,488',prev:'18,582',spark:[18582,18570,18555,18540,18530,18520,18510,18506,18504]},
-  {id:'dubai',city:'Dubai',abbr:'DXB',exchange:'DFM',index:'DFM Index',lat:25.20,lon:55.27,pct:+0.44,r:18,color:'#22c55e',price:'4,612',open:'4,592',high:'4,618',low:'4,589',prev:'4,592',spark:[4592,4595,4598,4602,4605,4608,4610,4611,4612]},
-  {id:'singapore',city:'Singapore',abbr:'SGP',exchange:'SGX',index:'STI',lat:1.35,lon:103.82,pct:+0.52,r:18,color:'#22c55e',price:'3,714',open:'3,695',high:'3,718',low:'3,693',prev:'3,695',spark:[3695,3698,3701,3704,3707,3709,3711,3713,3714]},
-  {id:'sydney',city:'Sydney',abbr:'SYD',exchange:'ASX',index:'ASX 200',lat:-33.87,lon:151.21,pct:+0.78,r:16,color:'#16a34a',price:'8,118',open:'8,055',high:'8,124',low:'8,052',prev:'8,055',spark:[8055,8063,8072,8082,8090,8100,8108,8114,8118]},
-  {id:'saopaulo',city:'São Paulo',abbr:'SAO',exchange:'B3',index:'Bovespa',lat:-23.55,lon:-46.63,pct:-0.67,r:16,color:'#ef4444',price:'128,440',open:'129,300',high:'129,350',low:'128,200',prev:'129,310',spark:[129310,129200,129050,128900,128750,128600,128500,128460,128440]},
-  {id:'johannesburg',city:'Johannesburg',abbr:'JHB',exchange:'JSE',index:'JSE All Share',lat:-26.20,lon:28.04,pct:+0.21,r:14,color:'#22c55e',price:'81,204',open:'81,033',high:'81,250',low:'81,010',prev:'81,033',spark:[81033,81050,81070,81090,81110,81140,81170,81190,81204]},
+  {id:'mumbai',sym:'^NSEI',city:'Mumbai',abbr:'MUM',exchange:'NSE',index:'NIFTY 50',lat:19.07,lon:72.87,pct:+0.68,r:28,color:'#22c55e',price:'24,871',open:'24,705',high:'24,920',low:'24,688',prev:'24,703',spark:[24703,24710,24688,24720,24760,24800,24835,24860,24871]},
+  {id:'newyork',sym:'^GSPC',city:'New York',abbr:'NYS',exchange:'NYSE',index:'S&P 500',lat:40.71,lon:-74.00,pct:+0.31,r:32,color:'#16a34a',price:'5,618',open:'5,601',high:'5,634',low:'5,598',prev:'5,600',spark:[5600,5598,5605,5610,5608,5612,5615,5617,5618]},
+  {id:'london',sym:'^FTSE',city:'London',abbr:'LON',exchange:'LSE',index:'FTSE 100',lat:51.50,lon:-0.12,pct:-0.15,r:26,color:'#ef4444',price:'8,204',open:'8,216',high:'8,219',low:'8,195',prev:'8,216',spark:[8216,8215,8212,8208,8204,8200,8198,8202,8204]},
+  {id:'tokyo',sym:'^N225',city:'Tokyo',abbr:'TOK',exchange:'TSE',index:'Nikkei 225',lat:35.68,lon:139.69,pct:+0.95,r:26,color:'#22c55e',price:'38,942',open:'38,574',high:'39,010',low:'38,555',prev:'38,574',spark:[38574,38600,38650,38720,38800,38870,38910,38940,38942]},
+  {id:'hongkong',sym:'^HSI',city:'Hong Kong',abbr:'HKG',exchange:'HKEX',index:'Hang Seng',lat:22.32,lon:114.17,pct:-1.24,r:22,color:'#dc2626',price:'18,221',open:'18,453',high:'18,460',low:'18,188',prev:'18,450',spark:[18450,18420,18390,18350,18310,18270,18240,18228,18221]},
+  {id:'shanghai',sym:'000001.SS',city:'Shanghai',abbr:'SHA',exchange:'SSE',index:'SSE Composite',lat:31.22,lon:121.46,pct:-0.89,r:24,color:'#ef4444',price:'3,098',open:'3,126',high:'3,128',low:'3,092',prev:'3,126',spark:[3126,3120,3115,3110,3105,3101,3098,3095,3098]},
+  {id:'frankfurt',sym:'^GDAXI',city:'Frankfurt',abbr:'FRA',exchange:'XETRA',index:'DAX 40',lat:50.11,lon:8.68,pct:-0.42,r:22,color:'#ef4444',price:'18,504',open:'18,582',high:'18,590',low:'18,488',prev:'18,582',spark:[18582,18570,18555,18540,18530,18520,18510,18506,18504]},
+  {id:'dubai',sym:'^DFMGI',city:'Dubai',abbr:'DXB',exchange:'DFM',index:'DFM Index',lat:25.20,lon:55.27,pct:+0.44,r:18,color:'#22c55e',price:'4,612',open:'4,592',high:'4,618',low:'4,589',prev:'4,592',spark:[4592,4595,4598,4602,4605,4608,4610,4611,4612]},
+  {id:'singapore',sym:'^STI',city:'Singapore',abbr:'SGP',exchange:'SGX',index:'STI',lat:1.35,lon:103.82,pct:+0.52,r:18,color:'#22c55e',price:'3,714',open:'3,695',high:'3,718',low:'3,693',prev:'3,695',spark:[3695,3698,3701,3704,3707,3709,3711,3713,3714]},
+  {id:'sydney',sym:'^AXJO',city:'Sydney',abbr:'SYD',exchange:'ASX',index:'ASX 200',lat:-33.87,lon:151.21,pct:+0.78,r:16,color:'#16a34a',price:'8,118',open:'8,055',high:'8,124',low:'8,052',prev:'8,055',spark:[8055,8063,8072,8082,8090,8100,8108,8114,8118]},
+  {id:'saopaulo',sym:'^BVSP',city:'São Paulo',abbr:'SAO',exchange:'B3',index:'Bovespa',lat:-23.55,lon:-46.63,pct:-0.67,r:16,color:'#ef4444',price:'128,440',open:'129,300',high:'129,350',low:'128,200',prev:'129,310',spark:[129310,129200,129050,128900,128750,128600,128500,128460,128440]},
+  {id:'johannesburg',sym:'^J203.JO',city:'Johannesburg',abbr:'JHB',exchange:'JSE',index:'JSE All Share',lat:-26.20,lon:28.04,pct:+0.21,r:14,color:'#22c55e',price:'81,204',open:'81,033',high:'81,250',low:'81,010',prev:'81,033',spark:[81033,81050,81070,81090,81110,81140,81170,81190,81204]},
 ];
 
 function drawSparklineMap(canvas, data, positive, width, height){
@@ -1190,6 +1195,12 @@ function openMapPanel(c){
   const cvs = document.getElementById('panel-sparkline');
   const pw = document.getElementById('side-panel').clientWidth - 36;
   drawSparklineMap(cvs, c.spark, pos, Math.max(pw, 220), 70);
+  // Wire the "View Full Chart" link to the detail page
+  const chartLink = document.getElementById('panel-chart-link');
+  if(chartLink && c.sym){
+    chartLink.style.cursor = 'pointer';
+    chartLink.onclick = () => { location.href = '/index-detail/' + encodeURIComponent(c.sym); };
+  }
   document.getElementById('side-panel').classList.add('open');
 }
 document.addEventListener('DOMContentLoaded',()=>{
@@ -1355,7 +1366,7 @@ document.addEventListener('DOMContentLoaded',()=>{
           <div class="panel-meta-item"><label>Low</label><span id="panel-low">—</span></div>
           <div class="panel-meta-item"><label>Prev Close</label><span id="panel-prev">—</span></div>
         </div>
-        <div class="panel-chart-link">View Full Chart →</div>
+        <div class="panel-chart-link" id="panel-chart-link">View Full Chart →</div>
       </div>
     </div>
     <div class="map-legend">
