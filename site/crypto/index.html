@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>prvaaha. — Crypto</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230d1f10'/%3E%3Cpath d='M2,22 L6,16 L10,20 L14,9 C16,4 18,14 21,10 C24,6 27,13 30,8' fill='none' stroke='%23c9a84c' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Pathway+Gothic+One&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0906;
+  --surface:#141109;
+  --surface2:rgba(30,25,12,.9);
+  --border:rgba(201,168,76,.14);
+  --border2:rgba(201,168,76,.35);
+  --text:#f5f0e0;
+  --text2:rgba(245,240,224,.72);
+  --muted:rgba(245,240,224,.45);
+  --gold:#c9a84c;
+  --accent:#c9a84c;
+  --pos:#6ee7a0;
+  --neg:#f08a8a;
+  --hdr:#0d0d0d;
+  --hdr-text:rgba(245,240,224,.88);
+  --hdr-muted:rgba(245,240,224,.42);
+  --sans:'Pathway Gothic One',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:'Pathway Gothic One',sans-serif;font-size:13px;-webkit-font-smoothing:antialiased;min-height:100vh}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font-family:'Pathway Gothic One',sans-serif;border:none;outline:none}
+
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes tsroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* ── TICKER BAR ── */
+.tbar{background:#0d0d0d;border-bottom:1px solid rgba(201,168,76,.1);height:32px;overflow:hidden;position:relative}
+.tbar::before,.tbar::after{content:'';position:absolute;top:0;bottom:0;width:60px;z-index:2;pointer-events:none}
+.tbar::before{left:0;background:linear-gradient(to right,#0d0d0d 40%,transparent)}
+.tbar::after{right:0;background:linear-gradient(to left,#0d0d0d 40%,transparent)}
+.tbar-track{display:flex;align-items:center;height:100%;animation:tsroll 90s linear infinite;width:max-content;will-change:transform}
+.tbar-track:hover{animation-play-state:paused}
+.tick{display:flex;align-items:center;gap:8px;padding:0 18px;border-right:1px solid rgba(201,168,76,.1);height:100%;cursor:pointer;flex-shrink:0}
+.tick:hover{background:rgba(201,168,76,.04)}
+.t-sym{font-family:'Pathway Gothic One',sans-serif;font-size:10px;font-weight:700;color:rgba(245,240,224,.6);white-space:nowrap;letter-spacing:.3px}
+.t-row{display:flex;align-items:center;gap:4px}
+.t-price{font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(245,240,224,.5);white-space:nowrap}
+.t-pct{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;white-space:nowrap}
+.t-pct.pos{color:#6ee7a0}.t-pct.neg{color:#f08a8a}
+.tick-left{display:flex;flex-direction:column;gap:1px}
+.tick-spark{display:flex;align-items:center}
+
+/* ── HEADER ── */
+.hdr{background:#0d0d0d;border-bottom:3px solid #138808;height:58px;display:flex;align-items:center;padding:0 24px;gap:0;position:sticky;top:0;z-index:600}
+.logo{display:flex;align-items:center;gap:10px;padding-right:20px;border-right:1px solid rgba(201,168,76,.15);flex-shrink:0;cursor:pointer}
+.logo-flag{width:26px;height:26px;border-radius:3px;overflow:hidden;display:flex;flex-direction:column;flex-shrink:0}
+.lf1{flex:1;background:#FF9933}
+.lf2{flex:1;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:900;color:#000080}
+.lf3{flex:1;background:#138808}
+.nav{display:flex;flex:1;padding-left:10px;overflow:hidden}
+.nav a{color:rgba(245,240,224,.75);font-size:13px;font-family:'Pathway Gothic One',sans-serif;letter-spacing:.02em;padding:0 14px;height:58px;display:flex;align-items:center;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-3px;transition:color .15s;cursor:pointer;text-decoration:none}
+.nav a:hover{color:var(--hdr-text)}
+.nav a.active{color:var(--gold);border-bottom-color:var(--gold)}
+.nav a.alpha{color:#fff;font-weight:700;text-shadow:0 0 8px rgba(255,255,255,.5)}
+
+/* Search box */
+.search-box{display:flex;align-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(201,168,76,.18);height:30px;padding:0 10px;gap:8px;width:200px;position:relative}
+.search-box input{background:none;border:none;outline:none;color:#f5f0e0;font-size:12px;font-family:'Pathway Gothic One',sans-serif;width:100%}
+.search-box input::placeholder{color:rgba(245,240,224,.4)}
+.search-drop{position:absolute;top:100%;left:0;right:0;background:#141109;border:1px solid rgba(201,168,76,.25);border-top:none;z-index:700;box-shadow:0 12px 40px rgba(0,0,0,.8);display:none;max-height:280px;overflow-y:auto}
+.search-drop.open{display:block}
+.sd-cat{font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.25px;color:var(--muted);padding:10px 14px 4px;border-top:1px solid var(--border)}
+.sd-cat:first-child{border-top:none}
+.sd-row{display:flex;align-items:center;padding:8px 14px;gap:10px;cursor:pointer;transition:background .1s}
+.sd-row:hover{background:rgba(201,168,76,.06)}
+.sd-badge{font-size:9px;font-weight:700;padding:2px 6px;flex-shrink:0;text-transform:uppercase;letter-spacing:.3px}
+.sd-sym{font-family:var(--mono);font-size:12px;font-weight:700;min-width:68px;flex-shrink:0;color:var(--text)}
+.sd-name{font-size:12px;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sd-pct{font-family:var(--mono);font-size:12px;font-weight:700;flex-shrink:0}
+.sd-pct.pos{color:var(--pos)}.sd-pct.neg{color:var(--neg)}
+.sd-empty{padding:20px;text-align:center;color:var(--muted);font-size:13px}
+.search-wrap{position:relative}
+
+.signin-btn{background:transparent;color:#c9a84c;border:1px solid rgba(201,168,76,.4);padding:5px 14px;font-size:11px;letter-spacing:.2px;text-transform:uppercase;white-space:nowrap;font-family:'Pathway Gothic One',sans-serif;cursor:pointer;transition:all .15s}
+.signin-btn:hover{background:rgba(201,168,76,.1);border-color:var(--gold)}
+
+/* ── THEME TOGGLE ── */
+.theme-toggle{position:relative;display:flex;align-items:center}
+.theme-toggle-btn{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.05);border:1px solid rgba(201,168,76,.22);height:30px;padding:0 10px;cursor:pointer;font-family:'Pathway Gothic One',sans-serif;font-size:10px;color:rgba(245,240,224,.6);letter-spacing:.08em;white-space:nowrap;transition:all .15s}
+.theme-toggle-btn:hover{border-color:rgba(201,168,76,.5);color:#f5f0e0}
+.theme-toggle-btn svg{flex-shrink:0}
+.theme-menu{position:absolute;top:calc(100% + 6px);right:0;background:#0d0d0d;border:1px solid rgba(201,168,76,.22);min-width:140px;z-index:700;display:none;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,.8)}
+.theme-menu.open{display:flex}
+.theme-opt{display:flex;align-items:center;gap:9px;padding:8px 14px;font-family:'Pathway Gothic One',sans-serif;font-size:12px;color:rgba(245,240,224,.65);cursor:pointer;letter-spacing:.04em;transition:background .12s,color .12s;border:none;background:none;width:100%;text-align:left}
+.theme-opt:hover{background:rgba(201,168,76,.07);color:#f5f0e0}
+.theme-opt.active{color:var(--gold)}
+.theme-opt svg{flex-shrink:0;opacity:.7}
+
+/* ── STATUS BAR ── */
+.status-bar{background:#0d0d0d;border-bottom:1px solid rgba(201,168,76,.08);padding:3px 24px;display:flex;align-items:center;gap:12px;font-size:9px;color:rgba(245,240,224,.4);letter-spacing:.3px;font-family:'JetBrains Mono',monospace;height:22px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--pos);animation:blink 1.5s ease-in-out infinite;display:inline-block}
+
+/* ── STUB PAGE ── */
+.stub-page{max-width:1200px;margin:0 auto;padding:60px 24px 100px}
+.stub-eyebrow{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--accent);margin-bottom:12px}
+.stub-headline{font-family:var(--sans);font-size:40px;font-weight:700;color:var(--text);margin-bottom:16px;line-height:1.1;max-width:700px}
+.stub-sub{font-size:14px;color:var(--muted);max-width:560px;line-height:1.6;margin-bottom:40px}
+.stub-coming{background:var(--surface);border:1px solid var(--border);padding:32px 36px;max-width:560px;margin-bottom:32px}
+.stub-tag{display:inline-block;background:rgba(201,168,76,.12);color:var(--accent);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:4px 12px;margin-bottom:24px}
+.stub-features{display:flex;flex-direction:column;gap:10px}
+.stub-feat{font-size:13px;color:var(--text2)}
+.stub-back-btn{display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid var(--border2);color:var(--muted);padding:9px 18px;font-size:11px;font-family:var(--sans);font-weight:600;letter-spacing:.2px;text-transform:uppercase;cursor:pointer;text-decoration:none;transition:all .15s}
+.stub-back-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ── DAY MODE ── */
+body.theme-light .stub-coming{background:#fff;border-color:rgba(0,0,0,.1)}
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="hdr">
+  <div class="logo" onclick="location.href='../prthvi-home-page.html'" style="cursor:pointer">
+    <div class="logo-flag">
+      <div class="lf1"></div>
+      <div class="lf2">&#8857;</div>
+      <div class="lf3"></div>
+    </div>
+    <span style="font-family:'Pathway Gothic One',sans-serif;font-size:19px;font-style:italic;color:#f5f0e0;white-space:nowrap;letter-spacing:-.2px">
+      <em style="color:#138808;font-style:italic">p</em>rvaaha<span style="color:#138808">.</span>
+    </span>
+  </div>
+  <nav class="nav">
+    <a href="../prthvi-home-page.html">Home</a>
+    <a href="../markets/">Markets</a>
+    <a href="../news/">News</a>
+    <a href="../alpha/" class="alpha">Alpha &#10022;</a>
+    <a href="../crypto/" class="active">Crypto</a>
+    <a href="../watchlist/">Watchlist</a>
+  </nav>
+  <div style="display:flex;align-items:center;gap:10px;margin-left:auto;flex-shrink:0">
+    <div class="search-wrap">
+      <div class="search-box">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(201,168,76,.5)" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" placeholder="Search stocks&#8230;" id="searchInput" autocomplete="off" name="prvaaha-search" readonly
+          onfocus="this.removeAttribute('readonly');runSearch('')"
+          oninput="runSearch(this.value)" onblur="setTimeout(()=>{closeSearch();this.setAttribute('readonly','');this.value='';},180)"/>
+      </div>
+      <div class="search-drop" id="searchDrop"></div>
+    </div>
+    <span id="istClock" style="font-size:10px;color:rgba(201,168,76,.5);font-family:'JetBrains Mono',monospace;white-space:nowrap;letter-spacing:.02em"></span>
+    <div class="theme-toggle" id="themeToggle">
+      <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleThemeMenu()">
+        <svg id="themeIcon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <span id="themeLabel">Night</span>
+      </button>
+      <div class="theme-menu" id="themeMenu">
+        <button class="theme-opt active" data-mode="dark" onclick="setTheme('dark',this)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>Night
+        </button>
+        <button class="theme-opt" data-mode="light" onclick="setTheme('light',this)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>Day
+        </button>
+        <button class="theme-opt" data-mode="system" onclick="setTheme('system',this)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>System
+        </button>
+      </div>
+    </div>
+    <button class="signin-btn" onclick="openAuthModal()">Sign In</button>
+  </div>
+</header>
+
+<!-- ── STATUS BAR ── -->
+<div class="status-bar">
+  <span id="mktStatus" style="color:#6ee7a0;font-weight:600">&#9679; NSE &amp; BSE: Checking…</span>
+  <span>·</span><span>Data delayed 15 min</span>
+  <span>·</span><span>IST: <span id="istDisp">--:--</span></span>
+  <span style="margin-left:auto;display:flex;align-items:center;gap:5px;color:#c9a84c">
+    <span class="live-dot"></span>prvaaha.
+  </span>
+</div>
+
+<!-- ── TICKER BAR ── -->
+<div class="tbar"><div class="tbar-track" id="tbarTrack"></div></div>
+
+<!-- ── CRYPTO STUB PAGE ── -->
+<div class="stub-page">
+  <div class="stub-eyebrow">Crypto Markets</div>
+  <div class="stub-headline">BTC, ETH, SOL and the digital asset landscape.</div>
+  <div class="stub-sub">
+    Real-time prices, dominance charts, fear &amp; greed index, and macro correlation with Indian equity markets.
+  </div>
+  <div class="stub-coming">
+    <div class="stub-tag">Coming Soon</div>
+    <div class="stub-features">
+      <div class="stub-feat">&#11041; Live BTC / ETH / SOL prices (INR &amp; USD)</div>
+      <div class="stub-feat">&#11041; Market cap &amp; dominance charts</div>
+      <div class="stub-feat">&#11041; Fear &amp; Greed Index</div>
+      <div class="stub-feat">&#11041; Crypto &#8596; Nifty correlation tracker</div>
+      <div class="stub-feat">&#11041; On-chain flow signals</div>
+      <div class="stub-feat">&#11041; Indian exchange regulatory tracker</div>
+    </div>
+  </div>
+  <a class="stub-back-btn" href="../news/">&#8592; Go to News</a>
+</div>
+
+<footer style="background:#0a0906;border-top:1px solid rgba(201,168,76,.1);padding:20px 24px;margin-top:40px">
+  <div style="max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+    <span style="font-size:14px;font-weight:700;color:var(--accent)">prvaaha.</span>
+    <div style="display:flex;gap:16px;flex:1">
+      <a href="../markets/" style="font-size:11px;color:var(--muted)">Markets</a>
+      <a href="../news/" style="font-size:11px;color:var(--muted)">News</a>
+      <a href="../watchlist/" style="font-size:11px;color:var(--muted)">Watchlist</a>
+    </div>
+    <span style="font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace">&#169; 2026 Prvaaha · Not financial advice</span>
+  </div>
+</footer>
+
+<!-- ── AUTH MODAL ── -->
+<div id="auth-modal" style="position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:1000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(10px);padding:20px" onclick="if(event.target===this)closeAuthModal()">
+  <div style="background:var(--surface);border:1px solid var(--border2);width:100%;max-width:420px;position:relative;box-shadow:0 32px 80px rgba(0,0,0,.6)">
+    <button onclick="closeAuthModal()" style="position:absolute;top:12px;right:14px;background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;line-height:1">&times;</button>
+    <div style="padding:28px 28px 0">
+      <div style="font-family:var(--sans);font-size:24px;font-weight:800;letter-spacing:-.3px;margin-bottom:4px">
+        <em style="color:#138808">p</em>rvaaha<span style="color:#138808">.</span>
+      </div>
+      <div id="auth-subtitle" style="font-size:13px;color:var(--muted);margin-bottom:22px">Sign in to unlock your personal watchlist &amp; premium insights</div>
+      <div style="display:flex;border-bottom:1px solid var(--border)">
+        <button id="auth-tab-in" onclick="authSwitchTab('in')"
+          style="flex:1;padding:8px 0;border:none;background:none;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;border-bottom:2px solid var(--accent);margin-bottom:-1px;color:var(--text);font-family:var(--sans)">Sign In</button>
+        <button id="auth-tab-up" onclick="authSwitchTab('up')"
+          style="flex:1;padding:8px 0;border:none;background:none;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;color:var(--muted);font-family:var(--sans)">Create Account</button>
+      </div>
+    </div>
+    <div id="auth-form-in" style="padding:20px 28px 28px">
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.2px;color:var(--muted);margin-bottom:6px">Email</label>
+        <input id="si-email" type="email" placeholder="you@example.com" autocomplete="email"
+          style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 12px;font-size:13px;font-family:var(--sans);outline:none"
+          onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
+          onkeydown="if(event.key==='Enter')AUTH.doSignIn()"/>
+      </div>
+      <div style="margin-bottom:20px">
+        <label style="display:block;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.2px;color:var(--muted);margin-bottom:6px">Password</label>
+        <input id="si-pass" type="password" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" autocomplete="current-password"
+          style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 12px;font-size:13px;font-family:var(--sans);outline:none"
+          onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
+          onkeydown="if(event.key==='Enter')AUTH.doSignIn()"/>
+      </div>
+      <div style="margin-bottom:16px;text-align:right">
+        <span onclick="authSwitchTab('reset')" style="font-size:11px;color:var(--accent);cursor:pointer;font-weight:600;letter-spacing:.2px">Forgot password?</span>
+      </div>
+      <div id="si-err" style="color:var(--neg);font-size:12px;margin-bottom:12px;display:none"></div>
+      <button onclick="AUTH.doSignIn()" class="signin" style="width:100%;padding:11px;font-size:12px;letter-spacing:.2px;background:transparent;color:var(--accent);border:1px solid rgba(201,168,76,.4);font-family:var(--sans);text-transform:uppercase;cursor:pointer">Sign In &#8594;</button>
+      <div style="margin-top:14px;text-align:center;font-size:11px;color:var(--muted)">
+        Don't have an account? <span onclick="authSwitchTab('up')" style="color:var(--accent);cursor:pointer;font-weight:600">Create one free</span>
+      </div>
+    </div>
+    <div id="auth-form-reset" style="padding:20px 28px 28px;display:none">
+      <div style="margin-bottom:18px">
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">Reset your password</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.5">Enter the email linked to your account and we'll send you a reset link.</div>
+      </div>
+      <div style="margin-bottom:20px">
+        <label style="display:block;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.2px;color:var(--muted);margin-bottom:6px">Email</label>
+        <input id="reset-email" type="email" placeholder="you@example.com" autocomplete="email"
+          style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 12px;font-size:13px;font-family:var(--sans);outline:none"
+          onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
+          onkeydown="if(event.key==='Enter')AUTH.doResetPassword()"/>
+      </div>
+      <div id="reset-err" style="color:var(--neg);font-size:12px;margin-bottom:12px;display:none"></div>
+      <div id="reset-ok" style="color:#138808;font-size:12px;margin-bottom:12px;display:none;font-weight:600">&#10003; Reset link sent — check your inbox!</div>
+      <button id="reset-btn" onclick="AUTH.doResetPassword()" class="signin" style="width:100%;padding:11px;font-size:12px;letter-spacing:.2px;background:transparent;color:var(--accent);border:1px solid rgba(201,168,76,.4);font-family:var(--sans);text-transform:uppercase;cursor:pointer">Send Reset Link &#8594;</button>
+      <div style="margin-top:14px;text-align:center;font-size:11px;color:var(--muted)">
+        <span onclick="authSwitchTab('in')" style="color:var(--accent);cursor:pointer;font-weight:600">&#8592; Back to Sign In</span>
+      </div>
+    </div>
+    <div id="auth-form-up" style="padding:20px 28px 28px;display:none">
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.2px;color:var(--muted);margin-bottom:6px">Your Name</label>
+        <input id="su-name" type="text" placeholder="Arjun Sharma" autocomplete="name"
+          style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 12px;font-size:13px;font-family:var(--sans);outline:none"
+          onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"/>
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.2px;color:var(--muted);margin-bottom:6px">Email</label>
+        <input id="su-email" type="email" placeholder="you@example.com" autocomplete="email"
+          style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 12px;font-size:13px;font-family:var(--sans);outline:none"
+          onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"/>
+      </div>
+      <div style="margin-bottom:20px">
+        <label style="display:block;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.2px;color:var(--muted);margin-bottom:6px">Password</label>
+        <input id="su-pass" type="password" placeholder="Min 6 characters" autocomplete="new-password"
+          style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 12px;font-size:13px;font-family:var(--sans);outline:none"
+          onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
+          onkeydown="if(event.key==='Enter')AUTH.doSignUp()"/>
+      </div>
+      <div id="su-err" style="color:var(--neg);font-size:12px;margin-bottom:12px;display:none"></div>
+      <button onclick="AUTH.doSignUp()" class="signin" style="width:100%;padding:11px;font-size:12px;letter-spacing:.2px;background:transparent;color:var(--accent);border:1px solid rgba(201,168,76,.4);font-family:var(--sans);text-transform:uppercase;cursor:pointer">Create Account &#8594;</button>
+      <div style="margin-top:14px;text-align:center;font-size:11px;color:var(--muted)">
+        Already have an account? <span onclick="authSwitchTab('in')" style="color:var(--accent);cursor:pointer;font-weight:600">Sign in</span>
+      </div>
+    </div>
+    <div style="background:var(--surface2);border-top:1px solid var(--border);padding:12px 28px;display:flex;gap:16px;flex-wrap:wrap">
+      <span style="font-size:10px;color:var(--accent);font-weight:600">&#10022; Personal Watchlist</span>
+      <span style="font-size:10px;color:var(--muted)">&#10022; Live Prices</span>
+      <span style="font-size:10px;color:var(--muted)">&#10022; Alpha Engine</span>
+      <span style="font-size:10px;color:var(--muted)">&#10022; DCF Valuations</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// SUPABASE CLIENT
+// ══════════════════════════════════════════════
+const _sb = window.supabase?.createClient(
+  'https://hepkrvmhcbptoibzdwvg.supabase.co',
+  'sb_publishable_Z8bb16ZVksxuZtl9FHC20Q_qQiUaeJZ'
+) ?? null;
+
+// ══════════════════════════════════════════════
+// DATA — REGIONS & STOCKS (for ticker)
+// ══════════════════════════════════════════════
+const REGIONS_DEF = [{
+  id:'india', name:'India', emoji:'🇮🇳',
+  indices:[
+    {s:'NIFTY50',  sym:'^NSEI',   n:'Nifty 50',   base:24800},
+    {s:'SENSEX',   sym:'^BSESN',  n:'Sensex',     base:81400},
+    {s:'BANKNIFTY',sym:'^NSEBANK',n:'Bank Nifty', base:53200},
+    {s:'NIFTYIT',  sym:'^CNXIT',  n:'Nifty IT',   base:40600},
+  ]
+}];
+
+const STOCKS = [
+  {sym:'RELIANCE.NS', n:'Reliance Industries',  s:'RELIANCE', base:3100},
+  {sym:'TCS.NS',      n:'Tata Consultancy',     s:'TCS',      base:4200},
+  {sym:'HDFCBANK.NS', n:'HDFC Bank',            s:'HDFCBANK', base:1920},
+  {sym:'INFY.NS',     n:'Infosys',              s:'INFY',     base:1720},
+  {sym:'ICICIBANK.NS',n:'ICICI Bank',           s:'ICICIBANK',base:1360},
+  {sym:'HINDUNILVR.NS',n:'Hindustan Unilever',  s:'HUL',      base:2480},
+  {sym:'ITC.NS',      n:'ITC Ltd',              s:'ITC',      base:480},
+  {sym:'SBIN.NS',     n:'State Bank of India',  s:'SBIN',     base:880},
+  {sym:'BAJFINANCE.NS',n:'Bajaj Finance',       s:'BAJFIN',   base:8100},
+];
+
+const ALL_INDICES = REGIONS_DEF.flatMap(r => r.indices.map(i => ({...i, region:r.id})));
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+const SD={}, ID_DATA={};
+let histI={}, histS={};
+
+const fmt=(n,d=2)=>(+n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const sgn=v=>v>=0?'+':'';
+const rnd=(a,b)=>Math.random()*(b-a)+a;
+
+function genHist(base,positive,pts=60){
+  const v=[0]; const drift=positive?.03:-.03;
+  for(let i=1;i<pts;i++) v.push(v[i-1]+drift+(Math.random()-.5)*1.8);
+  const mn=Math.min(...v),mx=Math.max(...v),range=mx-mn||1;
+  return v.map(x=>base*(1+(x-mn)/range*0.025-0.0125));
+}
+
+function initData(){
+  ALL_INDICES.forEach(i=>{
+    ID_DATA[i.sym]={price:i.base,chg:0,pct:0};
+    histI[i.sym]=genHist(i.base,true);
+  });
+  STOCKS.forEach(s=>{
+    const initPct=(Math.random()-0.5)*4;
+    const initPrice=s.base*(1+initPct/100);
+    SD[s.sym]={price:initPrice,chg:initPrice-s.base,pct:initPct};
+    histS[s.sym]=genHist(s.base,true);
+  });
+}
+
+// ══════════════════════════════════════════════
+// SPARKLINE
+// ══════════════════════════════════════════════
+function spark(hist,w=52,h=22,sw=1.3){
+  if(!hist||hist.length<2) return`<svg width="${w}" height="${h}"></svg>`;
+  const mn=Math.min(...hist),mx=Math.max(...hist),range=mx-mn||1;
+  const pos=hist[hist.length-1]>=hist[0];
+  const col=pos?'#22c55e':'#ef4444';
+  const pts=hist.map((v,i)=>`${(i/(hist.length-1))*w},${h-2-((v-mn)/range)*(h-4)}`).join(' ');
+  const lx=w,ly=h-2-((hist[hist.length-1]-mn)/range)*(h-4);
+  return`<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" overflow="visible">
+    <polyline points="${pts}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${lx}" cy="${ly}" r="2" fill="${col}"/>
+  </svg>`;
+}
+
+// ══════════════════════════════════════════════
+// TICKER
+// ══════════════════════════════════════════════
+function buildTicker(){
+  const items=[
+    ...REGIONS_DEF[0].indices.map(i=>({id:i.s,sym:i.sym,label:i.s,prefix:'',hist:histI[i.sym]})),
+    ...STOCKS.slice(0,9).map(s=>({id:s.s,sym:s.sym,label:s.s,prefix:'₹',hist:histS[s.sym]})),
+  ];
+  const html=items.map(it=>{
+    const d=it.prefix?SD[it.sym]:ID_DATA[it.sym];
+    const pct=d?.pct||0; const price=d?.price||0;
+    return`<div class="tick">
+      <div class="tick-left">
+        <span class="t-sym">${it.label}</span>
+        <div class="t-row">
+          <span class="t-price" data-tp="${it.id}">${it.prefix}${fmt(price,it.prefix?2:0)}</span>
+          <span class="t-pct ${pct>=0?'pos':'neg'}" data-tc="${it.id}">${sgn(pct)}${fmt(pct)}%</span>
+        </div>
+      </div>
+      <div class="tick-spark" data-ts="${it.id}">${spark(it.hist,52,22)}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('tbarTrack').innerHTML=html+html;
+}
+
+function tickData(){
+  ALL_INDICES.forEach(i=>{
+    const cur=ID_DATA[i.sym]; const d=cur.price*(Math.random()-.495)*.004; const p=cur.price+d;
+    ID_DATA[i.sym]={price:p,chg:p-i.base,pct:((p-i.base)/i.base)*100};
+    histI[i.sym].push(p); if(histI[i.sym].length>80) histI[i.sym].shift();
+  });
+  STOCKS.forEach(s=>{
+    const cur=SD[s.sym]; const d=cur.price*(Math.random()-.495)*.005; const p=cur.price+d;
+    SD[s.sym]={price:p,chg:p-s.base,pct:((p-s.base)/s.base)*100};
+    histS[s.sym].push(p); if(histS[s.sym].length>80) histS[s.sym].shift();
+  });
+}
+
+function refreshTicker(){
+  tickData();
+  const items=[
+    ...REGIONS_DEF[0].indices.map(i=>({id:i.s,sym:i.sym,prefix:'',hist:histI[i.sym]})),
+    ...STOCKS.slice(0,9).map(s=>({id:s.s,sym:s.sym,prefix:'₹',hist:histS[s.sym]})),
+  ];
+  items.forEach(it=>{
+    const d=it.prefix?SD[it.sym]:ID_DATA[it.sym];
+    if(!d) return;
+    const pct=d.pct||0; const price=d.price||0;
+    document.querySelectorAll(`[data-tp="${it.id}"]`).forEach(el=>el.textContent=it.prefix+fmt(price,it.prefix?2:0));
+    document.querySelectorAll(`[data-tc="${it.id}"]`).forEach(el=>{
+      el.textContent=sgn(pct)+fmt(pct)+'%';
+      el.className='t-pct '+(pct>=0?'pos':'neg');
+    });
+    document.querySelectorAll(`[data-ts="${it.id}"]`).forEach(el=>el.innerHTML=spark(it.hist,52,22));
+  });
+}
+
+// ══════════════════════════════════════════════
+// SEARCH
+// ══════════════════════════════════════════════
+function buildSearchIndex(){
+  const idx=[];
+  ALL_INDICES.forEach(i=>{
+    idx.push({type:'Index',badge:'rgba(167,139,250,.18)',badgeC:'rgba(167,139,250,.9)',sym:i.s,name:i.n,extra:'India',sym2:i.sym});
+  });
+  STOCKS.forEach(s=>{
+    idx.push({type:'Stock',badge:'rgba(255,153,51,.18)',badgeC:'var(--accent)',sym:s.s,name:s.n,extra:'NSE',sym2:s.sym});
+  });
+  return idx;
+}
+let _searchIdx=null;
+
+function runSearch(q){
+  if(!_searchIdx) _searchIdx=buildSearchIndex();
+  const drop=document.getElementById('searchDrop');
+  q=q.trim().toLowerCase();
+  if(!q){drop.classList.remove('open');drop.innerHTML='';return;}
+  const results=_searchIdx.filter(r=>
+    r.sym.toLowerCase().includes(q)||r.name.toLowerCase().includes(q)
+  ).slice(0,12);
+  if(!results.length){
+    drop.innerHTML=`<div class="sd-empty">No results for "<b>${q}</b>"</div>`;
+    drop.classList.add('open');return;
+  }
+  const groups={};
+  results.forEach(r=>{if(!groups[r.type])groups[r.type]=[];groups[r.type].push(r);});
+  let html='';
+  Object.entries(groups).forEach(([type,items])=>{
+    html+=`<div class="sd-cat">${type}</div>`;
+    items.forEach(r=>{
+      const d=r.sym2?ID_DATA[r.sym2]||SD[r.sym2]:null;
+      const pct=d?.pct;
+      html+=`<div class="sd-row">
+        <span class="sd-badge" style="background:${r.badge};color:${r.badgeC}">${r.type}</span>
+        <span class="sd-sym">${r.sym}</span>
+        <span class="sd-name">${r.name}</span>
+        ${pct!=null?`<span class="sd-pct ${pct>=0?'pos':'neg'}">${sgn(pct)}${fmt(Math.abs(pct))}%</span>`:''}
+      </div>`;
+    });
+  });
+  drop.innerHTML=html;
+  drop.classList.add('open');
+}
+
+function closeSearch(){
+  document.getElementById('searchDrop').classList.remove('open');
+}
+
+// ══════════════════════════════════════════════
+// THEME
+// ══════════════════════════════════════════════
+const MOON_SVG = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+const SUN_SVG  = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+const SYS_SVG  = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`;
+
+let _themeMode = localStorage.getItem('prvaaha-combo-theme') || 'dark';
+
+function applyTheme(mode){
+  const prefersDark = window.matchMedia('(prefers-color-scheme:dark)').matches;
+  const isDark = mode === 'dark' || (mode === 'system' && prefersDark);
+  const root = document.documentElement;
+  if(isDark){
+    document.body.classList.remove('theme-light');
+    root.style.setProperty('--bg','#0a0906');
+    root.style.setProperty('--surface','#141109');
+    root.style.setProperty('--surface2','rgba(30,25,12,.9)');
+    root.style.setProperty('--border','rgba(201,168,76,.14)');
+    root.style.setProperty('--border2','rgba(201,168,76,.35)');
+    root.style.setProperty('--text','#f5f0e0');
+    root.style.setProperty('--text2','rgba(245,240,224,.72)');
+    root.style.setProperty('--muted','rgba(245,240,224,.45)');
+    root.style.setProperty('--pos','#6ee7a0');
+    root.style.setProperty('--neg','#f08a8a');
+  } else {
+    document.body.classList.add('theme-light');
+    root.style.setProperty('--bg','#f5f2ec');
+    root.style.setProperty('--surface','#ffffff');
+    root.style.setProperty('--surface2','rgba(0,0,0,.05)');
+    root.style.setProperty('--border','rgba(0,0,0,.1)');
+    root.style.setProperty('--border2','rgba(0,0,0,.22)');
+    root.style.setProperty('--text','#1a1208');
+    root.style.setProperty('--text2','rgba(30,20,5,.65)');
+    root.style.setProperty('--muted','rgba(30,20,5,.45)');
+    root.style.setProperty('--pos','#0f7748');
+    root.style.setProperty('--neg','#c0392b');
+  }
+  const icon = document.getElementById('themeIcon');
+  const label = document.getElementById('themeLabel');
+  if(!icon||!label) return;
+  if(mode==='dark'){   icon.outerHTML=MOON_SVG.replace('<svg','<svg id="themeIcon"'); label.textContent='Night'; }
+  else if(mode==='light'){ icon.outerHTML=SUN_SVG.replace('<svg','<svg id="themeIcon"'); label.textContent='Day'; }
+  else {                   icon.outerHTML=SYS_SVG.replace('<svg','<svg id="themeIcon"'); label.textContent='System'; }
+}
+
+function setTheme(mode, btn){
+  _themeMode = mode;
+  localStorage.setItem('prvaaha-combo-theme', mode);
+  applyTheme(mode);
+  document.querySelectorAll('.theme-opt').forEach(o=>o.classList.toggle('active', o.dataset.mode===mode));
+  closeThemeMenu();
+}
+
+function toggleThemeMenu(){
+  document.getElementById('themeMenu').classList.toggle('open');
+}
+function closeThemeMenu(){
+  document.getElementById('themeMenu').classList.remove('open');
+}
+document.addEventListener('click', e=>{
+  const tt=document.getElementById('themeToggle');
+  if(tt&&!tt.contains(e.target)) closeThemeMenu();
+});
+
+// ══════════════════════════════════════════════
+// IST CLOCK
+// ══════════════════════════════════════════════
+function updateClock(){
+  const now = new Date();
+  const ist = new Date(now.toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
+  const h = ist.getHours().toString().padStart(2,'0');
+  const m = ist.getMinutes().toString().padStart(2,'0');
+  const s = ist.getSeconds().toString().padStart(2,'0');
+  const timeStr = `${h}:${m}:${s} IST`;
+  const clockEl = document.getElementById('istClock');
+  const dispEl  = document.getElementById('istDisp');
+  if(clockEl) clockEl.textContent = timeStr;
+  if(dispEl)  dispEl.textContent  = `${h}:${m}`;
+  const dow = ist.getDay();
+  const mins = ist.getHours()*60 + ist.getMinutes();
+  const isWeekday = dow>=1 && dow<=5;
+  const isOpen = isWeekday && mins>=555 && mins<930;
+  const statusEl = document.getElementById('mktStatus');
+  if(statusEl){
+    statusEl.textContent = isOpen ? '● NSE & BSE: Open' : '● NSE & BSE: Closed';
+    statusEl.style.color = isOpen ? '#6ee7a0' : 'rgba(245,240,224,.4)';
+  }
+}
+
+// ══════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════
+const AUTH = {
+  user: null,
+
+  async init() {
+    if (!_sb) return;
+    try {
+      const sessionResult = await Promise.race([
+        _sb.auth.getSession(),
+        new Promise((_,rej) => setTimeout(() => rej(new Error('auth timeout')), 5000)),
+      ]);
+      const session = sessionResult?.data?.session;
+      if (session?.user) { this.user = this._map(session.user); this.updateUI(); }
+    } catch(e) {}
+    try {
+      _sb.auth.onAuthStateChange((event, session) => {
+        if (event === 'TOKEN_REFRESHED') return;
+        this.user = session?.user ? this._map(session.user) : null;
+        this.updateUI();
+      });
+    } catch(e) {}
+  },
+
+  _map(u) {
+    return {
+      id: u.id, email: u.email,
+      name: u.user_metadata?.full_name || u.user_metadata?.name || u.email.split('@')[0],
+      isAuthenticated: true,
+    };
+  },
+
+  async doSignIn() {
+    const email = document.getElementById('si-email')?.value.trim();
+    const pass  = document.getElementById('si-pass')?.value;
+    if (!email || !pass) { this._showErr('si-err','Please fill in all fields.'); return; }
+    const btn = document.querySelector('#auth-form-in .signin');
+    if (btn) { btn.textContent = 'Signing in…'; btn.disabled = true; }
+    const { data, error } = await _sb.auth.signInWithPassword({email, password:pass});
+    if (btn) { btn.textContent = 'Sign In →'; btn.disabled = false; }
+    if (error) { this._showErr('si-err', error.message.includes('Invalid') ? 'Incorrect email or password.' : error.message); return; }
+    if (data?.user) { this.user = this._map(data.user); this.updateUI(); }
+    closeAuthModal();
+    this._toast(`Welcome back, ${this.user?.name || ''}!`);
+  },
+
+  async doSignUp() {
+    const name  = document.getElementById('su-name')?.value.trim();
+    const email = document.getElementById('su-email')?.value.trim();
+    const pass  = document.getElementById('su-pass')?.value;
+    if (!name || !email || !pass) { this._showErr('su-err','Please fill in all fields.'); return; }
+    if (pass.length < 6) { this._showErr('su-err','Password must be at least 6 characters.'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { this._showErr('su-err','Enter a valid email address.'); return; }
+    const btn = document.querySelector('#auth-form-up .signin');
+    if (btn) { btn.textContent = 'Creating…'; btn.disabled = true; }
+    const { data, error } = await _sb.auth.signUp({email, password:pass, options:{data:{name}}});
+    if (btn) { btn.textContent = 'Create Account →'; btn.disabled = false; }
+    if (error) { this._showErr('su-err', error.message); return; }
+    if (data.session) {
+      if (data.user) { this.user = this._map(data.user); this.updateUI(); }
+      closeAuthModal();
+      this._toast(`Welcome to prvaaha., ${name}! Full access unlocked.`);
+    } else {
+      closeAuthModal();
+      this._toast('Check your email to confirm your account, then sign in!');
+    }
+  },
+
+  async doResetPassword() {
+    const email = document.getElementById('reset-email')?.value.trim();
+    if (!email) { this._showErr('reset-err','Please enter your email address.'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { this._showErr('reset-err','Enter a valid email address.'); return; }
+    const btn = document.getElementById('reset-btn');
+    if (btn) { btn.textContent = 'Sending…'; btn.disabled = true; }
+    const { error } = await _sb.auth.resetPasswordForEmail(email, {redirectTo:'https://prvaaha.com/reset-password'});
+    if (btn) { btn.textContent = 'Send Reset Link →'; btn.disabled = false; }
+    if (error) { this._showErr('reset-err', error.message); return; }
+    const ok = document.getElementById('reset-ok'); if (ok) ok.style.display = 'block';
+    if (btn) btn.style.display = 'none';
+  },
+
+  async signOut() {
+    if (_sb) await _sb.auth.signOut();
+    this.user = null; this.updateUI();
+    this._toast('Signed out successfully.');
+  },
+
+  updateUI() {
+    const btn = document.querySelector('.signin-btn');
+    if (!btn) return;
+    if (this.user) {
+      const initials = this.user.name.slice(0,2).toUpperCase();
+      btn.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px">
+        <span style="background:#138808;color:#fff;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800">${initials}</span>
+        ${this.user.name.split(' ')[0]}</span>`;
+      btn.onclick = () => AUTH.signOut();
+    } else {
+      btn.textContent = 'Sign In';
+      btn.onclick = () => openAuthModal();
+    }
+  },
+
+  _showErr(id, msg) {
+    const el = document.getElementById(id); if (!el) return;
+    el.textContent = msg; el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 4500);
+  },
+
+  _toast(msg) {
+    const t = document.createElement('div');
+    t.textContent = msg;
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:10px 20px;font-size:12px;font-family:var(--sans);font-weight:600;z-index:2000;box-shadow:0 8px 32px rgba(0,0,0,.4);pointer-events:none;opacity:0;transition:opacity .25s';
+    document.body.appendChild(t);
+    requestAnimationFrame(() => t.style.opacity = '1');
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+  },
+};
+
+// ══════════════════════════════════════════════
+// AUTH MODAL HELPERS
+// ══════════════════════════════════════════════
+function openAuthModal(tab='in') {
+  document.getElementById('auth-modal').style.display = 'flex';
+  authSwitchTab(tab);
+}
+function closeAuthModal() {
+  document.getElementById('auth-modal').style.display = 'none';
+  ['si-email','si-pass','su-name','su-email','su-pass','reset-email'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  const ok = document.getElementById('reset-ok'); if (ok) ok.style.display = 'none';
+  const rb = document.getElementById('reset-btn'); if (rb) { rb.style.display = ''; rb.disabled = false; }
+}
+function authSwitchTab(tab) {
+  const isIn = tab==='in', isUp = tab==='up', isReset = tab==='reset';
+  document.getElementById('auth-form-in').style.display    = isIn    ? 'block' : 'none';
+  document.getElementById('auth-form-up').style.display    = isUp    ? 'block' : 'none';
+  document.getElementById('auth-form-reset').style.display = isReset ? 'block' : 'none';
+  const tIn = document.getElementById('auth-tab-in');
+  const tUp = document.getElementById('auth-tab-up');
+  if (tIn) { tIn.style.borderBottomColor = isIn ? 'var(--accent)' : 'transparent'; tIn.style.color = isIn ? 'var(--text)' : 'var(--muted)'; }
+  if (tUp) { tUp.style.borderBottomColor = isUp ? 'var(--accent)' : 'transparent'; tUp.style.color = isUp ? 'var(--text)' : 'var(--muted)'; }
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', async () => {
+  initData();
+  buildTicker();
+  applyTheme(_themeMode);
+  document.querySelectorAll('.theme-opt').forEach(o => o.classList.toggle('active', o.dataset.mode === _themeMode));
+  window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change', () => {
+    if (_themeMode === 'system') applyTheme('system');
+  });
+  updateClock();
+  setInterval(updateClock, 1000);
+  try { await AUTH.init(); } catch(e) {}
+  setInterval(() => refreshTicker(), 10000);
+});
+</script>
+</body>
+</html>

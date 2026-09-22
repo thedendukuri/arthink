@@ -105,7 +105,18 @@ app.use((req, res, next) => {
 });
 
 // ── Serve front-end ─────────────────────────────────────────
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'bharatiya-finance.html')));
+// New MPA site — each route serves the page's index.html
+app.use('/markets',   express.static(path.join(__dirname, 'site/markets')));
+app.use('/news',      express.static(path.join(__dirname, 'site/news')));
+app.use('/watchlist', express.static(path.join(__dirname, 'site/watchlist')));
+app.use('/alpha',     express.static(path.join(__dirname, 'site/alpha')));
+app.use('/crypto',    express.static(path.join(__dirname, 'site/crypto')));
+
+// Home page (new MPA home; legacy SPA still at /legacy for reference)
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'site/prthvi-home-page.html')));
+// Alias so relative links from subpages (../prthvi-home-page.html) resolve correctly
+app.get('/prthvi-home-page.html', (req, res) => res.sendFile(path.join(__dirname, 'site/prthvi-home-page.html')));
+app.get('/legacy', (req, res) => res.sendFile(path.join(__dirname, 'bharatiya-finance.html')));
 app.get('/reset-password', (req, res) => res.sendFile(path.join(__dirname, 'reset-password.html')));
 
 // ── GET /api/quote?syms=^NSEI,TCS.NS,AAPL,^GSPC ─────────────
