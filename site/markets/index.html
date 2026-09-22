@@ -762,7 +762,7 @@ function renderTable(data){
     // Click-through to index detail page
     tr.style.cursor = 'pointer';
     tr.addEventListener('click', () => {
-      location.href = '/index-detail/' + encodeURIComponent(d.sym);
+      location.href = '/index/' + encodeURIComponent(d.sym);
     });
   });
   // Draw sparklines after DOM insert
@@ -1199,7 +1199,7 @@ function openMapPanel(c){
   const chartLink = document.getElementById('panel-chart-link');
   if(chartLink && c.sym){
     chartLink.style.cursor = 'pointer';
-    chartLink.onclick = () => { location.href = '/index-detail/' + encodeURIComponent(c.sym); };
+    chartLink.onclick = () => { location.href = '/index/' + encodeURIComponent(c.sym); };
   }
   document.getElementById('side-panel').classList.add('open');
 }
