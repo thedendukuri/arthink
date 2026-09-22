@@ -1097,26 +1097,30 @@ function updateClock(){
 }
 
 // ── TICKER ──
-(function(){
-  const TICKS=[
-    {sym:'NIFTY 50',price:'24,832',pct:'+0.68%',up:true},
-    {sym:'SENSEX',price:'81,224',pct:'+0.71%',up:true},
-    {sym:'BANK NIFTY',price:'52,418',pct:'+0.80%',up:true},
-    {sym:'NIFTY IT',price:'38,204',pct:'-0.30%',up:false},
-    {sym:'NIFTY MID',price:'45,812',pct:'+0.41%',up:true},
-    {sym:'S&P 500',price:'5,847',pct:'+0.31%',up:true},
-    {sym:'NASDAQ',price:'18,734',pct:'+0.52%',up:true},
-    {sym:'FTSE 100',price:'8,312',pct:'-0.15%',up:false},
-    {sym:'DAX',price:'18,924',pct:'+0.28%',up:true},
-    {sym:'NIKKEI',price:'38,946',pct:'+0.95%',up:true},
-    {sym:'HANG SENG',price:'21,832',pct:'-1.24%',up:false},
-    {sym:'USD/INR',price:'83.42',pct:'+0.12%',up:true},
-    {sym:'GOLD',price:'₹72,840',pct:'+0.38%',up:true},
-    {sym:'CRUDE',price:'$78.24',pct:'-0.62%',up:false},
-  ];
+// Ticker symbols: Yahoo Finance sym → display label
+const TICKER_DEFS = [
+  {sym:'^NSEI',    label:'NIFTY 50'},
+  {sym:'^BSESN',   label:'SENSEX'},
+  {sym:'^NSEBANK', label:'BANK NIFTY'},
+  {sym:'^CNXIT',   label:'NIFTY IT'},
+  {sym:'^GSPC',    label:'S&P 500'},
+  {sym:'^IXIC',    label:'NASDAQ'},
+  {sym:'^FTSE',    label:'FTSE 100'},
+  {sym:'^GDAXI',   label:'DAX'},
+  {sym:'^N225',    label:'NIKKEI'},
+  {sym:'^HSI',     label:'HANG SENG'},
+];
+function buildTicker(liveMap){
   const track=document.getElementById('tbarTrack');
   if(!track)return;
-  const double=[...TICKS,...TICKS];
+  const ticks=TICKER_DEFS.map(def=>{
+    const live=liveMap&&liveMap[def.sym];
+    const idx=indices.find(d=>d.sym===def.sym);
+    const price=live?live.price:(idx?idx.last:0);
+    const pct  =live?live.pct  :(idx?idx.pct :0);
+    return{sym:def.label,price:fmt(price),pct:fmtPct(pct),up:pct>=0};
+  });
+  const double=[...ticks,...ticks];
   track.innerHTML=double.map(t=>`
     <div class="tick">
       <span class="t-sym">${t.sym}</span>
@@ -1125,7 +1129,100 @@ function updateClock(){
         <span class="t-pct ${t.up?'pos':'neg'}">${t.up?'▲':'▼'} ${t.pct}</span>
       </div>
     </div>`).join('');
-})();
+}
+// Initial render with static data
+buildTicker(null);
+
+// ── GLANCE BAND CONFIG ──
+// Maps chip index (0-6) to Yahoo Finance symbol
+const GLANCE_SYMS=['^NSEI','^BSESN','^GSPC','^FTSE','^N225','^HSI','^NSEBANK'];
+
+// ── LIVE DATA FETCH ──
+const IS_SERVED=location.protocol!=='file:';
+// All symbols we need: 27 table indices + extra ticker syms
+const _LIVE_SYMS=[...new Set([
+  ...indices.map(d=>d.sym),
+  '^IXIC',  // NASDAQ (not in table but in ticker)
+])].join(',');
+
+async function fetchAndApplyLiveData(){
+  if(!IS_SERVED)return;
+  try{
+    const res=await fetch('/api/quote?syms='+encodeURIComponent(_LIVE_SYMS));
+    if(!res.ok)return;
+    const data=await res.json();
+    const results=(data.quoteResponse?.result)||[];
+
+    // Build sym → {price,chg,pct} map
+    const liveMap={};
+    results.forEach(q=>{
+      if(!q?.symbol)return;
+      liveMap[q.symbol]={
+        price:q.regularMarketPrice??0,
+        chg:  q.regularMarketChange??0,
+        pct:  q.regularMarketChangePercent??0,
+      };
+    });
+
+    // 1. Update indices array with live prices
+    indices.forEach(d=>{
+      const live=liveMap[d.sym];
+      if(!live)return;
+      d.last =live.price;
+      d.chg  =live.chg;
+      d.pct  =live.pct;
+      d.trend=live.pct>=0?'up':'down';
+    });
+
+    // 2. Re-render table
+    filterAndRender(false);
+
+    // 3. Update glance chips
+    const chips=document.querySelectorAll('.glance-chip');
+    GLANCE_SYMS.forEach((sym,i)=>{
+      const chip=chips[i];if(!chip)return;
+      const live=liveMap[sym];if(!live)return;
+      chip.querySelector('.glance-price').textContent=fmt(live.price);
+      const pctEl=chip.querySelector('.glance-pct');
+      pctEl.textContent=fmtPct(live.pct);
+      pctEl.className='glance-pct '+(live.pct>=0?'pos':'neg');
+    });
+
+    // 4. Update region pill pcts (average of all indices in that region)
+    const regionGroups={};
+    indices.forEach(d=>{
+      if(!regionGroups[d.region])regionGroups[d.region]=[];
+      regionGroups[d.region].push(d.pct);
+    });
+    const avg=arr=>arr.reduce((a,b)=>a+b,0)/arr.length;
+    document.querySelectorAll('.region-pill').forEach(pill=>{
+      const r=pill.dataset.region;
+      const pcts=r==='all'?indices.map(d=>d.pct):(regionGroups[r]||[]);
+      if(!pcts.length)return;
+      const a=avg(pcts);
+      const pctEl=pill.querySelector('.region-pill-pct');
+      if(!pctEl)return;
+      pctEl.textContent=fmtPct(a);
+      pctEl.className='region-pill-pct '+(a>=0?'pos':'neg');
+    });
+
+    // 5. Rebuild ticker with live data
+    buildTicker(liveMap);
+
+    // 6. Update status bar timestamp
+    const tsEl=document.getElementById('lastUpdated');
+    if(tsEl){
+      const now=new Date();
+      tsEl.textContent='Updated '+now.toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'})+' IST';
+    }
+  }catch(e){
+    console.warn('[markets] live fetch failed:',e.message);
+  }
+}
+
+// Fetch on load + every 60 seconds
+fetchAndApplyLiveData();
+setInterval(fetchAndApplyLiveData,60_000);
 
 // ══ BUBBLE MAP DATA + JS ══
 const centers = [
