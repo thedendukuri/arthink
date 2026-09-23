@@ -183,8 +183,8 @@ canvas.spark{display:block}
 .hm-tab{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.08em;padding:5px 10px;cursor:pointer;color:rgba(245,240,224,.4);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s;user-select:none}
 .hm-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
 .hm-tab.stub{cursor:not-allowed;opacity:.35}
-.heatmap-treemap{display:flex;flex-direction:row;gap:2px;padding:0 8px 8px;height:80px}
-.heatmap-cell{flex-shrink:1;flex-basis:0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:pointer;transition:background-color 300ms ease,box-shadow .15s;border:1px solid rgba(201,168,76,.06);position:relative;overflow:hidden}
+.heatmap-treemap{position:relative;padding:0 8px 8px;height:160px}
+.heatmap-cell{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;transition:background-color 300ms ease,box-shadow .15s;border:1px solid rgba(0,0,0,.25);box-sizing:border-box;overflow:hidden}
 .heatmap-cell:hover{box-shadow:0 0 0 1px rgba(201,168,76,.4);z-index:2}
 .hm-name{font-size:7.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(245,240,224,.8);text-align:center;font-family:'Pathway Gothic One',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;padding:0 3px}
 .hm-pct{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;text-align:center;line-height:1}
@@ -916,28 +916,47 @@ function renderHeatmap(liveMap){
   const tip=document.getElementById('hmTooltip');
   if(!grid)return;
   grid.innerHTML='';
-  sectors.forEach(s=>{
+
+  const W=grid.clientWidth||280;
+  const H=160;
+
+  // Build D3 hierarchy weighted by sector Nifty 50 share
+  const root=d3.hierarchy({children:sectors}).sum(d=>d.weight||0);
+  d3.treemap().size([W,H]).padding(2)(root);
+
+  root.leaves().forEach(node=>{
+    const s=node.data;
     const live=liveMap&&liveMap[s.sym];
     const pct=live?live.pct:0;
     const price=live?live.price:null;
     const pos=pct>=0;
+    const cw=node.x1-node.x0;
+    const ch=node.y1-node.y0;
+
     const cell=document.createElement('div');
     cell.className='heatmap-cell';
-    cell.style.flexGrow=s.weight;
+    cell.style.left=node.x0+'px';
+    cell.style.top=node.y0+'px';
+    cell.style.width=cw+'px';
+    cell.style.height=ch+'px';
     cell.style.backgroundColor=live?sectorColor(pct):'rgba(201,168,76,.04)';
-    // anatomy — name always shown, price hidden in tiny cells via overflow
+
+    // Show name only if cell is wide enough
+    const showName=cw>36;
+    const showPrice=cw>60&&ch>44&&price!=null;
     cell.innerHTML=`
-      <span class="hm-name">${s.name}</span>
-      <span class="hm-pct" style="color:${pos?'#6ee7a0':'#f08a8a'}">${pos?'+':''}${pct.toFixed(2)}%</span>
-      ${price!=null?`<span class="hm-price">${fmt(price)}</span>`:''}
+      ${showName?`<span class="hm-name">${s.name}</span>`:''}
+      <span class="hm-pct" style="color:${pos?'#6ee7a0':'#f08a8a'};font-size:${cw<50?'8px':'10px'}">${pos?'+':''}${pct.toFixed(cw<50?1:2)}%</span>
+      ${showPrice?`<span class="hm-price">${fmt(price)}</span>`:''}
     `;
-    // click-through → canonical index detail page
-    cell.style.cursor='pointer';
+
+    // click-through
     cell.addEventListener('click',()=>{
       location.href='/index/'+encodeURIComponent(s.sym);
     });
-    // hover tooltip
-    cell.addEventListener('mouseenter',e=>{
+
+    // tooltip
+    cell.addEventListener('mouseenter',()=>{
       if(!tip)return;
       document.getElementById('hmtName').textContent=s.name;
       document.getElementById('hmtSym').textContent=s.sym;
@@ -955,6 +974,7 @@ function renderHeatmap(liveMap){
     cell.addEventListener('mouseleave',()=>{
       if(tip)tip.style.display='none';
     });
+
     grid.appendChild(cell);
   });
 }
