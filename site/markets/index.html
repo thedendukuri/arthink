@@ -179,11 +179,23 @@ canvas.spark{display:block}
 .panel-hdr{padding:10px 14px;border-bottom:1px solid var(--border);font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:rgba(201,168,76,.75);display:flex;align-items:center;justify-content:space-between;font-family:'Pathway Gothic One',sans-serif}
 
 /* Sector Heatmap */
-.heatmap-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;padding:8px}
-.heatmap-cell{padding:8px 6px;display:flex;flex-direction:column;gap:2px;align-items:center;justify-content:center;min-height:50px;cursor:default;transition:opacity .15s;border:1px solid rgba(201,168,76,.06)}
-.heatmap-cell:hover{opacity:.8;border-color:rgba(201,168,76,.2)}
-.hm-name{font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(245,240,224,.7);text-align:center;font-family:'Pathway Gothic One',sans-serif}
-.hm-val{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;text-align:center}
+.heatmap-tabs{display:flex;align-items:center;gap:0;margin-bottom:6px;border-bottom:1px solid rgba(201,168,76,.1);padding:0 8px}
+.hm-tab{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.08em;padding:5px 10px;cursor:pointer;color:rgba(245,240,224,.4);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s;user-select:none}
+.hm-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.hm-tab.stub{cursor:not-allowed;opacity:.35}
+.heatmap-treemap{display:flex;flex-direction:row;gap:2px;padding:0 8px 8px;height:80px}
+.heatmap-cell{flex-shrink:1;flex-basis:0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:pointer;transition:background-color 300ms ease,box-shadow .15s;border:1px solid rgba(201,168,76,.06);position:relative;overflow:hidden}
+.heatmap-cell:hover{box-shadow:0 0 0 1px rgba(201,168,76,.4);z-index:2}
+.hm-name{font-size:7.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(245,240,224,.8);text-align:center;font-family:'Pathway Gothic One',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;padding:0 3px}
+.hm-pct{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;text-align:center;line-height:1}
+.hm-price{font-family:'JetBrains Mono',monospace;font-size:7px;text-align:center;color:rgba(245,240,224,.45);line-height:1}
+/* Tooltip */
+#hmTooltip{position:fixed;pointer-events:none;z-index:9999;background:#0d0d0d;border:1px solid rgba(201,168,76,.3);padding:8px 12px;display:none;flex-direction:column;gap:3px;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.7)}
+.hmt-name{font-family:'Pathway Gothic One',sans-serif;font-size:11px;letter-spacing:.05em;color:var(--gold)}
+.hmt-sym{font-family:'JetBrains Mono',monospace;font-size:8px;color:rgba(245,240,224,.4)}
+.hmt-row{display:flex;justify-content:space-between;gap:16px;margin-top:2px}
+.hmt-price{font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(245,240,224,.85)}
+.hmt-pct{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700}
 
 /* Movers Panel */
 .movers-tabs{display:flex;gap:0}
@@ -314,8 +326,11 @@ body.theme-light .week52-fill{background:rgba(201,168,76,.5)}
 
 body.theme-light .panel{background:#fff;border-color:rgba(0,0,0,.1)}
 body.theme-light .panel-hdr{border-bottom-color:rgba(0,0,0,.08);color:rgba(120,75,0,.7)}
-body.theme-light .heatmap-cell{border-color:rgba(0,0,0,.06)}
-body.theme-light .hm-name{color:rgba(30,20,5,.65)}
+body.theme-light .heatmap-cell{border-color:rgba(0,0,0,.08)}
+body.theme-light .hm-name{color:rgba(30,20,5,.8)}
+body.theme-light .hm-price{color:rgba(30,20,5,.4)}
+body.theme-light #hmTooltip{background:#fff;border-color:rgba(201,168,76,.4)}
+body.theme-light .hmt-price{color:rgba(30,20,5,.85)}
 body.theme-light .mover-row{border-bottom-color:rgba(0,0,0,.06)}
 body.theme-light .mover-row:hover{background:rgba(201,168,76,.07)}
 body.theme-light .mover-bar-track{background:rgba(0,0,0,.09)}
@@ -529,8 +544,22 @@ body.theme-light .table-container::-webkit-scrollbar-thumb{background:rgba(0,0,0
 
     <!-- Panel 1: Sector Heatmap -->
     <div class="panel">
-      <div class="panel-hdr">Sector Heatmap <span style="font-size:8px;color:var(--muted);letter-spacing:.06em;font-family:'JetBrains Mono',monospace">NSE · Today</span></div>
-      <div class="heatmap-grid" id="heatmapGrid"></div>
+      <div class="panel-hdr">Sector Heatmap <span style="font-size:8px;color:var(--muted);letter-spacing:.06em;font-family:'JetBrains Mono',monospace">NSE India</span></div>
+      <div class="heatmap-tabs">
+        <span class="hm-tab active" id="hmTab1d">1D</span>
+        <span class="hm-tab stub" title="Coming soon">1W</span>
+        <span class="hm-tab stub" title="Coming soon">1M</span>
+      </div>
+      <div class="heatmap-treemap" id="heatmapGrid"></div>
+    </div>
+    <!-- Heatmap tooltip (shared, positioned by JS) -->
+    <div id="hmTooltip">
+      <span class="hmt-name" id="hmtName"></span>
+      <span class="hmt-sym" id="hmtSym"></span>
+      <div class="hmt-row">
+        <span class="hmt-price" id="hmtPrice"></span>
+        <span class="hmt-pct" id="hmtPct"></span>
+      </div>
     </div>
 
     <!-- Panel 2: Top Movers -->
@@ -854,43 +883,78 @@ document.getElementById('sortPerfLink').addEventListener('click',()=>{
   filterAndRender(false);
 });
 
-// ── SECTOR HEATMAP (12 sectors) ──
+// ── SECTOR HEATMAP ──
+// {name, sym, weight} — weight drives flex-grow (proportional to Nifty 50 sector weight)
 const sectors = [
-  {name:'Banking',pct:0.8},{name:'IT',pct:-0.3},{name:'Auto',pct:1.2},{name:'FMCG',pct:0.1},
-  {name:'Pharma',pct:-0.4},{name:'Energy',pct:0.6},{name:'Metals',pct:2.1},{name:'Realty',pct:1.5},
-  {name:'Infra',pct:0.9},{name:'Media',pct:-0.7},{name:'Telecom',pct:0.3},{name:'Chemical',pct:0.5},
+  {name:'Banking',  sym:'^NSEBANK',   weight:32},
+  {name:'IT',       sym:'^CNXIT',     weight:13},
+  {name:'Auto',     sym:'^CNXAUTO',   weight:9},
+  {name:'FMCG',     sym:'^CNXFMCG',   weight:8},
+  {name:'Pharma',   sym:'^CNXPHARMA', weight:7},
+  {name:'Energy',   sym:'^CNXENERGY', weight:7},
+  {name:'Metals',   sym:'^CNXMETAL',  weight:5},
+  {name:'Realty',   sym:'^CNXREALTY', weight:4},
+  {name:'Infra',    sym:'^CNXINFRA',  weight:4},
+  {name:'PSU Bank', sym:'^CNXPSUBNK', weight:3},
+  {name:'Telecom',  sym:'^CNXTELECOM',weight:3},
+  {name:'Media',    sym:'^CNXMEDIA',  weight:1},
 ];
 
-function pctToColor(pct){
-  if(pct>0){
-    const i = Math.min(pct/2.5,1);
-    const r = Math.round(15);
-    const g = Math.round(50 + i*70);
-    const b = Math.round(25);
-    const a = 0.5 + i*0.35;
-    return `rgba(${r},${g},${b},${a})`;
+function sectorColor(pct){
+  const i=Math.min(Math.abs(pct)/2.5,1);
+  if(pct>=0){
+    const g=Math.round(80+i*110);
+    return `rgba(15,${g},30,${0.3+i*0.6})`;
   } else {
-    const i = Math.min(Math.abs(pct)/2.5,1);
-    const r = Math.round(80 + i*80);
-    const g = Math.round(15);
-    const b = Math.round(15);
-    const a = 0.5 + i*0.35;
-    return `rgba(${r},${g},${b},${a})`;
+    const r=Math.round(140+i*90);
+    return `rgba(${r},18,18,${0.3+i*0.6})`;
   }
 }
 
-function renderHeatmap(){
-  const grid = document.getElementById('heatmapGrid');
-  grid.innerHTML = '';
+function renderHeatmap(liveMap){
+  const grid=document.getElementById('heatmapGrid');
+  const tip=document.getElementById('hmTooltip');
+  if(!grid)return;
+  grid.innerHTML='';
   sectors.forEach(s=>{
-    const cell = document.createElement('div');
-    cell.className = 'heatmap-cell';
-    cell.style.background = pctToColor(s.pct);
-    const pos = s.pct>=0;
-    cell.innerHTML = `
+    const live=liveMap&&liveMap[s.sym];
+    const pct=live?live.pct:0;
+    const price=live?live.price:null;
+    const pos=pct>=0;
+    const cell=document.createElement('div');
+    cell.className='heatmap-cell';
+    cell.style.flexGrow=s.weight;
+    cell.style.backgroundColor=live?sectorColor(pct):'rgba(201,168,76,.04)';
+    // anatomy — name always shown, price hidden in tiny cells via overflow
+    cell.innerHTML=`
       <span class="hm-name">${s.name}</span>
-      <span class="hm-val" style="color:${pos?'#6ee7a0':'#f08a8a'}">${pos?'+':''}${s.pct.toFixed(1)}%</span>
+      <span class="hm-pct" style="color:${pos?'#6ee7a0':'#f08a8a'}">${pos?'+':''}${pct.toFixed(2)}%</span>
+      ${price!=null?`<span class="hm-price">${fmt(price)}</span>`:''}
     `;
+    // click-through → canonical index detail page
+    cell.style.cursor='pointer';
+    cell.addEventListener('click',()=>{
+      location.href='/index/'+encodeURIComponent(s.sym);
+    });
+    // hover tooltip
+    cell.addEventListener('mouseenter',e=>{
+      if(!tip)return;
+      document.getElementById('hmtName').textContent=s.name;
+      document.getElementById('hmtSym').textContent=s.sym;
+      document.getElementById('hmtPrice').textContent=price!=null?fmt(price):'—';
+      const pctEl=document.getElementById('hmtPct');
+      pctEl.textContent=(pos?'+':'')+pct.toFixed(2)+'%';
+      pctEl.style.color=pos?'#6ee7a0':'#f08a8a';
+      tip.style.display='flex';
+    });
+    cell.addEventListener('mousemove',e=>{
+      if(!tip)return;
+      tip.style.left=(e.clientX+14)+'px';
+      tip.style.top=(e.clientY-10)+'px';
+    });
+    cell.addEventListener('mouseleave',()=>{
+      if(tip)tip.style.display='none';
+    });
     grid.appendChild(cell);
   });
 }
@@ -1142,7 +1206,8 @@ const IS_SERVED=location.protocol!=='file:';
 // All symbols we need: 27 table indices + extra ticker syms
 const _LIVE_SYMS=[...new Set([
   ...indices.map(d=>d.sym),
-  '^IXIC',  // NASDAQ (not in table but in ticker)
+  '^IXIC',       // NASDAQ ticker
+  ...sectors.map(s=>s.sym), // sectoral indices (7 net-new beyond the 27)
 ])].join(',');
 
 async function fetchAndApplyLiveData(){
@@ -1209,7 +1274,10 @@ async function fetchAndApplyLiveData(){
     // 5. Rebuild ticker with live data
     buildTicker(liveMap);
 
-    // 6. Update status bar timestamp
+    // 6. Update sector heatmap
+    renderHeatmap(liveMap);
+
+    // 7. Update status bar timestamp
     const tsEl=document.getElementById('lastUpdated');
     if(tsEl){
       const now=new Date();
@@ -1418,7 +1486,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   updateClock();
   setInterval(updateClock, 1000);
   filterAndRender(false);
-  renderHeatmap();
+  renderHeatmap(null); // live data applied by fetchAndApplyLiveData()
   renderMovers(gainers,'gainers-list');
   renderMovers(losers,'losers-list');
   renderMiniMap();
